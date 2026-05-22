@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tokyo Called">
+  <meta name="theme-color" content="#0F0F1A">
+  <title>Tokyo Called</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════ INTRO SCREEN -->
+<div id="intro-screen" class="screen hidden">
+  <div class="intro-orbs"></div>
+  <div class="intro-content">
+    <div class="game-title">
+      <div class="title-jp">召された</div>
+      <div class="title-en">Tokyo Called</div>
+    </div>
+
+    <div class="intro-divider"></div>
+
+    <p class="intro-text">
+      Tokyo, Japan. You've arrived with a calling, a Bible, and broken Japanese.
+      The city stretches before you — vast, beautiful, and spiritually unreached.
+      Where do you begin?
+    </p>
+
+    <div class="name-form">
+      <label for="character-name">Your name</label>
+      <input
+        id="character-name"
+        type="text"
+        placeholder="Enter your name…"
+        maxlength="20"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
+      <button id="start-btn" class="btn-primary">Begin Your Journey →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ GAME SCREEN -->
+<div id="game-screen" class="screen hidden">
+
+  <!-- ── Active action progress bar ────────────────────────── -->
+  <div id="action-bar" class="action-bar hidden">
+    <div id="action-bar-label" class="action-bar-label">…</div>
+    <div class="action-bar-track">
+      <div id="action-bar-fill" class="action-bar-fill"></div>
+    </div>
+    <button id="action-cancel" class="action-bar-cancel" title="Cancel action">✕</button>
+  </div>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="game-header">
+    <div id="header-name" class="header-name">—</div>
+    <div id="header-day"  class="header-day">Day 1</div>
+    <button id="header-settings" class="header-settings" title="Settings">⚙</button>
+  </header>
+
+  <!-- ── Resource HUD ───────────────────────────────────────── -->
+  <div class="hud">
+    <div class="res faith">
+      <div class="res-icon">✦</div>
+      <div id="res-faith" class="res-val">50</div>
+      <div class="res-lbl">Faith</div>
+    </div>
+    <div class="res trust">
+      <div class="res-icon">◈</div>
+      <div id="res-contacts" class="res-val">0</div>
+      <div class="res-lbl">Contacts</div>
+    </div>
+    <div class="res money">
+      <div class="res-icon">◎</div>
+      <div id="res-money" class="res-val">¥300</div>
+      <div class="res-lbl">Support</div>
+    </div>
+    <div class="res wisdom">
+      <div class="res-icon">◆</div>
+      <div id="res-wisdom" class="res-val">0</div>
+      <div class="res-lbl">Wisdom</div>
+    </div>
+    <div class="res lang">
+      <div class="res-icon">語</div>
+      <div id="res-lang" class="res-val">Lv.0</div>
+      <div class="lang-pip-row">
+        <div class="lang-pip"></div>
+        <div class="lang-pip"></div>
+        <div class="lang-pip"></div>
+        <div class="lang-pip"></div>
+        <div class="lang-pip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Location view ──────────────────────────────────────── -->
+  <div class="location-view">
+    <div id="location-bg" class="location-bg bg-apartment"></div>
+    <div class="location-info">
+      <div id="location-name-jp" class="location-name-jp">アパート</div>
+      <div id="location-name-en" class="location-name-en">Your Apartment</div>
+    </div>
+  </div>
+
+  <!-- ── Content area ───────────────────────────────────────── -->
+  <div class="content-area">
+    <!-- Tab switcher -->
+    <div class="content-tabs">
+      <button class="content-tab active" data-tab="actions">Actions</button>
+      <button class="content-tab"        data-tab="people">People</button>
+      <button class="content-tab"        data-tab="milestones">★ Goals</button>
+    </div>
+
+    <!-- Actions panel -->
+    <div id="tab-actions" class="tab-panel">
+      <div id="action-list" class="action-list"></div>
+    </div>
+
+    <!-- People panel -->
+    <div id="tab-people" class="tab-panel hidden">
+      <div id="people-list" class="people-list"></div>
+      <div id="contacts-summary" class="contacts-summary"></div>
+    </div>
+
+    <!-- Milestones panel -->
+    <div id="tab-milestones" class="tab-panel hidden">
+      <div id="milestones-list" class="milestones-list"></div>
+    </div>
+  </div>
+
+  <!-- ── Location tab bar ───────────────────────────────────── -->
+  <nav id="location-tabs" class="location-tabs"></nav>
+
+</div><!-- /game-screen -->
+
+<!-- ════════════════════════════════════════════════════════ TOAST -->
+<div id="toast" class="toast">
+  <div id="toast-icon" class="toast-icon">★</div>
+  <div class="toast-body">
+    <div id="toast-title" class="toast-title"></div>
+    <div id="toast-desc"  class="toast-desc"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ MODAL -->
+<div id="modal" class="modal-overlay hidden">
+  <div id="modal-card" class="modal-card"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ SETTINGS -->
+<div id="settings-overlay" class="settings-overlay hidden">
+  <div class="settings-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Settings
+      <button id="settings-close" class="sheet-close">✕</button>
+    </div>
+
+    <button id="mute-btn" class="sheet-btn sheet-btn-normal">🔊 Mute Music</button>
+    <button id="reset-btn" class="sheet-btn sheet-btn-danger">⚠️ Reset Progress</button>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

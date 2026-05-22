@@ -1,0 +1,24 @@
+{
+  "name": "Tokyo Called",
+  "short_name": "TokyoCalled",
+  "description": "An idle missionary game set in Tokyo, Japan",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0F0F1A",
+  "theme_color": "#0F0F1A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/images/ui/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/ui/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
