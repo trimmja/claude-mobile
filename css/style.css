@@ -35,7 +35,10 @@
   /* viewport-fit=cover in index.html required for env() on iOS Home Screen apps */
   --safe-bottom: max(20px, env(safe-area-inset-bottom, 0px));
   --safe-top: max(0px, env(safe-area-inset-top, 0px));
+  --safe-left: max(0px, env(safe-area-inset-left, 0px));
+  --safe-right: max(0px, env(safe-area-inset-right, 0px));
   --tab-bar-extra: 8px;
+  --tab-bar-height: calc(52px + var(--tab-bar-extra) + var(--safe-bottom));
 }
 
 *, *::before, *::after {
@@ -50,7 +53,9 @@
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
   background: var(--bg);
   color: var(--text);
   font-family: 'Nunito', 'Noto Sans JP', sans-serif;
@@ -67,6 +72,9 @@ input { user-select: text; }
 .screen {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -203,7 +211,7 @@ input { user-select: text; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding-top: var(--safe-top);
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
 }
 
 /* Action Progress Bar */
@@ -781,6 +789,7 @@ input { user-select: text; }
   gap: 2px;
   padding: 10px 12px 8px;
   min-height: 52px;
+  touch-action: manipulation;
   cursor: pointer;
   background: none;
   border: none;
@@ -809,7 +818,7 @@ input { user-select: text; }
 /* ─── TOAST ─── */
 .toast {
   position: fixed;
-  bottom: calc(72px + var(--safe-bottom) + var(--tab-bar-extra));
+  bottom: calc(var(--tab-bar-height) + 12px);
   left: 50%;
   transform: translateX(-50%) translateY(12px);
   background: var(--surface-2);
@@ -847,7 +856,8 @@ input { user-select: text; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: calc(24px + var(--safe-top)) calc(24px + var(--safe-right))
+    calc(24px + var(--safe-bottom)) calc(24px + var(--safe-left));
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
