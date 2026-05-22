@@ -47,7 +47,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 1. Develop locally; push to GitHub when I ask.
 2. Keep `CLAUDE.md` and `.cursor/rules/` aligned between Claude and Cursor.
 3. Polish Phase 1 (core game is built) — balance, UX, iPhone PWA via GitHub Pages.
-4. Test after pushes: https://trimmja.github.io/claude-mobile/
+4. Test after pushes: https://trimmja.github.io/japan-evangelistic-band/
 
 **Next (after Phase 1 feels solid)**
 
@@ -70,7 +70,7 @@ as the player's language skill grows.
 
 ## Live game
 Deploy via: GitHub repo → Settings → Pages → branch `claude/environment-selection-iphone-EohwW` → root
-URL: `https://trimmja.github.io/claude-mobile/`
+URL: `https://trimmja.github.io/japan-evangelistic-band/` (not `claude-mobile` — that URL 404s)
 
 ## Tech stack
 - Pure HTML/CSS/Vanilla JS — no build step, no framework, no package.json

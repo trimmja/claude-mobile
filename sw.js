@@ -1,4 +1,4 @@
-const CACHE = 'tokyo-called-v2';
+const CACHE = 'tokyo-called-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -37,7 +37,41 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
+function isBalanceJson(url) {
+  return url.pathname.includes('/data/') && url.pathname.endsWith('.json');
+}
+
+function isAppAsset(url) {
+  return /\.(js|css|html)$/.test(url.pathname);
+}
+
+// Balance JSON: always network (so edits show after push + refresh).
+// App JS/CSS/HTML: network-first, then cache for offline.
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+
+  if (isBalanceJson(url)) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  if (isAppAsset(url)) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then(cache => cache.put(e.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
