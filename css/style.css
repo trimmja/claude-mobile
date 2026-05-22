@@ -105,19 +105,24 @@ input { user-select: text; }
 
 .title-jp {
   font-family: 'Noto Sans JP', sans-serif;
-  font-size: 52px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--sakura-light);
   text-shadow: 0 0 60px rgba(255,179,198,0.5), 0 0 20px rgba(255,143,171,0.3);
-  letter-spacing: 10px;
+  letter-spacing: 4px;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .title-en {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--gold);
-  letter-spacing: 5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  text-align: center;
+  line-height: 1.35;
+  max-width: 280px;
   opacity: 0.9;
 }
 

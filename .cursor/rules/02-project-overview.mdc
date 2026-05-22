@@ -1,11 +1,11 @@
 ---
-description: Tokyo Called — project summary and stack
+description: Japan Evangelistic Band — project summary and stack
 alwaysApply: true
 ---
 
 # Project overview
 
-**Name:** Tokyo Called (repo: `japan-evangelistic-band`)
+**Name:** Japan Evangelistic Band (repo: `japan-evangelistic-band`)
 
 **What it is:** PWA idle/management game — American missionary life in Tokyo. iPhone-first via GitHub Pages (Add to Home Screen). Dark theme, sakura + gold palette; Japanese UI text unlocks as language skill grows.
 

@@ -1,4 +1,4 @@
-const CACHE = 'tokyo-called-v5';
+const CACHE = 'jeb-v6';
 const ASSETS = [
   './',
   './index.html',

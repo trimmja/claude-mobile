@@ -1,5 +1,5 @@
 // Bump when you need phones to pick up a new build (shown in Settings).
-export const APP_VERSION = '5';
+export const APP_VERSION = '6';
 
 export async function hardRefreshApp() {
   if ('serviceWorker' in navigator) {
