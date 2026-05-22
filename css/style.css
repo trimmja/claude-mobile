@@ -1006,6 +1006,15 @@ input { user-select: text; }
   gap: 10px;
 }
 
+.sheet-version {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 0 0 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 .sheet-btn-normal {
   background: var(--surface-2);
   border: 1px solid var(--border);

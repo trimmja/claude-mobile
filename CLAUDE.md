@@ -10,7 +10,7 @@ Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Cla
 - I work in the local folder `jbe` (GitHub repo: `trimmja/japan-evangelistic-band`).
 - I use **Claude** for planning and design, **Cursor** for edits and git.
 - Ask before pushing to GitHub unless I say to publish / push / save to GitHub.
-- **Hosting & testing:** GitHub Pages is the live host; I mostly test on my **iPhone**. Changes to `data/*.json` need a push before they appear on the phone.
+- **Hosting & testing:** GitHub Pages — https://trimmja.github.io/japan-evangelistic-band/ (not `claude-mobile`). Mostly test on **iPhone**. Push then refresh; stale PWA → Settings → **Load latest update** or reinstall Home Screen shortcut.
 - Real missionary experience in Japan — keep the game culturally authentic.
 
 ---

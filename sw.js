@@ -1,4 +1,4 @@
-const CACHE = 'tokyo-called-v3';
+const CACHE = 'tokyo-called-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './data/actions.json',
   './data/timing.json',
   './js/main.js',
+  './js/version.js',
   './js/state.js',
   './js/language.js',
   './js/save.js',
@@ -30,9 +31,10 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then(clients => Promise.all(clients.map(c => c.navigate(c.url))))
   );
   self.clients.claim();
 });
@@ -45,8 +47,7 @@ function isAppAsset(url) {
   return /\.(js|css|html)$/.test(url.pathname);
 }
 
-// Balance JSON: always network (so edits show after push + refresh).
-// App JS/CSS/HTML: network-first, then cache for offline.
+// Balance JSON: always network. App assets: network-first.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 

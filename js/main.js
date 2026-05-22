@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { APP_VERSION } from './version.js';
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { startEngine, hooks } from './engine.js';
@@ -12,6 +13,23 @@ import {
 // Expose audio for settings panel
 window._audio = audio;
 
+let swReloading = false;
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swReloading) return;
+    swReloading = true;
+    location.reload();
+  });
+
+  navigator.serviceWorker
+    .register(`./sw.js?v=${APP_VERSION}`)
+    .then(reg => reg.update())
+    .catch(() => {});
+}
+
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 async function boot() {
   try {
@@ -20,10 +38,7 @@ async function boot() {
     console.warn('Game data JSON could not load; actions may be empty.', err);
   }
 
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
+  registerServiceWorker();
 
   const hasSaved = loadGame();
 

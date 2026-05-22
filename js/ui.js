@@ -8,6 +8,7 @@ import { NPC_DEFS, getStageName, getTrustPercent } from './npcs.js';
 import { MILESTONE_DEFS, completedCount } from './milestones.js';
 import { locText, actionText, langLevel, langProgress } from './language.js';
 import { playTap } from './audio.js';
+import { APP_VERSION, hardRefreshApp } from './version.js';
 
 // ─── DOM refs ───────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -357,6 +358,15 @@ export function showConfirmModal(title, body, onConfirm) {
 
 // ─── SETTINGS ───────────────────────────────────────────────────────────────
 export function bindSettings(onReset) {
+  const versionEl = $('app-version');
+  if (versionEl) {
+    versionEl.textContent = `Build ${APP_VERSION} · trimmja.github.io/japan-evangelistic-band`;
+  }
+
+  $('refresh-app-btn')?.addEventListener('click', () => {
+    hardRefreshApp();
+  });
+
   $('header-settings').addEventListener('click', () => {
     $('settings-overlay').classList.remove('hidden');
   });
