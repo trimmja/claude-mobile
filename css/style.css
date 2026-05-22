@@ -33,12 +33,12 @@
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.7);
 
   /* viewport-fit=cover in index.html required for env() on iOS Home Screen apps */
-  --safe-bottom: max(20px, env(safe-area-inset-bottom, 0px));
-  --safe-top: max(0px, env(safe-area-inset-top, 0px));
-  --safe-left: max(0px, env(safe-area-inset-left, 0px));
-  --safe-right: max(0px, env(safe-area-inset-right, 0px));
-  --tab-bar-extra: 8px;
-  --tab-bar-height: calc(52px + var(--tab-bar-extra) + var(--safe-bottom));
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --loc-tabs-h: 50px;
+  --tab-bar-height: calc(var(--loc-tabs-h) + var(--safe-bottom));
 }
 
 *, *::before, *::after {
@@ -50,10 +50,15 @@
   user-select: none;
 }
 
+html {
+  height: -webkit-fill-available;
+}
+
 html, body {
   width: 100%;
   height: 100%;
-  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg);
@@ -74,7 +79,8 @@ input { user-select: text; }
   inset: 0;
   width: 100%;
   height: 100%;
-  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
 }
@@ -211,7 +217,7 @@ input { user-select: text; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+  padding: var(--safe-top) var(--safe-right) var(--tab-bar-height) var(--safe-left);
 }
 
 /* Action Progress Bar */
@@ -767,16 +773,22 @@ input { user-select: text; }
 
 .milestones-count span { color: var(--gold); font-weight: 800; }
 
-/* ─── LOCATION TAB BAR ─── */
+/* ─── LOCATION TAB BAR (fixed to screen bottom; bg fills home-indicator zone) ─── */
 .location-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
   display: flex;
+  align-items: flex-start;
+  min-height: var(--tab-bar-height);
+  padding-bottom: var(--safe-bottom);
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding-bottom: calc(var(--tab-bar-extra) + var(--safe-bottom));
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  flex-shrink: 0;
 }
 
 .location-tabs::-webkit-scrollbar { display: none; }
@@ -787,8 +799,8 @@ input { user-select: text; }
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 10px 12px 8px;
-  min-height: 52px;
+  padding: 6px 12px 4px;
+  min-height: var(--loc-tabs-h);
   touch-action: manipulation;
   cursor: pointer;
   background: none;
@@ -818,7 +830,7 @@ input { user-select: text; }
 /* ─── TOAST ─── */
 .toast {
   position: fixed;
-  bottom: calc(var(--tab-bar-height) + 12px);
+  bottom: calc(var(--tab-bar-height) + 10px);
   left: 50%;
   transform: translateX(-50%) translateY(12px);
   background: var(--surface-2);

@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v9';
+const CACHE = 'jeb-v10';
 const ASSETS = [
   './',
   './index.html',
