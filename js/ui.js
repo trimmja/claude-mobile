@@ -1,5 +1,8 @@
 import { state } from './state.js';
-import { ACTION_DEFS, actionsForLocation, actionProgress, startAction, cancelAction } from './actions.js';
+import {
+  ACTION_DEFS, actionsForLocation, actionProgress, startAction, cancelAction,
+  getActionRequirements, actionUnlockCacheKey,
+} from './actions.js';
 import { LOCATION_DEFS, LOCATION_ORDER, goTo } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent } from './npcs.js';
 import { MILESTONE_DEFS, completedCount } from './milestones.js';
@@ -102,6 +105,7 @@ export function renderActionBar() {
 let lastActionLocation = null;
 let lastActionId       = null;
 let lastMetCount       = -1;
+let lastUnlockKey      = '';
 
 export function renderActions() {
   const list    = $('action-list');
@@ -109,11 +113,14 @@ export function renderActions() {
   const activeId = state.action.id;
   const metCount = Object.values(state.npcs).filter(n => n.met).length;
 
-  // Full rebuild when location, active action, or NPC met count changes
-  if (locId !== lastActionLocation || activeId !== lastActionId || metCount !== lastMetCount) {
+  const unlockKey = actionUnlockCacheKey();
+
+  // Full rebuild when location, action, NPC met, or unlock progress changes
+  if (locId !== lastActionLocation || activeId !== lastActionId || metCount !== lastMetCount || unlockKey !== lastUnlockKey) {
     lastActionLocation = locId;
     lastActionId       = activeId;
     lastMetCount       = metCount;
+    lastUnlockKey      = unlockKey;
     list.innerHTML = '';
 
     const ids = actionsForLocation(locId);
@@ -159,8 +166,17 @@ export function renderActions() {
       meta.appendChild(el('span', 'tag tag-time', fmtDuration(def.duration)));
       infoEl.appendChild(meta);
 
-      if (isLocked && def.unlockHint) {
-        infoEl.appendChild(el('div', 'action-hint', '🔒 ' + def.unlockHint));
+      const requirements = getActionRequirements(id);
+      if (requirements?.length) {
+        const reqBox = el('div', 'action-requirements');
+        requirements.forEach(req => {
+          reqBox.appendChild(el(
+            'div',
+            'action-req-line' + (req.met ? ' met' : ' unmet'),
+            (req.met ? '✓ ' : '○ ') + req.label + ' — ' + req.detail,
+          ));
+        });
+        infoEl.appendChild(reqBox);
       }
 
       // progress bar for active action

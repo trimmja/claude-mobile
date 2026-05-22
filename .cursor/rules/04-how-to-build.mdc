@@ -23,4 +23,6 @@ Read `CLAUDE.md` for full tables (actions, NPCs, milestones, CSS tokens, DOM IDs
 
 **Design constraints:** One action at a time; costs at start, rewards at end; cancel refunds half faith cost; auto-save every 30 engine ticks + on action complete; no offline progress.
 
+**Locked actions — always show why:** Any gated action must list every requirement on its card with current progress (✓ done / ○ missing + “Now: …”). Implement in `getActionRequirements()` + `REQUIREMENT_BUILDERS` in `js/actions.js` and render via `action-requirements` in `js/ui.js`. Do not rely on `unlockHint` alone or hide requirements when locked.
+
 **Japan authenticity:** Preserve onsen, English events, station tracts, slow trust arcs, monthly support, shame/wa in stage gates — see `CLAUDE.md` § Authentic Japan touches.

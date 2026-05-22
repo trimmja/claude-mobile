@@ -578,6 +578,34 @@ input { user-select: text; }
   margin-top: 3px;
 }
 
+.action-requirements {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.action-req-line {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.action-req-line.met {
+  color: var(--success);
+}
+
+.action-req-line.unmet {
+  color: var(--sakura-light);
+}
+
+.action-card.locked .action-requirements {
+  border: 1px solid rgba(255, 143, 171, 0.25);
+}
+
 .action-prog {
   position: absolute;
   bottom: 0;

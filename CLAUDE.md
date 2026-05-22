@@ -335,6 +335,7 @@ Key DOM IDs: `res-faith`, `res-contacts`, `res-money`, `res-wisdom`, `res-lang`,
 - Home church relationship (letters/calls back to supporters)
 
 ## Design decisions
+- **Action requirements always visible** — gated actions show every unlock rule on the card with live progress (`getActionRequirements()` in `js/actions.js`, rendered in `js/ui.js`). New gated actions need a `REQUIREMENT_BUILDERS` entry; `unlockHint` in JSON is not enough alone.
 - **Active-only** — no offline progress, secondsPlayed only increments while engine runs
 - **One action at a time** — cancelling refunds half faith cost
 - **Save** — auto-saves every 30 engine ticks + on every action complete
@@ -359,7 +360,7 @@ whichever source file is relevant to the task.
 
 - Tune **action duration / cost / reward**: edit `data/actions.json`, refresh browser
 - Tune **day length / faith regen / payday**: edit `data/timing.json`, refresh browser
-- Add **actions**: new entry in `data/actions.json` + unlock rule in `js/actions.js` (`ACTION_UNLOCK`) + name in `js/language.js` (`ACTION_TEXT`)
+- Add **actions**: new entry in `data/actions.json` + unlock rule in `js/actions.js` (`ACTION_UNLOCK`) + requirements in `REQUIREMENT_BUILDERS` + name in `js/language.js` (`ACTION_TEXT`)
 - Add **locations**: extend `LOCATION_DEFS` in `js/locations.js` + add bg CSS class in `css/style.css`
 - Add **NPCs**: extend `NPC_DEFS` in `js/npcs.js` + add state entry in `js/state.js`
 - Add **milestones**: extend `MILESTONE_DEFS` in `js/milestones.js`

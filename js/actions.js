@@ -1,8 +1,10 @@
 import { state } from './state.js';
 import { spend, gain } from './resources.js';
 import { addLangXP } from './language.js';
-import { addNPCTrust } from './npcs.js';
+import { addNPCTrust, NPC_DEFS } from './npcs.js';
 import { parseDuration } from './parseDuration.js';
+
+const DEEP_TALK_MIN_STAGE = 2; // Friend
 
 // Unlock rules stay in code; numbers and durations come from data/actions.json.
 const ACTION_UNLOCK = {
@@ -49,6 +51,81 @@ export function initActionsFromData(data) {
     };
   }
 }
+
+// Human-readable requirements (always shown on gated actions).
+export function getActionRequirements(actionId) {
+  const reqs = REQUIREMENT_BUILDERS[actionId];
+  return reqs ? reqs() : null;
+}
+
+export function actionUnlockCacheKey() {
+  const n = state.npcs;
+  return [
+    state.language.level,
+    state.time.day,
+    state.resources.wisdom,
+    state.resources.contacts,
+    `k:${n.kenji.met}:${n.kenji.stage}`,
+    `y:${n.yuki.met}:${n.yuki.stage}`,
+    `h:${n.hiro.met}:${n.hiro.stage}`,
+  ].join('|');
+}
+
+function reqMet(npcId) {
+  const npc = state.npcs[npcId];
+  const def = NPC_DEFS[npcId];
+  const met = npc.met;
+  return {
+    label: `Meet ${def.name}`,
+    met,
+    detail: met ? 'Done' : 'Not met yet — meet them through outreach',
+  };
+}
+
+function reqFriendStage(npcId) {
+  const npc = state.npcs[npcId];
+  const def = NPC_DEFS[npcId];
+  const need = DEEP_TALK_MIN_STAGE;
+  const met = npc.met && npc.stage >= need;
+  const stageName = def.stages[npc.stage] ?? `Stage ${npc.stage}`;
+  return {
+    label: `Friend relationship with ${def.name}`,
+    met,
+    detail: npc.met
+      ? (met ? 'Done' : `Now: ${stageName} (stage ${npc.stage}, need ${need}+)`)
+      : 'Meet them first',
+  };
+}
+
+function reqMin(label, current, need, fmt = v => String(v)) {
+  const met = current >= need;
+  return {
+    label,
+    met,
+    detail: met ? 'Done' : `Now: ${fmt(current)} (need ${fmt(need)}+)`,
+  };
+}
+
+const REQUIREMENT_BUILDERS = {
+  commuter_convo: () => [
+    reqMin('Japanese Level 1', state.language.level, 1, v => `Level ${v}`),
+  ],
+  host_english: () => [
+    reqMin('Wisdom 10', state.resources.wisdom, 10),
+  ],
+  observe_shrine: () => [
+    reqMin('Day 3 in Tokyo', state.time.day, 3, v => `Day ${v}`),
+  ],
+  onsen_visit: () => [
+    reqMin('30 contacts', state.resources.contacts, 30),
+  ],
+  visit_kenji: () => [reqMet('kenji')],
+  visit_yuki: () => [reqMet('yuki')],
+  visit_hiro: () => [reqMet('hiro')],
+  deep_kenji: () => [reqMet('kenji'), reqFriendStage('kenji')],
+  deep_yuki: () => [reqMet('yuki'), reqFriendStage('yuki')],
+  deep_hiro: () => [reqMet('hiro'), reqFriendStage('hiro')],
+};
 
 // Returns action IDs available at the current location
 export function actionsForLocation(locationId) {
