@@ -1036,6 +1036,25 @@ input { user-select: text; }
 
 .sheet-btn-danger:active { background: rgba(248,113,113,0.16); }
 
+/* ─── HARD REFRESH OVERLAY ─── */
+.update-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 26, 0.92);
+  pointer-events: all;
+}
+
+.update-overlay-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
 /* ─── EMPTY STATE ─── */
 .empty-state {
   text-align: center;

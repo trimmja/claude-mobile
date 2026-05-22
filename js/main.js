@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { APP_VERSION } from './version.js';
+import { APP_VERSION, shouldSkipControllerReload } from './version.js';
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { startEngine, hooks } from './engine.js';
@@ -19,6 +19,7 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (shouldSkipControllerReload()) return;
     if (swReloading) return;
     swReloading = true;
     location.reload();
