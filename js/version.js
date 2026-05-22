@@ -1,13 +1,29 @@
 // Bump when you need phones to pick up a new build (shown in Settings).
-export const APP_VERSION = '7';
+export const APP_VERSION = '8';
 
 const SKIP_CONTROLLER_RELOAD_KEY = 'jeb_skip_controller_reload';
+const DEFER_SW_KEY = 'jeb_defer_sw';
 
 /** Set before a manual hard refresh so we don't reload again when the new SW takes over. */
 export function shouldSkipControllerReload() {
   if (!sessionStorage.getItem(SKIP_CONTROLLER_RELOAD_KEY)) return false;
   sessionStorage.removeItem(SKIP_CONTROLLER_RELOAD_KEY);
   return true;
+}
+
+/** After hard refresh, register the SW only once the page has fully loaded (iOS-safe). */
+export function shouldDeferServiceWorker() {
+  if (!sessionStorage.getItem(DEFER_SW_KEY)) return false;
+  sessionStorage.removeItem(DEFER_SW_KEY);
+  return true;
+}
+
+/** Remove old cache-bust query params left in the URL bar. */
+export function cleanCacheBustParam() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has('_')) return;
+  url.searchParams.delete('_');
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
 }
 
 function showUpdateOverlay() {
@@ -20,13 +36,6 @@ function showUpdateOverlay() {
   document.body.appendChild(el);
 }
 
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise(resolve => setTimeout(resolve, ms)),
-  ]);
-}
-
 export async function hardRefreshApp() {
   const btn = document.getElementById('refresh-app-btn');
   if (btn) {
@@ -35,19 +44,16 @@ export async function hardRefreshApp() {
   }
   showUpdateOverlay();
   sessionStorage.setItem(SKIP_CONTROLLER_RELOAD_KEY, '1');
+  sessionStorage.setItem(DEFER_SW_KEY, '1');
 
-  await withTimeout((async () => {
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-  })(), 2500);
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  }
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  }
 
-  const url = new URL(location.href);
-  url.searchParams.set('_', String(Date.now()));
-  location.replace(url.pathname + url.search + url.hash);
+  location.reload();
 }

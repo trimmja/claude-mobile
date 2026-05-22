@@ -1,5 +1,10 @@
 import { state } from './state.js';
-import { APP_VERSION, shouldSkipControllerReload } from './version.js';
+import {
+  APP_VERSION,
+  cleanCacheBustParam,
+  shouldDeferServiceWorker,
+  shouldSkipControllerReload,
+} from './version.js';
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { startEngine, hooks } from './engine.js';
@@ -33,13 +38,19 @@ function registerServiceWorker() {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 async function boot() {
+  cleanCacheBustParam();
+
   try {
     await loadGameData();
   } catch (err) {
     console.warn('Game data JSON could not load; actions may be empty.', err);
   }
 
-  registerServiceWorker();
+  if (shouldDeferServiceWorker()) {
+    window.addEventListener('load', () => registerServiceWorker(), { once: true });
+  } else {
+    registerServiceWorker();
+  }
 
   const hasSaved = loadGame();
 
