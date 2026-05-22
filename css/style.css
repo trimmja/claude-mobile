@@ -32,8 +32,10 @@
   --shadow: 0 4px 20px rgba(0,0,0,0.5);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.7);
 
-  --safe-bottom: env(safe-area-inset-bottom, 16px);
-  --safe-top: env(safe-area-inset-top, 0px);
+  /* viewport-fit=cover in index.html required for env() on iOS Home Screen apps */
+  --safe-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  --safe-top: max(0px, env(safe-area-inset-top, 0px));
+  --tab-bar-extra: 8px;
 }
 
 *, *::before, *::after {
@@ -74,7 +76,7 @@ input { user-select: text; }
   background: linear-gradient(170deg, #0A0A18 0%, #160A2A 50%, #080E20 100%);
   justify-content: center;
   align-items: center;
-  padding: 40px 28px;
+  padding: calc(40px + var(--safe-top)) 28px calc(40px + var(--safe-bottom));
   gap: 32px;
   text-align: center;
   overflow-y: auto;
@@ -201,13 +203,14 @@ input { user-select: text; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-top: var(--safe-top);
 }
 
 /* Action Progress Bar */
 .action-bar {
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
-  padding: calc(var(--safe-top) + 6px) 14px 8px;
+  padding: 6px 14px 8px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -761,7 +764,7 @@ input { user-select: text; }
   display: flex;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding-bottom: var(--safe-bottom);
+  padding-bottom: calc(var(--tab-bar-extra) + var(--safe-bottom));
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -774,8 +777,10 @@ input { user-select: text; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 8px 12px 6px;
+  padding: 10px 12px 8px;
+  min-height: 52px;
   cursor: pointer;
   background: none;
   border: none;
@@ -804,7 +809,7 @@ input { user-select: text; }
 /* ─── TOAST ─── */
 .toast {
   position: fixed;
-  bottom: 80px;
+  bottom: calc(72px + var(--safe-bottom) + var(--tab-bar-extra));
   left: 50%;
   transform: translateX(-50%) translateY(12px);
   background: var(--surface-2);
