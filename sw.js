@@ -1,8 +1,10 @@
-const CACHE = 'tokyo-called-v1';
+const CACHE = 'tokyo-called-v2';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './data/actions.json',
+  './data/timing.json',
   './js/main.js',
   './js/state.js',
   './js/language.js',
@@ -11,6 +13,8 @@ const ASSETS = [
   './js/locations.js',
   './js/resources.js',
   './js/actions.js',
+  './js/gameData.js',
+  './js/parseDuration.js',
   './js/milestones.js',
   './js/audio.js',
   './js/engine.js',

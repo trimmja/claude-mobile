@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { startEngine, hooks } from './engine.js';
 import * as audio from './audio.js';
@@ -12,7 +13,13 @@ import {
 window._audio = audio;
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
-function boot() {
+async function boot() {
+  try {
+    await loadGameData();
+  } catch (err) {
+    console.warn('Game data JSON could not load; actions may be empty.', err);
+  }
+
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

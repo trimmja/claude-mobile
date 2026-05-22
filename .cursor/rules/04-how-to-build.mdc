@@ -1,0 +1,26 @@
+---
+description: How to extend the codebase safely
+alwaysApply: false
+globs: js/**,index.html,css/**
+---
+
+# How to build on this codebase
+
+Read `CLAUDE.md` for full tables (actions, NPCs, milestones, CSS tokens, DOM IDs).
+
+| Task | Where to edit |
+|------|----------------|
+| Action duration, cost, reward | `data/actions.json` (see `data/README.md`) |
+| Day length, faith regen, payday | `data/timing.json` |
+| New action | `data/actions.json` + `ACTION_UNLOCK` in `js/actions.js` + `ACTION_TEXT` in `js/language.js` |
+| New location | `js/locations.js` + bg class in `css/style.css` |
+| New NPC | `js/npcs.js` + default in `js/state.js` |
+| New milestone | `js/milestones.js` |
+| UI / layout | `index.html` + `js/ui.js` |
+| Save key / format | `js/save.js` (bump key if breaking saves) |
+| BGM | `js/audio.js` |
+| Location art | `background-image` on `.location-bg` |
+
+**Design constraints:** One action at a time; costs at start, rewards at end; cancel refunds half faith cost; auto-save every 30 engine ticks + on action complete; no offline progress.
+
+**Japan authenticity:** Preserve onsen, English events, station tracts, slow trust arcs, monthly support, shame/wa in stage gates — see `CLAUDE.md` § Authentic Japan touches.

@@ -1,0 +1,22 @@
+---
+description: Tokyo Called — project summary and stack
+alwaysApply: true
+---
+
+# Project overview
+
+**Name:** Tokyo Called (repo: `japan-evangelistic-band`)
+
+**What it is:** PWA idle/management game — American missionary life in Tokyo. iPhone-first via GitHub Pages (Add to Home Screen). Dark theme, sakura + gold palette; Japanese UI text unlocks as language skill grows.
+
+**Deploy:** GitHub → Settings → Pages → branch `claude/environment-selection-iphone-EohwW` → `/` (root)
+
+**Live URL:** https://trimmja.github.io/claude-mobile/
+
+**Stack:** Pure HTML, CSS, vanilla JS — no build step, no framework, no `package.json`. ES modules, `localStorage` saves (`tokyo_called_v1`), Web Audio API, PWA (`manifest.json` + `sw.js`).
+
+**Key files:** `index.html`, `css/style.css`, `js/main.js` (boot/hooks), `js/state.js` (single source of truth), `js/engine.js` (1s tick), `js/ui.js` (render), plus `actions`, `locations`, `npcs`, `milestones`, `language`, `resources`, `save`, `audio`.
+
+**Architecture (short):** All modules mutate `state` from `state.js`. Engine ticks every 1s; `main.js` wires hooks; `requestAnimationFrame` drives `renderFrame()` in `ui.js`.
+
+Full file map, state shape, tables, and UI IDs are in `CLAUDE.md`.

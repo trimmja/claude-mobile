@@ -1,0 +1,15 @@
+---
+description: Keep CLAUDE.md and Cursor rules in sync (Claude + Cursor)
+alwaysApply: true
+---
+
+# Sync with CLAUDE.md
+
+This project is used with **both Cursor and Claude**. `CLAUDE.md` at the repo root is the shared source of truth.
+
+When you change project context, the developer profile, the current plan, or how to work on this repo:
+
+1. Update the relevant file(s) in `.cursor/rules/`
+2. Update the matching section(s) in `CLAUDE.md` in the same change
+
+Do not let Cursor rules and `CLAUDE.md` drift apart. If unsure which file to edit, update `CLAUDE.md` first, then mirror into `.cursor/rules/`.

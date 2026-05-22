@@ -2,160 +2,53 @@ import { state } from './state.js';
 import { spend, gain } from './resources.js';
 import { addLangXP } from './language.js';
 import { addNPCTrust } from './npcs.js';
+import { parseDuration } from './parseDuration.js';
 
-// duration in milliseconds, cost/reward in game units
-export const ACTION_DEFS = {
-  // ── APARTMENT ──────────────────────────────────────────────
-  pray: {
-    location: 'apartment',
-    icon: '🙏',
-    duration: 30000,
-    cost: {},
-    reward: { faith: 15, wisdom: 1 },
-    unlocked: () => true,
-  },
-  study_scripture: {
-    location: 'apartment',
-    icon: '📖',
-    duration: 60000,
-    cost: { faith: 5 },
-    reward: { wisdom: 8, faith: 3 },
-    unlocked: () => true,
-  },
-  study_japanese: {
-    location: 'apartment',
-    icon: '📝',
-    duration: 90000,
-    cost: { faith: 5 },
-    reward: { langXP: 10 },
-    unlocked: () => true,
-  },
-
-  // ── SHINJUKU STATION ────────────────────────────────────────
-  hand_tracts: {
-    location: 'station',
-    icon: '📄',
-    duration: 45000,
-    cost: { faith: 10 },
-    reward: { contacts: 2 },
-    npcChance: { id: 'kenji', chance: 0.3 },
-    unlocked: () => true,
-  },
-  commuter_convo: {
-    location: 'station',
-    icon: '💬',
-    duration: 60000,
-    cost: { faith: 15 },
-    reward: { contacts: 1, langXP: 3 },
-    unlocked: () => state.language.level >= 1,
-    unlockHint: 'Requires Japanese Level 1',
-  },
-
-  // ── YOYOGI PARK ─────────────────────────────────────────────
-  open_air_preach: {
-    location: 'park',
-    icon: '📢',
-    duration: 120000,
-    cost: { faith: 20 },
-    reward: { contacts: 5, faith: 5 },
-    npcChance: { id: 'hiro', chance: 0.35 },
-    unlocked: () => true,
-  },
-  casual_convo: {
-    location: 'park',
-    icon: '☕',
-    duration: 45000,
-    cost: { faith: 5 },
-    reward: { contacts: 1, langXP: 4 },
-    unlocked: () => true,
-  },
-
-  // ── CAFÉ ────────────────────────────────────────────────────
-  host_english: {
-    location: 'cafe',
-    icon: '🗣️',
-    duration: 180000,
-    cost: { faith: 10, money: 30 },
-    reward: { contacts: 8, wisdom: 3, langXP: 2 },
-    npcChance: { id: 'yuki', chance: 0.45 },
-    unlocked: () => state.resources.wisdom >= 10,
-    unlockHint: 'Requires Wisdom 10',
-  },
-
-  // ── SHRINE ──────────────────────────────────────────────────
-  observe_shrine: {
-    location: 'shrine',
-    icon: '⛩️',
-    duration: 60000,
-    cost: {},
-    reward: { wisdom: 5, langXP: 2 },
-    npcChance: { id: 'hiro', chance: 0.25 },
-    unlocked: () => state.time.day >= 3,
-    unlockHint: 'Unlocks Day 3',
-  },
-
-  // ── ONSEN ───────────────────────────────────────────────────
-  onsen_visit: {
-    location: 'onsen',
-    icon: '♨️',
-    duration: 180000,
-    cost: { money: 50 },
-    reward: { wisdom: 10, langXP: 5 },
-    unlocked: () => state.resources.contacts >= 30,
-    unlockHint: 'Requires 30 Contacts',
-    onComplete: () => { state.stats.onsenVisited = true; },
-  },
-
-  // ── NPC VISITS (available from any location when met) ───────
-  visit_kenji: {
-    location: null,
-    icon: '👔',
-    duration: 90000,
-    cost: { faith: 10 },
-    reward: { npcTrust: { id: 'kenji', amount: 12 } },
-    unlocked: () => state.npcs.kenji.met,
-  },
-  visit_yuki: {
-    location: null,
-    icon: '📚',
-    duration: 90000,
-    cost: { faith: 10 },
-    reward: { npcTrust: { id: 'yuki', amount: 12 } },
-    unlocked: () => state.npcs.yuki.met,
-  },
-  visit_hiro: {
-    location: null,
-    icon: '🌿',
-    duration: 90000,
-    cost: { faith: 10 },
-    reward: { npcTrust: { id: 'hiro', amount: 12 } },
-    unlocked: () => state.npcs.hiro.met,
-  },
-  deep_kenji: {
-    location: null,
-    icon: '💛',
-    duration: 120000,
-    cost: { faith: 20 },
-    reward: { npcTrust: { id: 'kenji', amount: 22 }, wisdom: 3 },
-    unlocked: () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2,
-  },
-  deep_yuki: {
-    location: null,
-    icon: '💛',
-    duration: 120000,
-    cost: { faith: 20 },
-    reward: { npcTrust: { id: 'yuki', amount: 22 }, wisdom: 3 },
-    unlocked: () => state.npcs.yuki.met && state.npcs.yuki.stage >= 2,
-  },
-  deep_hiro: {
-    location: null,
-    icon: '💛',
-    duration: 120000,
-    cost: { faith: 20 },
-    reward: { npcTrust: { id: 'hiro', amount: 22 }, wisdom: 3 },
-    unlocked: () => state.npcs.hiro.met && state.npcs.hiro.stage >= 2,
-  },
+// Unlock rules stay in code; numbers and durations come from data/actions.json.
+const ACTION_UNLOCK = {
+  pray: () => true,
+  study_scripture: () => true,
+  study_japanese: () => true,
+  hand_tracts: () => true,
+  commuter_convo: () => state.language.level >= 1,
+  open_air_preach: () => true,
+  casual_convo: () => true,
+  host_english: () => state.resources.wisdom >= 10,
+  observe_shrine: () => state.time.day >= 3,
+  onsen_visit: () => state.resources.contacts >= 30,
+  visit_kenji: () => state.npcs.kenji.met,
+  visit_yuki: () => state.npcs.yuki.met,
+  visit_hiro: () => state.npcs.hiro.met,
+  deep_kenji: () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2,
+  deep_yuki: () => state.npcs.yuki.met && state.npcs.yuki.stage >= 2,
+  deep_hiro: () => state.npcs.hiro.met && state.npcs.hiro.stage >= 2,
 };
+
+const ACTION_HOOKS = {
+  onsen_visit: () => { state.stats.onsenVisited = true; },
+};
+
+export const ACTION_DEFS = {};
+
+export function initActionsFromData(data) {
+  const entries = data.actions || data;
+  for (const id of Object.keys(ACTION_DEFS)) delete ACTION_DEFS[id];
+
+  for (const [id, cfg] of Object.entries(entries)) {
+    if (id.startsWith('_')) continue;
+    ACTION_DEFS[id] = {
+      location: cfg.location ?? null,
+      icon: cfg.icon,
+      duration: parseDuration(cfg.duration),
+      cost: cfg.cost || {},
+      reward: cfg.reward || {},
+      npcChance: cfg.npcChance,
+      unlockHint: cfg.unlockHint,
+      unlocked: ACTION_UNLOCK[id] ?? (() => true),
+      onComplete: ACTION_HOOKS[id],
+    };
+  }
+}
 
 // Returns action IDs available at the current location
 export function actionsForLocation(locationId) {

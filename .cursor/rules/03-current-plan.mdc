@@ -1,0 +1,25 @@
+---
+description: Current priorities and roadmap
+alwaysApply: true
+---
+
+# Current plan
+
+Update this rule and the **Current plan** section in `CLAUDE.md` whenever priorities change.
+
+## Now (active)
+
+1. **Local + GitHub workflow** — Develop in this folder; commit and push to `trimmja/japan-evangelistic-band` when the developer asks.
+2. **Shared AI context** — Keep `CLAUDE.md` and `.cursor/rules/` aligned so Cursor and Claude stay on the same page.
+3. **Phase 1 game** — Core loop is built (locations, actions, NPCs, milestones, save, PWA). Focus on polish, balance, and iPhone playability before large new systems.
+4. **Test on device** — Verify via GitHub Pages URL after pushes; use Add to Home Screen for standalone PWA feel.
+
+## Next (when Phase 1 feels solid)
+
+Pick from Phase 2 ideas in `CLAUDE.md` (e.g. real location art, BGM, second district, prayer requests). Do not start Phase 2 unless the developer asks.
+
+## Not in scope unless requested
+
+- Frameworks, build tools, or backend
+- Offline/progress while app is closed (design is active-only)
+- Rewriting working systems without a clear goal

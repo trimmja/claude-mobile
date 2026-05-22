@@ -1,0 +1,125 @@
+{
+  "_readme": "Pacing pass: ~half previous durations. Edit, save, push to GitHub, refresh on phone.",
+  "actions": {
+    "pray": {
+      "location": "apartment",
+      "icon": "🙏",
+      "duration": "15 seconds",
+      "cost": {},
+      "reward": { "faith": 15, "wisdom": 1 }
+    },
+    "study_scripture": {
+      "location": "apartment",
+      "icon": "📖",
+      "duration": "30 seconds",
+      "cost": { "faith": 5 },
+      "reward": { "wisdom": 8, "faith": 3 }
+    },
+    "study_japanese": {
+      "location": "apartment",
+      "icon": "📝",
+      "duration": "45 seconds",
+      "cost": { "faith": 5 },
+      "reward": { "langXP": 10 }
+    },
+    "hand_tracts": {
+      "location": "station",
+      "icon": "📄",
+      "duration": "20 seconds",
+      "cost": { "faith": 10 },
+      "reward": { "contacts": 2 },
+      "npcChance": { "id": "kenji", "chance": 0.3 }
+    },
+    "commuter_convo": {
+      "location": "station",
+      "icon": "💬",
+      "duration": "30 seconds",
+      "cost": { "faith": 15 },
+      "reward": { "contacts": 1, "langXP": 3 },
+      "unlockHint": "Requires Japanese Level 1"
+    },
+    "open_air_preach": {
+      "location": "park",
+      "icon": "📢",
+      "duration": "1 minute",
+      "cost": { "faith": 20 },
+      "reward": { "contacts": 5, "faith": 5 },
+      "npcChance": { "id": "hiro", "chance": 0.35 }
+    },
+    "casual_convo": {
+      "location": "park",
+      "icon": "☕",
+      "duration": "20 seconds",
+      "cost": { "faith": 5 },
+      "reward": { "contacts": 1, "langXP": 4 }
+    },
+    "host_english": {
+      "location": "cafe",
+      "icon": "🗣️",
+      "duration": "90 seconds",
+      "cost": { "faith": 10, "money": 30 },
+      "reward": { "contacts": 8, "wisdom": 3, "langXP": 2 },
+      "npcChance": { "id": "yuki", "chance": 0.45 },
+      "unlockHint": "Requires Wisdom 10"
+    },
+    "observe_shrine": {
+      "location": "shrine",
+      "icon": "⛩️",
+      "duration": "30 seconds",
+      "cost": {},
+      "reward": { "wisdom": 5, "langXP": 2 },
+      "npcChance": { "id": "hiro", "chance": 0.25 },
+      "unlockHint": "Unlocks Day 3"
+    },
+    "onsen_visit": {
+      "location": "onsen",
+      "icon": "♨️",
+      "duration": "90 seconds",
+      "cost": { "money": 50 },
+      "reward": { "wisdom": 10, "langXP": 5 },
+      "unlockHint": "Requires 30 Contacts"
+    },
+    "visit_kenji": {
+      "location": null,
+      "icon": "👔",
+      "duration": "45 seconds",
+      "cost": { "faith": 10 },
+      "reward": { "npcTrust": { "id": "kenji", "amount": 12 } }
+    },
+    "visit_yuki": {
+      "location": null,
+      "icon": "📚",
+      "duration": "45 seconds",
+      "cost": { "faith": 10 },
+      "reward": { "npcTrust": { "id": "yuki", "amount": 12 } }
+    },
+    "visit_hiro": {
+      "location": null,
+      "icon": "🌿",
+      "duration": "45 seconds",
+      "cost": { "faith": 10 },
+      "reward": { "npcTrust": { "id": "hiro", "amount": 12 } }
+    },
+    "deep_kenji": {
+      "location": null,
+      "icon": "💛",
+      "duration": "1 minute",
+      "cost": { "faith": 20 },
+      "reward": { "npcTrust": { "id": "kenji", "amount": 22 }, "wisdom": 3 }
+    },
+    "deep_yuki": {
+      "location": null,
+      "icon": "💛",
+      "duration": "1 minute",
+      "cost": { "faith": 20 },
+      "reward": { "npcTrust": { "id": "yuki", "amount": 22 }, "wisdom": 3 }
+    },
+    "deep_hiro": {
+      "location": null,
+      "icon": "💛",
+      "duration": "1 minute",
+      "cost": { "faith": 20 },
+      "reward": { "npcTrust": { "id": "hiro", "amount": 22 }, "wisdom": 3 }
+    }
+  }
+}

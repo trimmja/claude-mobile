@@ -1,0 +1,7 @@
+{
+  "_readme": "Pacing pass: shorter days, faster faith regen. Save, push, refresh on phone.",
+  "faithRegenPerSecond": 0.12,
+  "dayLength": "45 seconds",
+  "paydayAmount": 500,
+  "paydayEveryDays": 30
+}

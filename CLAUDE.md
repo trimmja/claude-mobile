@@ -1,5 +1,66 @@
 # Tokyo Called — Claude Context
 
+Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Claude should read this file. When either changes project context, the plan, or developer notes, **update both** this file and the matching `.cursor/rules/*.mdc` file.
+
+---
+
+## About me
+
+- Beginner — no coding experience. Prefer plain-language explanations.
+- I work in the local folder `jbe` (GitHub repo: `trimmja/japan-evangelistic-band`).
+- I use **Claude** for planning and design, **Cursor** for edits and git.
+- Ask before pushing to GitHub unless I say to publish / push / save to GitHub.
+- **Hosting & testing:** GitHub Pages is the live host; I mostly test on my **iPhone**. Changes to `data/*.json` need a push before they appear on the phone.
+- Real missionary experience in Japan — keep the game culturally authentic.
+
+---
+
+## Working with AI
+
+| Tool | Reads | Role |
+|------|--------|------|
+| Claude | This file (`CLAUDE.md`) | Planning, ideas, design review |
+| Cursor | `.cursor/rules/` + this file when needed | Code changes, commit, push |
+
+**Sync rule:** If context here changes, update the matching Cursor rule (and vice versa). Cursor rule files: `00-sync-claude-md`, `01-about-developer`, `02-project-overview`, `03-current-plan`, `04-how-to-build`, `05-coding-guidelines`.
+
+### Coding guidelines (AI)
+
+Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward caution over speed** — for trivial tasks, use judgment.
+
+**Project merge:** plain-language explanations; ask before push; balance changes in `data/*.json` → push → refresh on iPhone to verify.
+
+**1. Think before coding** — Don't assume or hide confusion. State assumptions; present multiple interpretations; suggest simpler approaches; stop and ask when unclear.
+
+**2. Simplicity first** — Minimum code for the ask. No extra features, single-use abstractions, unrequested configurability, or impossible-case error handling. If 200 lines could be 50, rewrite.
+
+**3. Goal-driven execution** — Turn asks into verifiable goals (tests, repro steps, before/after checks). Multi-step work gets a short plan with a verify line per step. Prefer strong success criteria over "make it work."
+
+**Working if:** smaller diffs, fewer overbuilt rewrites, questions before coding rather than after mistakes.
+
+---
+
+## Current plan
+
+**Now**
+
+1. Develop locally; push to GitHub when I ask.
+2. Keep `CLAUDE.md` and `.cursor/rules/` aligned between Claude and Cursor.
+3. Polish Phase 1 (core game is built) — balance, UX, iPhone PWA via GitHub Pages.
+4. Test after pushes: https://trimmja.github.io/claude-mobile/
+
+**Next (after Phase 1 feels solid)**
+
+- Phase 2 ideas below (art, BGM, new districts, etc.) — only when I ask.
+
+**Out of scope unless I ask**
+
+- Frameworks, build tools, backend, offline idle progress.
+
+*Update this section when priorities change.*
+
+---
+
 ## What this project is
 A PWA idle/management game about being an American missionary in Tokyo, Japan.
 Built by someone with real missionary experience in Japan — authenticity matters.
@@ -20,15 +81,20 @@ URL: `https://trimmja.github.io/claude-mobile/`
 
 ## File map
 ```
+data/actions.json   — editable action durations, costs, rewards (plain English times)
+data/timing.json    — faith regen, day length, payday amount/interval
+data/README.md      — how to edit the JSON files
 index.html          — full game shell (all DOM structure, all IDs)
 css/style.css       — all styles (dark theme, cherry blossom + gold palette)
 js/main.js          — entry point: boot, intro screen, startGame(), engine hooks
+js/gameData.js      — loads data/*.json at startup, applies to actions + timing
+js/parseDuration.js — "30 seconds" / "2 minutes" → milliseconds
 js/state.js         — single mutable state object (source of truth, imported everywhere)
 js/engine.js        — setInterval 1s tick loop; fires hooks for actions/days/milestones
 js/save.js          — localStorage save/load/reset (key: 'tokyo_called_v1')
 js/language.js      — JP→EN translation, XP thresholds, addLangXP(), locText(), actionText()
 js/resources.js     — tick() passive regen, advanceTime(), spend(), gain(), canAfford()
-js/actions.js       — ACTION_DEFS, startAction(), completeAction(), cancelAction(), actionProgress()
+js/actions.js       — ACTION_DEFS (from JSON), unlock rules, start/complete/cancel
 js/locations.js     — LOCATION_DEFS, LOCATION_ORDER, goTo()
 js/npcs.js          — NPC_DEFS, addNPCTrust(), getStageName(), getTrustPercent()
 js/milestones.js    — MILESTONE_DEFS, checkMilestones() (called each engine tick)
@@ -291,10 +357,11 @@ Key DOM IDs: `res-faith`, `res-contacts`, `res-money`, `res-wisdom`, `res-lang`,
 The codebase is clean and modular. A new session should read this file then read
 whichever source file is relevant to the task.
 
-- Add **actions**: extend `ACTION_DEFS` in `js/actions.js`
+- Tune **action duration / cost / reward**: edit `data/actions.json`, refresh browser
+- Tune **day length / faith regen / payday**: edit `data/timing.json`, refresh browser
+- Add **actions**: new entry in `data/actions.json` + unlock rule in `js/actions.js` (`ACTION_UNLOCK`) + name in `js/language.js` (`ACTION_TEXT`)
 - Add **locations**: extend `LOCATION_DEFS` in `js/locations.js` + add bg CSS class in `css/style.css`
 - Add **NPCs**: extend `NPC_DEFS` in `js/npcs.js` + add state entry in `js/state.js`
 - Add **milestones**: extend `MILESTONE_DEFS` in `js/milestones.js`
-- Change **timing**: edit `advanceTime()` in `js/resources.js`
 - Add **BGM**: load `<audio>` element in `js/audio.js`, play on location change
 - Add **real art**: set `background-image` on `.location-bg` elements per location

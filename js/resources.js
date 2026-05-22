@@ -1,26 +1,46 @@
 import { state } from './state.js';
+import { parseDuration } from './parseDuration.js';
+
+const DEFAULT_TIMING = {
+  faithRegenPerSecond: 0.08,
+  secondsPerDay: 60,
+  paydayAmount: 500,
+  paydayEveryDays: 30,
+};
+
+let timing = { ...DEFAULT_TIMING };
+
+export function applyTimingFromData(data) {
+  timing = {
+    faithRegenPerSecond: data.faithRegenPerSecond ?? DEFAULT_TIMING.faithRegenPerSecond,
+    secondsPerDay: data.dayLength != null
+      ? parseDuration(data.dayLength) / 1000
+      : (data.secondsPerDay ?? DEFAULT_TIMING.secondsPerDay),
+    paydayAmount: data.paydayAmount ?? DEFAULT_TIMING.paydayAmount,
+    paydayEveryDays: data.paydayEveryDays ?? DEFAULT_TIMING.paydayEveryDays,
+  };
+}
 
 // Passive faith regeneration (called each engine tick = 1 second)
 export function tick() {
-  // Faith slowly regenerates (0.08 per second = ~5 per minute)
   const f = state.resources.faith;
   if (f.current < f.max) {
-    f.current = Math.min(f.max, f.current + 0.08);
+    f.current = Math.min(f.max, f.current + timing.faithRegenPerSecond);
   }
 
   // Monthly support payout
   if (state.time.day >= state.resources.money.nextPayday) {
-    state.resources.money.current += 500;
-    state.resources.money.nextPayday += 30;
+    state.resources.money.current += timing.paydayAmount;
+    state.resources.money.nextPayday += timing.paydayEveryDays;
     return true; // signals payday event
   }
   return false;
 }
 
-// Day advancement: 1 in-game day = 60 real seconds of play
+// Day advancement — length from data/timing.json
 export function advanceTime() {
   state.time.secondsPlayed++;
-  const newDay = Math.floor(state.time.secondsPlayed / 60) + 1;
+  const newDay = Math.floor(state.time.secondsPlayed / timing.secondsPerDay) + 1;
   if (newDay !== state.time.day) {
     state.time.day = newDay;
     return true; // new day
