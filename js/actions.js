@@ -30,6 +30,17 @@ const ACTION_HOOKS = {
   onsen_visit: () => { state.stats.onsenVisited = true; },
 };
 
+// Actions that are completely hidden (not just locked) when conditions aren't met.
+// NPC-specific actions must not appear until the NPC has been met.
+const ACTION_VISIBLE = {
+  visit_kenji: () => state.npcs.kenji.met,
+  visit_yuki:  () => state.npcs.yuki.met,
+  visit_hiro:  () => state.npcs.hiro.met,
+  deep_kenji:  () => state.npcs.kenji.met,
+  deep_yuki:   () => state.npcs.yuki.met,
+  deep_hiro:   () => state.npcs.hiro.met,
+};
+
 export const ACTION_DEFS = {};
 
 export function initActionsFromData(data) {
@@ -47,6 +58,7 @@ export function initActionsFromData(data) {
       npcChance: cfg.npcChance,
       unlockHint: cfg.unlockHint,
       unlocked: ACTION_UNLOCK[id] ?? (() => true),
+      visible:  ACTION_VISIBLE[id] ?? (() => true),
       onComplete: ACTION_HOOKS[id],
     };
   }
@@ -130,7 +142,7 @@ const REQUIREMENT_BUILDERS = {
 // Returns action IDs available at the current location
 export function actionsForLocation(locationId) {
   return Object.entries(ACTION_DEFS)
-    .filter(([, def]) => def.location === locationId || def.location === null)
+    .filter(([, def]) => (def.location === locationId || def.location === null) && def.visible())
     .map(([id]) => id);
 }
 
