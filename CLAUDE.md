@@ -2,6 +2,8 @@
 
 Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Claude should read this file. When either changes project context, the plan, or developer notes, **update both** this file and the matching `.cursor/rules/*.mdc` file.
 
+@PROGRESS.md
+
 ---
 
 ## About me
@@ -19,7 +21,7 @@ Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Cla
 
 | Tool | Reads | Role |
 |------|--------|------|
-| Claude | This file (`CLAUDE.md`) | Planning, ideas, design review |
+| Claude | This file (`CLAUDE.md`) + `PROGRESS.md` | Planning, ideas, design review |
 | Cursor | `.cursor/rules/` + this file when needed | Code changes, commit, push |
 
 **Sync rule:** If context here changes, update the matching Cursor rule (and vice versa). Cursor rule files: `00-sync-claude-md`, `01-about-developer`, `02-project-overview`, `03-current-plan`, `04-how-to-build`, `05-coding-guidelines`.
@@ -35,29 +37,6 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 **2. Simplicity first** — Minimum code for the ask. No extra features, single-use abstractions, unrequested configurability, or impossible-case error handling. If 200 lines could be 50, rewrite.
 
 **3. Goal-driven execution** — Turn asks into verifiable goals (tests, repro steps, before/after checks). Multi-step work gets a short plan with a verify line per step. Prefer strong success criteria over "make it work."
-
-**Working if:** smaller diffs, fewer overbuilt rewrites, questions before coding rather than after mistakes.
-
----
-
-## Current plan
-
-**Now**
-
-1. Develop locally; push to GitHub when I ask.
-2. Keep `CLAUDE.md` and `.cursor/rules/` aligned between Claude and Cursor.
-3. Polish Phase 1 (core game is built) — balance, UX, iPhone PWA via GitHub Pages.
-4. Test after pushes: https://trimmja.github.io/japan-evangelistic-band/
-
-**Next (after Phase 1 feels solid)**
-
-- Phase 2 ideas below (art, BGM, new districts, etc.) — only when I ask.
-
-**Out of scope unless I ask**
-
-- Frameworks, build tools, backend, offline idle progress.
-
-*Update this section when priorities change.*
 
 ---
 
@@ -81,27 +60,32 @@ URL: `https://trimmja.github.io/japan-evangelistic-band/` (not `claude-mobile` �
 
 ## File map
 ```
-data/actions.json   — editable action durations, costs, rewards (plain English times)
+data/actions.json   — action durations, costs, rewards (plain English times)
 data/timing.json    — faith regen, day length, payday amount/interval
+data/stories.json   — story beat text keyed by action + conditions (editable content)
 data/README.md      — how to edit the JSON files
 index.html          — full game shell (all DOM structure, all IDs)
 css/style.css       — all styles (dark theme, cherry blossom + gold palette)
 js/main.js          — entry point: boot, intro screen, startGame(), engine hooks
-js/gameData.js      — loads data/*.json at startup, applies to actions + timing
+js/gameData.js      — loads data/*.json at startup
 js/parseDuration.js — "30 seconds" / "2 minutes" → milliseconds
 js/state.js         — single mutable state object (source of truth, imported everywhere)
 js/engine.js        — setInterval 1s tick loop; fires hooks for actions/days/milestones
 js/save.js          — localStorage save/load/reset (key: 'tokyo_called_v1')
-js/language.js      — JP→EN translation, XP thresholds, addLangXP(), locText(), actionText()
-js/resources.js     — tick() passive regen, advanceTime(), spend(), gain(), canAfford()
-js/actions.js       — ACTION_DEFS (from JSON), unlock rules, start/complete/cancel
+js/language.js      — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
+js/resources.js     — tick() passive regen, advanceTime(), spend(), gain()
+js/actions.js       — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, start/complete/cancel
 js/locations.js     — LOCATION_DEFS, LOCATION_ORDER, goTo()
-js/npcs.js          — NPC_DEFS, addNPCTrust(), getStageName(), getTrustPercent()
+js/npcs.js          — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
+js/stories.js       — getStoryText(actionId, state) — picks story beat from stories.json
 js/milestones.js    — MILESTONE_DEFS, checkMilestones() (called each engine tick)
 js/audio.js         — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute()
-js/ui.js            — all DOM rendering; renderFrame() called on every rAF
+js/ui.js            — all DOM rendering + showStoryPopup(); renderFrame() called on rAF
+js/version.js       — APP_VERSION (bump when deploying); hardRefreshApp()
 manifest.json       — PWA config (display: standalone)
-sw.js               — caches all JS/CSS/HTML for offline load
+sw.js               — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION
+assets/images/npcs/ — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
+PROGRESS.md         — what's been built, what's planned, ideas backlog
 ```
 
 ---
@@ -110,10 +94,13 @@ sw.js               — caches all JS/CSS/HTML for offline load
 
 ### State → Engine → UI flow
 1. `js/state.js` exports one mutable `state` object. All modules import and mutate it directly.
-2. `js/engine.js` runs `setInterval(tick, 1000)`. Each tick: advances time, runs passive resource regen, checks if active action is complete, checks milestones. Fires hook callbacks into `main.js`.
+2. `js/engine.js` runs `setInterval(tick, 1000)`. Each tick: advances time, passive resource regen, checks if active action is complete, checks milestones. Fires hook callbacks into `main.js`.
 3. `js/main.js` wires hooks: `hooks.onActionComplete`, `hooks.onNewDay`, `hooks.onPayday`, `hooks.onMilestone`, `hooks.onNPCMeet`.
 4. `requestAnimationFrame(loop)` in `main.js` calls `renderFrame()` on every frame (~60fps). `renderFrame()` calls `renderHUD()`, `renderHeader()`, `renderActions()`, `renderActionBar()`.
-5. Heavy rebuilds (action list, NPC panel, milestones) only trigger when tracked values change (location, active action ID, met NPC count).
+5. Heavy rebuilds (action list, NPC panel, milestones) only trigger when tracked values change.
+
+### Action completion flow
+`engine.js` detects timer expiry → calls `completeAction()` → returns `{ id, bonuses }` → engine calls `hooks.onActionComplete({ id, bonuses })` → `main.js` hook shows story popup (if no NPC meet pending) + triggers re-renders + saves.
 
 ### State object shape
 ```js
@@ -122,20 +109,20 @@ sw.js               — caches all JS/CSS/HTML for offline load
   character: { name: '' },
   time: { day: 1, secondsPlayed: 0 },
   resources: {
-    faith:    { current: 50, max: 100 },  // passive regen 0.08/s
+    faith:    { current: 50, max: 100 },  // passive regen configurable in timing.json
     contacts: 0,
     money:    { current: 300, nextPayday: 30 },
     wisdom:   0,
   },
   language: { xp: 0, level: 0 },   // 0–5
-  location: 'apartment',            // string key into LOCATION_DEFS
+  location: 'apartment',
   action: { id: null, startTime: null, duration: 0, label: '' },
   npcs: {
     kenji: { met: false, trust: 0, stage: 0 },
     yuki:  { met: false, trust: 0, stage: 0 },
     hiro:  { met: false, trust: 0, stage: 0 },
   },
-  milestones: { completed: [] },    // array of milestone id strings
+  milestones: { completed: [] },
   stats: { converts: 0, actionsCompleted: 0, onsenVisited: false },
   flags: { muted: false, pendingNPCMeet: null, pendingMilestone: null },
 }
@@ -145,7 +132,6 @@ sw.js               — caches all JS/CSS/HTML for offline load
 - `advanceTime()` increments `state.time.secondsPlayed` each engine tick
 - `day = Math.floor(secondsPlayed / 60) + 1` → 1 in-game day = 60 real seconds
 - Monthly support fires when `state.time.day >= state.resources.money.nextPayday`
-- nextPayday starts at 30, increments +30 each payout → payout every ~30 minutes
 
 ---
 
@@ -169,8 +155,7 @@ sw.js               — caches all JS/CSS/HTML for offline load
 --danger: #F87171
 --success: #34D399
 ```
-Fonts: `Nunito` (English UI, weights 400/600/700/800) + `Noto Sans JP` (Japanese text)
-Both loaded from Google Fonts in `index.html`.
+Fonts: `Nunito` (English UI) + `Noto Sans JP` (Japanese text) — Google Fonts in `index.html`.
 
 ---
 
@@ -192,88 +177,98 @@ Location names: shown in JP kanji until language level >= 1, then English.
 ## Language progression (js/language.js)
 
 XP thresholds: `[0, 20, 50, 80, 95, 100]`
-- Level 0 (0 XP): kanji location names, no commuter_convo action
-- Level 1 (20 XP): English location names, NPC names appear, commuter_convo unlocks
-- Level 2 (50 XP): all action names in English, NPC open→studying stage accessible
-- Level 3 (80 XP): NPC studying→believer stage accessible
-- Level 4 (95 XP): (reserved for future: preach in Japanese action)
-- Level 5 (100 XP): full fluency
+- Level 0: kanji UI labels, no commuter_convo, NPC intros mostly in Japanese
+- Level 1: English UI labels + tab names, commuter_convo unlocks, NPC intros mixed
+- Level 2: NPC open→studying stage accessible, NPC intros fully in English
+- Level 3: NPC studying→believer stage accessible
+- Level 4: (reserved)
+- Level 5: full fluency
 
-UI: 5 pip dots under "語" icon in the HUD. Filled pips = current level.
+`TAB_LABELS` exported from `language.js` — used by `renderHUD()` to update tab text when level changes.
 
 ---
 
 ## Actions (js/actions.js)
 
-All costs are deducted at action START. Rewards applied at completion. One action at a time.
+All costs deducted at action START. Rewards at completion. One action at a time.
 
-| ID | Location | Icon | Duration | Cost | Reward | NPC Chance |
-|----|----------|------|----------|------|--------|-----------|
-| pray | apartment | 🙏 | 30s | — | +15 faith, +1 wisdom | — |
-| study_scripture | apartment | 📖 | 60s | -5 faith | +8 wisdom, +3 faith | — |
-| study_japanese | apartment | 📝 | 90s | -5 faith | +10 langXP | — |
-| hand_tracts | station | 📄 | 45s | -10 faith | +2 contacts | 30% Kenji |
-| commuter_convo | station | 💬 | 60s | -15 faith | +1 contacts, +3 langXP | — |
-| open_air_preach | park | 📢 | 120s | -20 faith | +5 contacts, +5 faith | 35% Hiro |
-| casual_convo | park | ☕ | 45s | -5 faith | +1 contacts, +4 langXP | — |
-| host_english | cafe | 🗣️ | 180s | -10 faith, -30 money | +8 contacts, +3 wisdom, +2 langXP | 45% Yuki |
-| observe_shrine | shrine | ⛩️ | 60s | — | +5 wisdom, +2 langXP | 25% Hiro |
-| onsen_visit | onsen | ♨️ | 180s | -50 money | +10 wisdom, +5 langXP | — |
-| visit_kenji | any | 👔 | 90s | -10 faith | +12 Kenji trust | — |
-| visit_yuki | any | 📚 | 90s | -10 faith | +12 Yuki trust | — |
-| visit_hiro | any | 🌿 | 90s | -10 faith | +12 Hiro trust | — |
-| deep_kenji | any | 💛 | 120s | -20 faith | +22 Kenji trust, +3 wisdom | — |
-| deep_yuki | any | 💛 | 120s | -20 faith | +22 Yuki trust, +3 wisdom | — |
-| deep_hiro | any | 💛 | 120s | -20 faith | +22 Hiro trust, +3 wisdom | — |
+**Visibility vs. unlock:** Actions have two separate concepts:
+- `visible()` — if false, card is completely hidden (NPC actions before NPC is met)
+- `unlocked()` — if false, card shows as locked/greyed with requirements visible
 
-Unlock conditions:
-- `commuter_convo`: language level >= 1
-- `host_english`: wisdom >= 10
-- `observe_shrine`: day >= 3
-- `onsen_visit`: contacts >= 30
-- `visit_[npc]`: npc.met === true
-- `deep_[npc]`: npc.met === true AND npc.stage >= 2
+**Stat bonuses (applied in `completeAction()`):**
+- Communication actions (`hand_tracts`, `commuter_convo`, `casual_convo`, `host_english`): +contacts scaled to language level
+- Spiritual actions (`pray`, `study_scripture`, `observe_shrine`): +faith scaled to wisdom
+- NPC visit/deep actions: +trust scaled to language level
 
-NPC encounter: on action complete, if NPC not met, roll random. If hit → set met=true, set pendingNPCMeet flag. Engine fires `hooks.onNPCMeet` after `hooks.onActionComplete`.
-
-Cancel action: refunds half the faith cost.
+Adding a new action: entry in `data/actions.json` + rule in `ACTION_UNLOCK` + rule in `ACTION_VISIBLE` (if NPC-gated) + entry in `REQUIREMENT_BUILDERS` (if it has visible requirements) + name in `js/language.js` `ACTION_TEXT`.
 
 ---
 
 ## NPCs (js/npcs.js)
 
-**Kenji** (健二) — Salaryman, 34 — emoji 👔
+**Kenji** (健二) — Salaryman, 34
 - Met via: hand_tracts at station (30% chance)
-- Intro: rushes past at station, nearly knocks tracts away, politely notices pamphlet
-- Stage conditions: open (stage 3) requires wisdom >= 15; studying (stage 4) requires lang >= 2; believer (stage 5) requires lang >= 3
+- Future role: church elder / leader
 
-**Yuki** (由紀) — University student, 21 — emoji 📚
+**Yuki** (由紀) — University student, 21
 - Met via: host_english at café (45% chance)
-- Intro: stays after English event ends, says your English feels "more kind"
-- Stage conditions: open requires wisdom >= 15; studying requires lang >= 2; believer requires lang >= 3
+- Future role: theologian / teacher
 
-**Hiro** (浩) — Retired, 68 — emoji 🌿
-- Met via: open_air_preach at park (35% chance) OR observe_shrine at shrine (25% chance)
-- Intro: old man on park bench, wife died last year, comes to park every day
-- Stage conditions: open requires wisdom >= 15; studying requires lang >= 1; believer requires lang >= 3
+**Hiro** (浩) — Retired, 68
+- Met via: open_air_preach at park (35%) or observe_shrine at shrine (25%)
+- Future role: pastoral heart
 
-**Shared stage data:**
+**NPC_DEF fields:**
+- `introByLang[]` — first-meet text indexed by language level (0/1/2+); picked by `getIntroText(npcId)`
+- `stages[]` — stage name strings
+- `trustNeeded[]` — trust threshold per stage
+- `stageCondition[]` — extra condition functions per stage advance
+- `stageConditionHints[]` — human-readable hint strings for those conditions
+
+**Key functions:**
+- `getIntroText(npcId)` — returns correct intro for current language level
+- `getStageAdvanceHint(npcId)` — returns "X trust to next stage" or "Needs: Wisdom 15" or null
+- `addNPCTrust(npcId, amount)` — applies trust + checks stage advance
+
+**Stage thresholds (shared):**
 ```
-Stage 0: Stranger     — trust needed: 0
-Stage 1: Acquaintance — trust needed: 10
-Stage 2: Friend       — trust needed: 28
-Stage 3: Open         — trust needed: 55  + wisdom >= 15
-Stage 4: Studying     — trust needed: 85  + lang level varies per NPC
-Stage 5: Believer     — trust needed: 100 + lang >= 3
+Stage 0: Stranger     — trust: 0
+Stage 1: Acquaintance — trust: 10
+Stage 2: Friend       — trust: 28
+Stage 3: Open         — trust: 55  + wisdom >= 15
+Stage 4: Studying     — trust: 85  + lang level (varies per NPC)
+Stage 5: Believer     — trust: 100 + lang >= 3
 ```
-Stage advance is checked after every trust gain (addNPCTrust). Returns true if stage advanced.
-Portrait CSS classes: `portrait-kenji` (blue), `portrait-yuki` (purple), `portrait-hiro` (green).
+
+---
+
+## Story system (js/stories.js + data/stories.json)
+
+Story beats are shown after every action completion (bottom-sheet popup).
+
+**stories.json structure:**
+```json
+{
+  "action_id": [
+    { "conditions": { "dayMax": 7 }, "text": "..." },
+    { "conditions": { "langMin": 2, "npcMet": "kenji" }, "text": "..." },
+    { "conditions": {}, "text": "catch-all fallback" }
+  ]
+}
+```
+
+**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `langMin`, `langMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`
+
+**Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
+
+**To add story text:** edit `data/stories.json` only — no JS changes needed.
+
+**Popup behaviour:** slides up from bottom, sits above tab bar. Shows NPC portrait for `visit_*/deep_*` actions. Skipped when NPC first-meet modal is pending. Auto-dismisses 6s or tap.
 
 ---
 
 ## Milestones (js/milestones.js)
-
-Checked every engine tick. First uncompleted + passing milestone fires `hooks.onMilestone`.
 
 | ID | Icon | Name | Trigger |
 |----|------|------|---------|
@@ -298,52 +293,35 @@ Checked every engine tick. First uncompleted + passing milestone fires `hooks.on
 ## UI layout (index.html)
 
 ```
+[#story-popup]      — bottom-sheet; slides up after action complete; tap to dismiss
 [action-bar]        — hidden by default; shows active action progress + cancel button
 [game-header]       — character name | "Day N" | ⚙ settings button
 [.hud]              — 5 resource widgets: Faith ✦ | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
 [.location-view]    — 160px tall; CSS gradient bg + JP name + EN name overlaid
 [.content-area]
-  [.content-tabs]   — "Actions" | "People" | "★ Goals" — switches tab-panels
+  [.content-tabs]   — tab labels shift JP→EN at language level 1
   [#tab-actions]    — .action-list (rebuilt on location/action/NPC-met change)
-  [#tab-people]     — .people-list (3 NPC cards) + contacts-summary
+  [#tab-people]     — .people-list (only met NPCs; empty state if none) + contacts-summary
   [#tab-milestones] — .milestones-list (15 rows, gold when complete)
 [.location-tabs]    — bottom nav; 6 location buttons (locked ones dimmed)
 [#toast]            — fixed, bottom-center; slides up on milestone/payday
-[#modal]            — full-screen overlay; used for NPC first meetings + reset confirm
+[#modal]            — full-screen overlay; NPC first meetings + reset confirm
 [#settings-overlay] — bottom sheet; mute + reset buttons
 ```
 
-Key DOM IDs: `res-faith`, `res-contacts`, `res-money`, `res-wisdom`, `res-lang`,
-`lang-pip` (5 of them), `header-name`, `header-day`, `location-bg`, `location-name-jp`,
-`location-name-en`, `action-bar`, `action-bar-label`, `action-bar-fill`, `action-cancel`,
-`action-list`, `people-list`, `contacts-summary`, `milestones-list`, `location-tabs`,
-`toast`, `toast-icon`, `toast-title`, `toast-desc`, `modal`, `modal-card`,
-`settings-overlay`, `settings-close`, `mute-btn`, `reset-btn`.
-
 ---
 
-## Phase 2+ (NOT BUILT — ideas only)
-- Second Tokyo district (Akihabara, Shibuya, Harajuku)
-- Church planting: appoint elder → district runs semi-independently
-- Multiple Japanese cities (Osaka, Kyoto, Sapporo)
-- Persecution events (opposition, visa problems, loneliness)
-- Co-worker/spouse NPC
-- Background music tracks (BGM) — system scaffolded in audio.js, needs files
-- Real illustrated location art — swap CSS gradients for images in `.location-bg`
-- Real NPC portrait images — swap emoji+gradient for `<img>` in npc-avatar
-- Prayer request system (contacts send prayer requests you respond to)
-- Home church relationship (letters/calls back to supporters)
-
 ## Design decisions
-- **Action requirements always visible** — gated actions show every unlock rule on the card with live progress (`getActionRequirements()` in `js/actions.js`, rendered in `js/ui.js`). New gated actions need a `REQUIREMENT_BUILDERS` entry; `unlockHint` in JSON is not enough alone.
-- **Active-only** — no offline progress, secondsPlayed only increments while engine runs
-- **One action at a time** — cancelling refunds half faith cost
-- **Save** — auto-saves every 30 engine ticks + on every action complete
-- **Reset** — settings sheet → confirmation modal → localStorage.removeItem → reload
-- **Art** — CSS gradient backgrounds per location (`.bg-apartment`, etc.) — swap for images later
-- **Audio** — procedural Web Audio API tones. `window._audio = audio` exposed for settings panel
-- **Language mechanic** — UI shows JP kanji at low skill, translates progressively
-- **NPC encounters** — random roll on action complete; modal introduced character on first meet
+
+- **NPC visibility** — NPC action cards are invisible until NPC is met (`ACTION_VISIBLE` in `actions.js`). Other gated actions show as locked with requirements.
+- **Story popup skips NPC meet** — `pendingNPCMeet` flag is checked; if set, story popup is suppressed so the NPC modal takes focus.
+- **Language barrier is a UI mechanic** — tab labels, HUD labels, NPC intro text all shift based on language level. Add more as the game grows.
+- **Stat bonuses are modest** — multipliers (lang × 0.25 × contacts, etc.) are noticeable but not game-breaking.
+- **Action requirements always visible** — gated actions show every unlock rule on the card. New gated actions need a `REQUIREMENT_BUILDERS` entry.
+- **Active-only** — no offline progress, secondsPlayed only increments while engine runs.
+- **One action at a time** — cancelling refunds half faith cost.
+- **Save** — auto-saves every 30 engine ticks + on every action complete.
+- **Version bump** — when deploying: bump `APP_VERSION` in `js/version.js`, `CACHE` in `sw.js`, and `?v=` param on script tag in `index.html`.
 
 ## Authentic Japan touches to preserve
 - Onsens as relationship-building (costs money, big trust reward)
@@ -355,14 +333,14 @@ Key DOM IDs: `res-faith`, `res-contacts`, `res-money`, `res-wisdom`, `res-lang`,
 - Japanese location/action names in the UI even for English speakers
 
 ## How to continue building
-The codebase is clean and modular. A new session should read this file then read
-whichever source file is relevant to the task.
 
-- Tune **action duration / cost / reward**: edit `data/actions.json`, refresh browser
-- Tune **day length / faith regen / payday**: edit `data/timing.json`, refresh browser
-- Add **actions**: new entry in `data/actions.json` + unlock rule in `js/actions.js` (`ACTION_UNLOCK`) + requirements in `REQUIREMENT_BUILDERS` + name in `js/language.js` (`ACTION_TEXT`)
-- Add **locations**: extend `LOCATION_DEFS` in `js/locations.js` + add bg CSS class in `css/style.css`
-- Add **NPCs**: extend `NPC_DEFS` in `js/npcs.js` + add state entry in `js/state.js`
-- Add **milestones**: extend `MILESTONE_DEFS` in `js/milestones.js`
-- Add **BGM**: load `<audio>` element in `js/audio.js`, play on location change
-- Add **real art**: set `background-image` on `.location-bg` elements per location
+- **Tune action balance**: edit `data/actions.json`, push, refresh
+- **Tune pacing**: edit `data/timing.json`, push, refresh
+- **Add/edit story text**: edit `data/stories.json` only — no JS needed
+- **Add an action**: entry in `data/actions.json` + `ACTION_UNLOCK` + `ACTION_VISIBLE` (if NPC-gated) + `REQUIREMENT_BUILDERS` + `ACTION_TEXT` in `language.js`
+- **Add NPC portrait**: drop `{npcId}.png` in `assets/images/npcs/` — appears everywhere automatically
+- **Add a location**: extend `LOCATION_DEFS` in `locations.js` + bg CSS class in `style.css`
+- **Add an NPC**: extend `NPC_DEFS` in `npcs.js` + state entry in `state.js`
+- **Add milestones**: extend `MILESTONE_DEFS` in `milestones.js`
+- **Add BGM**: load `<audio>` in `audio.js`, play on location change
+- **Add real location art**: set `background-image` on `.location-bg` elements in CSS
