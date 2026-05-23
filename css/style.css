@@ -1112,3 +1112,177 @@ input { user-select: text; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 2px; }
+
+/* ─── NPC PORTRAIT (shared: cards, modal, story popup) ─── */
+/* The avatar wrapper holds both the <img> and the kanji fallback. */
+/* The image overlays the fallback; onerror hides it, revealing kanji. */
+.npc-avatar,
+.modal-portrait,
+.story-npc-avatar {
+  position: relative;
+  overflow: hidden;
+}
+
+.npc-portrait-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 2; /* above kanji fallback */
+}
+
+.modal-portrait-img {
+  /* same positioning, but parent already has border-radius */
+  border-radius: inherit;
+}
+
+.npc-portrait-fallback {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  pointer-events: none;
+  position: relative; /* sits above the image slot */
+  z-index: 1;
+}
+
+/* Fallback font sizes per context */
+.npc-avatar       .npc-portrait-fallback { font-size: 18px; }
+.modal-portrait   .npc-portrait-fallback { font-size: 30px; }
+.story-npc-avatar .npc-portrait-fallback { font-size: 15px; }
+
+/* NPC name JP suffix */
+.npc-name-jp {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* Stage advance hint */
+.npc-advance-hint {
+  font-size: 11px;
+  color: var(--sakura);
+  margin-top: 5px;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* Modal portrait with image */
+.modal-portrait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-portrait-fallback {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Modal title JP suffix */
+.modal-title-jp {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+/* ─── STORY POPUP ─── */
+/* Slides up from bottom, sits above the location tab bar. */
+.story-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 450;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: all;
+}
+
+.story-popup-backdrop {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.story-popup-card {
+  background: var(--surface-2);
+  border-top: 1px solid rgba(240, 192, 64, 0.2);
+  padding: 18px 20px calc(18px + var(--tab-bar-height));
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: sheet-up 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* NPC header row inside story popup */
+.story-popup-npc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.story-npc-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Use existing card colour classes on the story avatar too */
+.story-npc-avatar.npc-kenji { background: linear-gradient(135deg, #0F2A4A, #1A5080); }
+.story-npc-avatar.npc-yuki  { background: linear-gradient(135deg, #2A0F50, #5A2090); }
+.story-npc-avatar.npc-hiro  { background: linear-gradient(135deg, #0A2A10, #1A5A28); }
+
+.story-npc-info { flex: 1; }
+
+.story-npc-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.story-npc-role {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.story-popup-text {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.85;
+  font-style: italic;
+}
+
+/* Stat bonus line */
+.story-popup-bonus {
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--trust);
+  background: rgba(52, 211, 153, 0.08);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.story-popup-dismiss {
+  margin-top: 14px;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

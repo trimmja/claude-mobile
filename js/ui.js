@@ -4,9 +4,9 @@ import {
   getActionRequirements, actionUnlockCacheKey,
 } from './actions.js';
 import { LOCATION_DEFS, LOCATION_ORDER, goTo } from './locations.js';
-import { NPC_DEFS, getStageName, getTrustPercent } from './npcs.js';
+import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
 import { MILESTONE_DEFS, completedCount } from './milestones.js';
-import { locText, actionText, langLevel, langProgress } from './language.js';
+import { locText, actionText, langLevel, langProgress, TAB_LABELS } from './language.js';
 import { playTap } from './audio.js';
 import { APP_VERSION, hardRefreshApp } from './version.js';
 
@@ -20,6 +20,8 @@ const el = (tag, cls, html) => {
 };
 
 // ─── HUD ────────────────────────────────────────────────────────────────────
+let lastLangLevelForUI = -1;
+
 export function renderHUD() {
   $('res-faith').textContent    = Math.floor(state.resources.faith.current);
   $('res-contacts').textContent = state.resources.contacts;
@@ -34,6 +36,24 @@ export function renderHUD() {
   pips.forEach((pip, i) => {
     pip.classList.toggle('filled', i < lv);
   });
+
+  // Language-aware UI labels — only update when level changes
+  if (lv !== lastLangLevelForUI) {
+    lastLangLevelForUI = lv;
+    updateLanguageLabels(lv);
+  }
+}
+
+function updateLanguageLabels(lv) {
+  // Content tab labels
+  document.querySelectorAll('.content-tab').forEach(tab => {
+    const name = tab.dataset.tab;
+    const text = TAB_LABELS[name];
+    if (text) tab.textContent = lv >= 1 ? text.en : text.jp;
+  });
+  // Contacts HUD label
+  const cl = $('hud-contacts-lbl');
+  if (cl) cl.textContent = lv >= 1 ? 'Contacts' : '知人';
 }
 
 // ─── HEADER ─────────────────────────────────────────────────────────────────
@@ -52,7 +72,6 @@ export function renderLocation() {
   const texts = locText(state.location);
   const bg    = $('location-bg');
 
-  // swap bg class
   bg.className = 'location-bg ' + def.bgClass;
 
   $('location-name-jp').textContent = texts.jp;
@@ -116,7 +135,6 @@ export function renderActions() {
 
   const unlockKey = actionUnlockCacheKey();
 
-  // Full rebuild when location, action, NPC met, or unlock progress changes
   if (locId !== lastActionLocation || activeId !== lastActionId || metCount !== lastMetCount || unlockKey !== lastUnlockKey) {
     lastActionLocation = locId;
     lastActionId       = activeId;
@@ -135,7 +153,7 @@ export function renderActions() {
       const texts  = actionText(id);
       const isActive = activeId === id;
       const isLocked = !def.unlocked();
-      const isDisabled = !isActive && !!activeId; // another action running
+      const isDisabled = !isActive && !!activeId;
 
       const card = el('div', [
         'action-card',
@@ -144,10 +162,7 @@ export function renderActions() {
         isDisabled ? 'disabled'   : '',
       ].filter(Boolean).join(' '));
 
-      // icon
       const iconEl = el('div', 'action-icon', def.icon);
-
-      // info
       const infoEl = el('div', 'action-info');
 
       const jpEl = el('div', 'action-name-jp', texts.jp);
@@ -155,7 +170,6 @@ export function renderActions() {
       infoEl.appendChild(jpEl);
       infoEl.appendChild(enEl);
 
-      // meta tags
       const meta = el('div', 'action-meta');
       if (def.cost?.faith)  meta.appendChild(el('span', 'tag tag-cost',  '-' + def.cost.faith  + ' Faith'));
       if (def.cost?.money)  meta.appendChild(el('span', 'tag tag-cost',  '-¥' + def.cost.money));
@@ -180,7 +194,6 @@ export function renderActions() {
         infoEl.appendChild(reqBox);
       }
 
-      // progress bar for active action
       const progBar = el('div', 'action-prog');
       progBar.style.width = '0%';
 
@@ -224,18 +237,27 @@ export function renderPeople() {
   const list = $('people-list');
   list.innerHTML = '';
 
-  Object.entries(NPC_DEFS).forEach(([id, def]) => {
-    const npc    = state.npcs[id];
-    const unmet  = !npc.met;
-    const card   = el('div', ['npc-card', def.cardClass, unmet ? 'npc-unmet' : '', npc.stage === 5 ? 'believer' : ''].filter(Boolean).join(' '));
+  const metNPCs = Object.entries(NPC_DEFS).filter(([id]) => state.npcs[id].met);
 
-    const avatar = el('div', 'npc-avatar', def.emoji);
-    const info   = el('div', 'npc-info');
+  if (metNPCs.length === 0) {
+    // Empty state — nobody met yet
+    list.appendChild(el('div', 'empty-state',
+      '<div class="empty-icon">🌆</div>' +
+      '<p>Tokyo is full of people.<br>Hand out tracts at the station,<br>or try the park.</p>'
+    ));
+  } else {
+    metNPCs.forEach(([id, def]) => {
+      const npc  = state.npcs[id];
+      const card = el('div', ['npc-card', def.cardClass, npc.stage === 5 ? 'believer' : ''].filter(Boolean).join(' '));
 
-    info.appendChild(el('div', 'npc-name', unmet ? '???' : def.name));
-    info.appendChild(el('div', 'npc-role', unmet ? (state.language.level >= 1 ? def.role : '???') : def.role));
+      // Portrait (image with kanji fallback)
+      const avatar = buildNpcAvatar(id, def, 'npc-avatar');
 
-    if (!unmet) {
+      const info = el('div', 'npc-info');
+      const nameLine = el('div', 'npc-name');
+      nameLine.innerHTML = `${def.name} <span class="npc-name-jp">${def.nameJP}</span>`;
+      info.appendChild(nameLine);
+      info.appendChild(el('div', 'npc-role', def.role));
       info.appendChild(el('div', 'npc-stage-label', getStageName(id)));
 
       const barWrap = el('div', 'npc-bar-wrap');
@@ -243,19 +265,41 @@ export function renderPeople() {
       barFill.style.width = getTrustPercent(id).toFixed(0) + '%';
       barWrap.appendChild(barFill);
       info.appendChild(barWrap);
-    }
 
-    card.appendChild(avatar);
-    card.appendChild(info);
-    list.appendChild(card);
-  });
+      // Stage advance hint
+      const hint = getStageAdvanceHint(id);
+      if (hint) {
+        info.appendChild(el('div', 'npc-advance-hint', hint));
+      }
 
-  // Contacts summary
+      card.appendChild(avatar);
+      card.appendChild(info);
+      list.appendChild(card);
+    });
+  }
+
+  // Contacts summary — always show
   const summary = $('contacts-summary');
   summary.innerHTML = `
     <div class="contacts-big">${state.resources.contacts}</div>
     <div class="contacts-sub">Total Contacts</div>
   `;
+}
+
+// Build an NPC avatar element with portrait image + JP kanji fallback
+function buildNpcAvatar(npcId, def, className) {
+  const wrap = el('div', className);
+  // Portrait image — shows if file exists, hidden via onerror otherwise
+  const img = document.createElement('img');
+  img.src       = `assets/images/npcs/${npcId}.png`;
+  img.alt       = def.name;
+  img.className = 'npc-portrait-img';
+  img.onerror   = () => img.style.display = 'none';
+  // Kanji fallback
+  const fallback = el('span', 'npc-portrait-fallback', def.nameJP[0]);
+  wrap.appendChild(img);
+  wrap.appendChild(fallback);
+  return wrap;
 }
 
 // ─── MILESTONES TAB ──────────────────────────────────────────────────────────
@@ -313,6 +357,76 @@ export function showToast(icon, title, desc = '') {
   toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
+// ─── STORY POPUP ─────────────────────────────────────────────────────────────
+let storyPopupTimer = null;
+
+// Show the story popup after an action completes.
+// npcId: optional NPC to show portrait + name for.
+// bonuses: optional { contacts?, faith?, npcTrust? } object.
+export function showStoryPopup(text, icon, npcId, bonuses) {
+  if (!text) return;
+
+  const popup     = $('story-popup');
+  const textEl    = $('story-popup-text');
+  const npcEl     = $('story-popup-npc');
+  const bonusEl   = $('story-popup-bonus');
+
+  // Story text
+  textEl.textContent = text;
+
+  // NPC portrait header (if a specific NPC is involved)
+  if (npcId && NPC_DEFS[npcId]) {
+    const def = NPC_DEFS[npcId];
+    npcEl.classList.remove('hidden');
+    npcEl.innerHTML = '';
+
+    const avatarWrap = buildNpcAvatar(npcId, def, 'story-npc-avatar');
+    // Apply card colour class to the avatar wrapper
+    avatarWrap.classList.add(def.cardClass);
+
+    const infoDiv = el('div', 'story-npc-info');
+    infoDiv.appendChild(el('div', 'story-npc-name', def.name));
+    infoDiv.appendChild(el('div', 'story-npc-role', def.role));
+    npcEl.appendChild(avatarWrap);
+    npcEl.appendChild(infoDiv);
+  } else {
+    npcEl.classList.add('hidden');
+  }
+
+  // Bonus line
+  const bonusParts = [];
+  if (bonuses?.contacts) bonusParts.push(`+${bonuses.contacts} contacts (language)`);
+  if (bonuses?.faith)    bonusParts.push(`+${bonuses.faith} faith (wisdom)`);
+  if (bonuses?.npcTrust) bonusParts.push(`+${bonuses.npcTrust} trust (language)`);
+
+  if (bonusParts.length > 0) {
+    bonusEl.textContent = bonusParts.join(' · ');
+    bonusEl.classList.remove('hidden');
+  } else {
+    bonusEl.classList.add('hidden');
+  }
+
+  // Show popup
+  popup.classList.remove('hidden');
+
+  // Auto-dismiss after 6s
+  if (storyPopupTimer) clearTimeout(storyPopupTimer);
+  storyPopupTimer = setTimeout(() => dismissStoryPopup(), 6000);
+}
+
+function dismissStoryPopup() {
+  $('story-popup').classList.add('hidden');
+  if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
+}
+
+export function bindStoryPopup() {
+  const popup   = $('story-popup');
+  const backdrop = $('story-popup-backdrop');
+  const card    = popup?.querySelector('.story-popup-card');
+  if (backdrop) backdrop.addEventListener('click', dismissStoryPopup);
+  if (card)     card.addEventListener('click', dismissStoryPopup);
+}
+
 // ─── MODAL ──────────────────────────────────────────────────────────────────
 export function showModal(html, onClose) {
   const overlay = $('modal');
@@ -320,7 +434,6 @@ export function showModal(html, onClose) {
   card.innerHTML = html;
   overlay.classList.remove('hidden');
 
-  // Bind close buttons inside the modal
   card.querySelectorAll('[data-close]').forEach(btn => {
     btn.addEventListener('click', () => {
       overlay.classList.add('hidden');
@@ -330,12 +443,25 @@ export function showModal(html, onClose) {
 }
 
 export function showNPCMeetModal(npcId) {
-  const def = NPC_DEFS[npcId];
+  const def      = NPC_DEFS[npcId];
+  const introText = getIntroText(npcId);
+
+  // Build portrait HTML: image with kanji fallback
+  const portraitHtml = `
+    <div class="modal-portrait ${def.portraitClass}">
+      <img src="assets/images/npcs/${npcId}.png"
+           alt="${def.name}"
+           class="npc-portrait-img modal-portrait-img"
+           onerror="this.style.display='none'">
+      <span class="npc-portrait-fallback modal-portrait-fallback">${def.nameJP[0]}</span>
+    </div>
+  `;
+
   showModal(`
-    <div class="modal-portrait ${def.portraitClass}">${def.emoji}</div>
-    <div class="modal-title">${def.name}</div>
+    ${portraitHtml}
+    <div class="modal-title">${def.name} <span class="modal-title-jp">${def.nameJP}</span></div>
     <div class="modal-subtitle">${def.role}</div>
-    <div class="modal-body">${def.intro}</div>
+    <div class="modal-body">${introText}</div>
     <button class="modal-btn modal-btn-primary" data-close>Nice to meet you</button>
   `, () => {
     renderPeople();
@@ -363,9 +489,7 @@ export function bindSettings(onReset) {
     versionEl.textContent = `Build ${APP_VERSION} · trimmja.github.io/japan-evangelistic-band`;
   }
 
-  $('refresh-app-btn')?.addEventListener('click', () => {
-    hardRefreshApp();
-  });
+  $('refresh-app-btn')?.addEventListener('click', () => hardRefreshApp());
 
   $('header-settings').addEventListener('click', () => {
     $('settings-overlay').classList.remove('hidden');

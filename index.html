@@ -79,7 +79,7 @@
     <div class="res trust">
       <div class="res-icon">◈</div>
       <div id="res-contacts" class="res-val">0</div>
-      <div class="res-lbl">Contacts</div>
+      <div id="hud-contacts-lbl" class="res-lbl">Contacts</div>
     </div>
     <div class="res money">
       <div class="res-icon">◎</div>
@@ -175,6 +175,17 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=10"></script>
+<!-- ════════════════════════════════════════════════════════ STORY POPUP -->
+<div id="story-popup" class="story-popup hidden">
+  <div id="story-popup-backdrop" class="story-popup-backdrop"></div>
+  <div class="story-popup-card">
+    <div id="story-popup-npc" class="story-popup-npc hidden"></div>
+    <p id="story-popup-text" class="story-popup-text"></p>
+    <div id="story-popup-bonus" class="story-popup-bonus hidden"></div>
+    <div class="story-popup-dismiss">— tap to continue —</div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js?v=11"></script>
 </body>
 </html>

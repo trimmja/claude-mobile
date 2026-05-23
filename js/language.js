@@ -31,6 +31,13 @@ export const ACTION_TEXT = {
   deep_hiro:        { jp: '浩と深く話す',   en: 'Deep Talk — Hiro' },
 };
 
+// UI labels that shift to Japanese at language level 0
+export const TAB_LABELS = {
+  actions:    { jp: '行動', en: 'Actions' },
+  people:     { jp: '人々', en: 'People' },
+  milestones: { jp: '目標', en: '★ Goals' },
+};
+
 export function langLevel() { return state.language.level; }
 
 export function langProgress() {

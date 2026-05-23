@@ -1,0 +1,299 @@
+{
+  "_comment": "Story beats shown after action completion. Conditions (all optional): dayMin, dayMax, wisdomMin, langMin, langMax, npcMet (string), stageMin_{npcId} (int). Empty conditions = catch-all fallback.",
+
+  "pray": [
+    {
+      "conditions": { "dayMax": 7 },
+      "text": "You kneel on the tatami mat. The city bleeds through the thin walls — bicycle bells, a distant train announcement in Japanese you can't parse. Your prayer comes in English, instinctively. '神様...' you start, then trail off into your own language. You figure God can translate."
+    },
+    {
+      "conditions": { "dayMin": 8, "dayMax": 29 },
+      "text": "You're finding a rhythm. Morning prayer feels like something you're earning — not just reciting. You pray by name for the people you've met, for the ones who took a tract and kept walking, for the old man on the bench."
+    },
+    {
+      "conditions": { "dayMin": 30 },
+      "text": "After a month, prayer feels less like a discipline and more like breathing. You've started to understand why Japanese Christians talk about prayer as 静まること — stillness. Not performance. Just presence."
+    },
+    {
+      "conditions": { "npcMet": "kenji" },
+      "text": "You pray for Kenji today — for whatever he's carrying that he won't name. You don't know enough yet to pray specifically. You just hold him before God and trust that's enough."
+    },
+    {
+      "conditions": { "npcMet": "hiro" },
+      "text": "You pray for Hiro. For Emiko. For whatever it means that he comes to that bench every morning, facing the same direction, watching the same pigeons. That kind of faithfulness deserves a name."
+    },
+    {
+      "conditions": {},
+      "text": "You pray. The words feel unfamiliar in this place, but the intention isn't."
+    }
+  ],
+
+  "study_scripture": [
+    {
+      "conditions": { "wisdomMin": 0, "dayMax": 14 },
+      "text": "You read slowly. Verses that felt clear back home carry new weight here. 'Go into all the world.' You're in it now — this particular corner of it, with its particular silences. You underline more than usual."
+    },
+    {
+      "conditions": { "wisdomMin": 15 },
+      "text": "You find yourself reading through the lens of everything you've seen. The parable of the sower. The soil here isn't harder than anywhere else — just different. You're starting to understand the difference. That feels like progress."
+    },
+    {
+      "conditions": { "dayMin": 30 },
+      "text": "The Word is becoming your anchor. You've started marking verses that specifically apply to what you see in Tokyo — in the salary-worker exhaustion, in the crowds that flow past without eye contact. The Gospel was written for exactly this."
+    },
+    {
+      "conditions": {},
+      "text": "You open the Bible and read until something lands. Today, something does."
+    }
+  ],
+
+  "study_japanese": [
+    {
+      "conditions": { "langMax": 0 },
+      "text": "Hiragana first. Forty-six characters before you can read a children's book. You trace each one slowly — あ、い、う、え、お — like learning to walk again. The notebook is filling up. You are a beginner. You are okay with that."
+    },
+    {
+      "conditions": { "langMin": 1, "langMax": 1 },
+      "text": "You can read the station signs now. Small victory. You practice the phrases that matter: すみません (excuse me), ありがとうございます (thank you). A man at the convenience store actually understood your order in Japanese today. He looked surprised. So did you."
+    },
+    {
+      "conditions": { "langMin": 2 },
+      "text": "You're starting to hear the shape of sentences — where the verb goes, how politeness is layered into grammar itself. Japanese is a language where what you don't say matters as much as what you do. That's a sermon in itself."
+    },
+    {
+      "conditions": {},
+      "text": "One more hour. One more page. The language is coming, slowly."
+    }
+  ],
+
+  "hand_tracts": [
+    {
+      "conditions": { "langMax": 0 },
+      "text": "Most people don't take one. Some bow politely and keep walking. A few accept it without slowing down. One woman looks at the cover — a cross above the Tokyo skyline — and her expression is unreadable. The tract does the talking. You can't yet."
+    },
+    {
+      "conditions": { "langMin": 1, "langMax": 1 },
+      "text": "You try saying すみません as you hand them out. It helps. People are more surprised that you speak any Japanese than they are by the tract itself. A teenager actually laughs — not meanly — and takes one. Progress."
+    },
+    {
+      "conditions": { "langMin": 2 },
+      "text": "Your approach is smoother now. You can read hesitation, adjust your timing. A woman in her 40s takes a tract, reads the title quietly to herself: 神の愛. God's love. She doesn't hand it back."
+    },
+    {
+      "conditions": { "npcMet": "kenji" },
+      "text": "Every suit that rushes past reminds you of Kenji. You wonder what he thought when he took that first tract. Whether he still has it."
+    },
+    {
+      "conditions": {},
+      "text": "Another handful distributed. You don't know what happens to them after. That's okay. You didn't plant the trees you're sitting under."
+    }
+  ],
+
+  "commuter_convo": [
+    {
+      "conditions": { "langMin": 1, "langMax": 1 },
+      "text": "You catch a man reading an English novel on the train and ask about it — English first, then a word of Japanese. He brightens. 'My Japanese must be terrible,' you say. He shakes his head politely: 'No, no — very good.' He's being kind. You'll take it."
+    },
+    {
+      "conditions": { "langMin": 2, "langMax": 2 },
+      "text": "You manage a full exchange with a woman commuting to work. She asks why you're in Japan. You tell her the truth. She doesn't flinch. 'That is unusual,' she says. 'For Tokyo.' You agree. She seems to find that interesting."
+    },
+    {
+      "conditions": { "langMin": 3 },
+      "text": "A student asks about Christianity — curious, not skeptical. You explain simply. He listens all the way to his stop, then bows and thanks you. 考えてみます. I'll think about it. That's all you asked for."
+    },
+    {
+      "conditions": {},
+      "text": "Brief connection made in transit. Sometimes a seed is a sentence."
+    }
+  ],
+
+  "open_air_preach": [
+    {
+      "conditions": { "langMax": 0 },
+      "text": "You speak in English. A small cluster forms — mostly younger people curious about the foreigner. You watch their faces more than you hear your own words. Most move on after a minute. One stays the whole time and then applauds. You bow, not sure what else to do."
+    },
+    {
+      "conditions": { "langMin": 1, "langMax": 2 },
+      "text": "You mix languages now — English foundation, Japanese phrases where you know them. The crowd is small but steadier. A father stops with his daughter. She tugs his sleeve and asks him something. He shrugs — then stays."
+    },
+    {
+      "conditions": { "langMin": 3 },
+      "text": "Preaching in Japanese is still imperfect, but it's real. An elderly woman listens the whole time. Afterward she says something you don't fully catch — but you hear the word 祈り. Prayer. You bow back and thank her."
+    },
+    {
+      "conditions": { "npcMet": "hiro" },
+      "text": "You think of Hiro watching from his bench as you preach. You wonder if anyone preached here twenty years ago, when his wife was still alive. Whether she ever stopped to listen."
+    },
+    {
+      "conditions": {},
+      "text": "The park echoes differently each time. Today a few people stopped. That's enough."
+    }
+  ],
+
+  "casual_convo": [
+    {
+      "conditions": { "langMax": 0 },
+      "text": "Smiles and nods carry a lot — you learn this early. A grandmother on the bench offers you a piece of mochi from her bag. You accept. She doesn't speak English, you barely speak Japanese, but the gesture is perfect."
+    },
+    {
+      "conditions": { "langMin": 1, "langMax": 1 },
+      "text": "You can introduce yourself now — name, where you're from, what you're doing in Japan. The reaction is usually the same: raised eyebrows, then a slow smile. A missionary? In Tokyo? They thought those were something from another century."
+    },
+    {
+      "conditions": { "langMin": 2 },
+      "text": "A longer conversation today — about family, about why you came. The man you spoke with lost his job last year. He comes to the park to think. Something in your words catches. He asks if you'll be here again. You will."
+    },
+    {
+      "conditions": {},
+      "text": "Small talk in a foreign language is its own kind of courage."
+    }
+  ],
+
+  "host_english": [
+    {
+      "conditions": { "wisdomMin": 0, "dayMax": 20 },
+      "text": "Eight people came. Three stayed the full session. You taught vocabulary, answered questions about American culture, and somewhere in the middle someone asked about church. You didn't force it. You just answered honestly. The room got quieter — in a good way."
+    },
+    {
+      "conditions": { "wisdomMin": 15 },
+      "text": "The conversation went beyond language tonight. A student asked why English feels 'more open' than Japanese — why it's easier to say certain things. You told her that in English you have to put the self first. In Japanese the self disappears into context. She wrote that down."
+    },
+    {
+      "conditions": { "npcMet": "yuki" },
+      "text": "You scan the room for Yuki's face when you set up. She's usually early. Tonight she brought a friend from her department who 'just wanted to see what this was.' That's how it starts."
+    },
+    {
+      "conditions": {},
+      "text": "Language is just the door. You're always hoping they'll come inside."
+    }
+  ],
+
+  "observe_shrine": [
+    {
+      "conditions": { "wisdomMin": 0, "dayMax": 20 },
+      "text": "You watch without judgment. People pass through — some hurried, some careful. An older woman claps twice, bows, and stands in silence for a long moment. You don't know what she's asking for. But you recognize the posture."
+    },
+    {
+      "conditions": { "wisdomMin": 15 },
+      "text": "You're beginning to understand the pull this place has. Not as a rival to what you believe, but as a window into what people long for: cleansing, connection, an ear that listens. The form is different. The longing isn't."
+    },
+    {
+      "conditions": { "npcMet": "hiro", "wisdomMin": 20 },
+      "text": "You think of Hiro here. He says he's not religious — but he comes to the park every day, faces the same direction, sits in the same spot. Everyone is worshipping something. Most people just don't call it that."
+    },
+    {
+      "conditions": {},
+      "text": "You sit and observe. You're starting to see."
+    }
+  ],
+
+  "onsen_visit": [
+    {
+      "conditions": { "langMax": 1 },
+      "text": "You weren't sure what to expect. There's a ritual to it — the washing first, the specific movements, the quiet. Nobody talks much. An older man nods at you across the steam. You nod back. Something passes between you that language couldn't have carried."
+    },
+    {
+      "conditions": { "langMin": 2 },
+      "text": "You got into a real conversation — in the changing room, of all places. A man about your age, between jobs, thinking about what comes next. You talked for twenty minutes. The steam relaxes people. Walls come down. You think about what that means for the Gospel."
+    },
+    {
+      "conditions": { "npcMet": "kenji" },
+      "text": "You mentioned the onsen to Kenji once. He laughed: 温泉は日本人の教会だ. Onsen are the church of the Japanese. He meant it as a joke. You didn't entirely take it that way."
+    },
+    {
+      "conditions": {},
+      "text": "The onsen strips away pretense. Something about that always opens doors."
+    }
+  ],
+
+  "visit_kenji": [
+    {
+      "conditions": { "stageMin_kenji": 0, "stageMax_kenji": 1 },
+      "text": "You meet Kenji for coffee near the station. He's formal — same suit he always wears. He asks about your family, your hometown, your church back home. He listens carefully and gives careful answers. You learn he has a younger sister. That's more than he's told anyone at work in years."
+    },
+    {
+      "conditions": { "stageMin_kenji": 2, "stageMax_kenji": 2 },
+      "text": "Kenji is quieter than usual. His company announced restructuring. He says it without emotion, like reading a train schedule. But his coffee sits untouched for ten minutes. You don't rush to fill the silence. He eventually says: 'I don't know what I'm working for.' You wait. He doesn't say more. But he comes back next week."
+    },
+    {
+      "conditions": { "stageMin_kenji": 3 },
+      "text": "The questions are different now. Kenji wants to know about doubt — whether real faith allows for it. You tell him that doubt and faith are not opposites. He looks like you said something slightly illegal. Then he almost smiles."
+    },
+    {
+      "conditions": {},
+      "text": "You and Kenji meet. It matters more each time."
+    }
+  ],
+
+  "visit_yuki": [
+    {
+      "conditions": { "stageMin_yuki": 0, "stageMax_yuki": 1 },
+      "text": "Yuki comes with a list of questions she wrote out in a notebook. She's done research — looked up theological terms in English and Japanese. She wants to know if Christianity is compatible with Japanese culture. You answer each question honestly. She writes down your answers."
+    },
+    {
+      "conditions": { "stageMin_yuki": 2, "stageMax_yuki": 2 },
+      "text": "She admits she's been going to church — just to see. Not yours. A church near her apartment. 'I didn't want you to know yet,' she says, 'in case I didn't like it.' She liked it. She's not sure what to do with that."
+    },
+    {
+      "conditions": { "stageMin_yuki": 3 },
+      "text": "Yuki has been reading the Gospel of John in Japanese and English side by side. She has questions about the prologue — 'In the beginning was the Word.' She thinks she understands now why the Word had to become flesh. Why God couldn't just send a message. You sit with that. 'I've never heard it put that way,' you tell her. 'It's exactly right.'"
+    },
+    {
+      "conditions": {},
+      "text": "Yuki asks good questions. You're both figuring something out."
+    }
+  ],
+
+  "visit_hiro": [
+    {
+      "conditions": { "stageMin_hiro": 0, "stageMax_hiro": 1 },
+      "text": "You bring two cans of coffee from the vending machine. Hiro accepts his without looking at you. You sit beside him. The pigeons circle. He tells you about his wife — her name was Emiko, she liked chrysanthemums, she used to get up before dawn to pray. He doesn't say what she prayed to. He doesn't have to."
+    },
+    {
+      "conditions": { "stageMin_hiro": 2, "stageMax_hiro": 2 },
+      "text": "Hiro asks you today: 'Do you think the dead can hear us?' You pause. He's not asking academically. You tell him you believe so — not from proof, but from faith. He sits with that for a long time. 'Emiko would have liked you,' he says finally. That undoes you a little."
+    },
+    {
+      "conditions": { "stageMin_hiro": 3 },
+      "text": "Hiro tells you he started reading the Bible Emiko kept in the bedside drawer. He found her bookmarks inside — she had underlined things. He reads you one of them aloud, slowly. His voice doesn't shake. He's past the stage where it does."
+    },
+    {
+      "conditions": {},
+      "text": "You sit with Hiro. Some visits don't need many words."
+    }
+  ],
+
+  "deep_kenji": [
+    {
+      "conditions": { "stageMin_kenji": 3 },
+      "text": "Two hours over ramen. Kenji talks about his father — a man who worked until he disappeared from the family without dying. A mother who prayed at the altar every morning for a husband who had already left in every way that mattered. 'I don't know how to believe in anything,' he says. You tell him that might be exactly the right place to start."
+    },
+    {
+      "conditions": {},
+      "text": "A long conversation with Kenji. The kind that changes things."
+    }
+  ],
+
+  "deep_yuki": [
+    {
+      "conditions": { "stageMin_yuki": 3 },
+      "text": "Yuki tells you she's been afraid to believe — not because she thinks it's untrue, but because of what her parents would think. She's an only child. Her grandmother burned incense for her grandfather every morning. 'Is that wrong?' she asks. You tell her that loving the dead is not wrong. That love doesn't have to be opposed to faith. She cries a little. You're not sorry it came out."
+    },
+    {
+      "conditions": {},
+      "text": "A long conversation with Yuki. She's closer than she knows."
+    }
+  ],
+
+  "deep_hiro": [
+    {
+      "conditions": { "stageMin_hiro": 3 },
+      "text": "Hiro asks you to pray — out loud, in whatever language you like. He closes his eyes while you do. When you finish he sits quietly for a while. 'I think she prayed like that,' he says. 'Emiko.' He doesn't say anything after that. Neither do you. The silence is not empty."
+    },
+    {
+      "conditions": {},
+      "text": "Time with Hiro. Something is growing."
+    }
+  ]
+}

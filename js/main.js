@@ -9,10 +9,14 @@ import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { startEngine, hooks } from './engine.js';
 import * as audio from './audio.js';
+import { ACTION_DEFS } from './actions.js';
+import { getStoryText } from './stories.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation,
   renderLocationTabs, renderActions, renderPeople, renderMilestones,
-  showToast, showNPCMeetModal, bindContentTabs, bindCancelButton, bindSettings,
+  showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup,
+  bindContentTabs, bindCancelButton, bindSettings,
+  renderActionBar,
 } from './ui.js';
 
 // Expose audio for settings panel
@@ -101,13 +105,27 @@ function startGame() {
   bindContentTabs();
   bindCancelButton();
   bindSettings(resetGame);
+  bindStoryPopup();
 
   // Wire engine hooks
-  hooks.onActionComplete = (actionId) => {
+  hooks.onActionComplete = ({ id, bonuses }) => {
     audio.playActionComplete();
+
+    // Show story popup (skip if an NPC first-meet is about to appear)
+    if (!state.flags.pendingNPCMeet) {
+      const text = getStoryText(id, state);
+      if (text) {
+        const def = ACTION_DEFS[id];
+        // Determine if this action is associated with a known NPC
+        const visitMatch = id.match(/^(?:visit|deep)_(\w+)$/);
+        const npcId = visitMatch ? visitMatch[1] : null;
+        showStoryPopup(text, def?.icon, npcId, bonuses);
+      }
+    }
+
     renderActions();
     renderActionBar();
-    renderLocationTabs(); // some locations may newly unlock
+    renderLocationTabs();
     saveGame();
   };
 

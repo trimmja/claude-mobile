@@ -157,13 +157,21 @@ export function cancelAction() {
   clearAction();
 }
 
-// Called by engine when timer expires
+// Communication actions that benefit from language level
+const COMM_ACTIONS    = new Set(['hand_tracts', 'commuter_convo', 'casual_convo', 'host_english']);
+// Spiritual actions that benefit from wisdom
+const SPIRIT_ACTIONS  = new Set(['pray', 'study_scripture', 'observe_shrine']);
+// NPC visit actions that benefit from language level (trust bonus)
+const NPC_VISIT_ACTIONS = new Set(['visit_kenji', 'visit_yuki', 'visit_hiro', 'deep_kenji', 'deep_yuki', 'deep_hiro']);
+
+// Called by engine when timer expires.
+// Returns { id, bonuses } where bonuses is an object of { contacts?, faith?, npcTrust? }.
 export function completeAction() {
   const id  = state.action.id;
   const def = ACTION_DEFS[id];
   if (!def) { clearAction(); return null; }
 
-  applyRewards(def.reward);
+  const bonuses = applyRewards(id, def.reward);
   if (def.onComplete) def.onComplete();
 
   state.stats.actionsCompleted++;
@@ -178,7 +186,7 @@ export function completeAction() {
     }
   }
 
-  return id;
+  return { id, bonuses };
 }
 
 export function actionProgress() {
@@ -204,16 +212,40 @@ function spendCosts(costs) {
   return true;
 }
 
-function applyRewards(reward) {
-  if (!reward) return;
+// Applies base rewards and stat bonuses. Returns bonus amounts for display.
+function applyRewards(id, reward) {
+  if (!reward) return {};
+
   if (reward.faith)    gain('faith',    reward.faith);
   if (reward.contacts) gain('contacts', reward.contacts);
   if (reward.money)    gain('money',    reward.money);
   if (reward.wisdom)   gain('wisdom',   reward.wisdom);
   if (reward.langXP)   addLangXP(reward.langXP);
-  if (reward.npcTrust) {
-    addNPCTrust(reward.npcTrust.id, reward.npcTrust.amount);
+  if (reward.npcTrust) addNPCTrust(reward.npcTrust.id, reward.npcTrust.amount);
+
+  const bonuses = {};
+  const lang    = state.language.level;
+  const wisdom  = state.resources.wisdom;
+
+  // Language bonus: communication actions gain +contacts
+  if (COMM_ACTIONS.has(id) && reward.contacts && lang > 0) {
+    const bonus = Math.floor(lang * 0.25 * reward.contacts);
+    if (bonus > 0) { gain('contacts', bonus); bonuses.contacts = bonus; }
   }
+
+  // Wisdom bonus: spiritual actions gain +faith
+  if (SPIRIT_ACTIONS.has(id) && reward.faith && wisdom > 0) {
+    const bonus = Math.floor((wisdom / 100) * reward.faith);
+    if (bonus > 0) { gain('faith', bonus); bonuses.faith = bonus; }
+  }
+
+  // Language bonus: NPC visit actions gain +trust
+  if (NPC_VISIT_ACTIONS.has(id) && reward.npcTrust && lang > 0) {
+    const bonus = Math.floor(lang * 0.2 * reward.npcTrust.amount);
+    if (bonus > 0) { addNPCTrust(reward.npcTrust.id, bonus); bonuses.npcTrust = bonus; }
+  }
+
+  return bonuses;
 }
 
 function clearAction() {

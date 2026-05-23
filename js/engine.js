@@ -37,8 +37,8 @@ function engineTick() {
 
   // Check action completion
   if (isActionComplete()) {
-    const actionId = completeAction();
-    if (hooks.onActionComplete) hooks.onActionComplete(actionId);
+    const result = completeAction(); // { id, bonuses } or null
+    if (result && hooks.onActionComplete) hooks.onActionComplete(result);
 
     // NPC meet
     if (state.flags.pendingNPCMeet && hooks.onNPCMeet) {
