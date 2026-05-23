@@ -209,15 +209,39 @@
 
   "visit_kenji": [
     {
-      "conditions": { "stageMin_kenji": 0, "stageMax_kenji": 1 },
+      "conditions": { "stageMin_kenji": 0, "stageMax_kenji": 1, "langMax": 0 },
+      "text": "You find the coffee kiosk near Gate 3. Kenji arrives on time, suit pressed, phone in hand. You pull out your own phone — Google Translate. He watches you type. He types back. The exchange is slow and clumsy and occasionally wrong. But he doesn't check his watch. When you stand up to leave he bows precisely and says something you don't catch. You bow back. That's enough for now."
+    },
+    {
+      "conditions": { "stageMin_kenji": 0, "stageMax_kenji": 1, "langMin": 1, "langMax": 1 },
+      "text": "You meet Kenji at the station coffee kiosk. Your Japanese is enough for the basics now — you can ask about his work, say something about the weather, thank him properly. He loosens slightly. He tells you the name of his company. Small thing. But he offered it; you didn't ask. That's the difference."
+    },
+    {
+      "conditions": { "stageMin_kenji": 0, "stageMax_kenji": 1, "langMin": 2 },
       "text": "You meet Kenji for coffee near the station. He's formal — same suit he always wears. He asks about your family, your hometown, your church back home. He listens carefully and gives careful answers. You learn he has a younger sister. That's more than he's told anyone at work in years."
     },
     {
-      "conditions": { "stageMin_kenji": 2, "stageMax_kenji": 2 },
+      "conditions": { "stageMin_kenji": 2, "stageMax_kenji": 2, "langMax": 0 },
+      "text": "Kenji meets you at the kiosk but barely touches his coffee. He holds his phone and types: '会社が... restructuring.' You look up the word. Restructuring. He stares at the cup. You don't know how to say what you'd want to say. You sit with him anyway. He stays longer than usual."
+    },
+    {
+      "conditions": { "stageMin_kenji": 2, "stageMax_kenji": 2, "langMin": 1, "langMax": 1 },
+      "text": "Kenji is quieter than usual. He says one word — 大変, 'difficult' — and looks away. You ask if it's work. He nods slowly. His coffee sits untouched. You don't push. You've learned that silence with Kenji isn't empty — it's how he processes things. He comes back next week."
+    },
+    {
+      "conditions": { "stageMin_kenji": 2, "stageMax_kenji": 2, "langMin": 2 },
       "text": "Kenji is quieter than usual. His company announced restructuring. He says it without emotion, like reading a train schedule. But his coffee sits untouched for ten minutes. You don't rush to fill the silence. He eventually says: 'I don't know what I'm working for.' You wait. He doesn't say more. But he comes back next week."
     },
     {
-      "conditions": { "stageMin_kenji": 3 },
+      "conditions": { "stageMin_kenji": 3, "langMax": 0 },
+      "text": "Kenji types a question into his phone and holds it up: 'Do you really believe all this?' You read it. You type back: 'Yes.' He reads your answer several times. He doesn't respond. But there's something in his face that wasn't there before."
+    },
+    {
+      "conditions": { "stageMin_kenji": 3, "langMin": 1, "langMax": 1 },
+      "text": "Kenji asks slowly, choosing each word: 'Is it... okay, to doubt? In your faith?' You tell him yes — that doubt and faith aren't opposites. He repeats the word in Japanese: 疑い. Doubt. He seems to be filing it somewhere."
+    },
+    {
+      "conditions": { "stageMin_kenji": 3, "langMin": 2 },
       "text": "The questions are different now. Kenji wants to know about doubt — whether real faith allows for it. You tell him that doubt and faith are not opposites. He looks like you said something slightly illegal. Then he almost smiles."
     },
     {
@@ -228,15 +252,39 @@
 
   "visit_yuki": [
     {
-      "conditions": { "stageMin_yuki": 0, "stageMax_yuki": 1 },
-      "text": "Yuki comes with a list of questions she wrote out in a notebook. She's done research — looked up theological terms in English and Japanese. She wants to know if Christianity is compatible with Japanese culture. You answer each question honestly. She writes down your answers."
+      "conditions": { "stageMin_yuki": 0, "stageMax_yuki": 1, "langMax": 0 },
+      "text": "Yuki is waiting with her notebook open. She's written out her questions in English — careful, complete sentences. She leads the whole conversation. You answer in English; she takes notes. The dynamic is slightly backwards from what you'd expect. She seems to find your situation genuinely interesting, like a linguistics puzzle she hasn't seen before."
     },
     {
-      "conditions": { "stageMin_yuki": 2, "stageMax_yuki": 2 },
+      "conditions": { "stageMin_yuki": 0, "stageMax_yuki": 1, "langMin": 1, "langMax": 1 },
+      "text": "Yuki comes with questions in her notebook as usual. But today you answer one in Japanese — halting, imperfect. She stops writing and looks up. 'Your Japanese,' she says, 'you're really studying.' The way she says it isn't polite surprise. It's actual respect. Language is her world. Effort in it means something."
+    },
+    {
+      "conditions": { "stageMin_yuki": 0, "stageMax_yuki": 1, "langMin": 2 },
+      "text": "Yuki comes with a list of questions she wrote out in a notebook. She's looked up theological terms in English and Japanese. She wants to know if Christianity is compatible with Japanese culture. You answer each question honestly. She writes down your answers. The conversation runs twenty minutes past when she said she had to leave."
+    },
+    {
+      "conditions": { "stageMin_yuki": 2, "stageMax_yuki": 2, "langMax": 0 },
+      "text": "Yuki seems different today — lighter. She types something and shows you her phone: a church near her apartment. 'I went,' she types. 'Just to see.' She watches your face carefully. You smile. She seems relieved, though you're not sure why she expected anything else."
+    },
+    {
+      "conditions": { "stageMin_yuki": 2, "stageMax_yuki": 2, "langMin": 1, "langMax": 1 },
+      "text": "Yuki tells you quietly that she visited a church near her apartment. 'I didn't tell you,' she says carefully in Japanese. 'In case I didn't like it.' She pauses. 'I liked it.' She looks uncertain — like she's not sure what that means yet. You tell her that's okay. She writes something in her notebook."
+    },
+    {
+      "conditions": { "stageMin_yuki": 2, "stageMax_yuki": 2, "langMin": 2 },
       "text": "She admits she's been going to church — just to see. Not yours. A church near her apartment. 'I didn't want you to know yet,' she says, 'in case I didn't like it.' She liked it. She's not sure what to do with that."
     },
     {
-      "conditions": { "stageMin_yuki": 3 },
+      "conditions": { "stageMin_yuki": 3, "langMax": 0 },
+      "text": "Yuki slides her phone across — she's been reading John chapter 1 in Japanese and English side by side, highlighting phrases. She points to one: 言葉は神であった. The Word was God. Then: 言葉は肉体となった. The Word became flesh. She types: 'Why flesh? Why not just a message?' You sit with that. It's exactly the right question."
+    },
+    {
+      "conditions": { "stageMin_yuki": 3, "langMin": 1, "langMax": 1 },
+      "text": "Yuki has been reading John's prologue. She asks slowly: 'Why did God... become a person? Why not... send a letter?' It comes out partly in Japanese, partly in English. Either way the question is precise. You tell her: because a message can be ignored. A person cannot. She writes that down."
+    },
+    {
+      "conditions": { "stageMin_yuki": 3, "langMin": 2 },
       "text": "Yuki has been reading the Gospel of John in Japanese and English side by side. She has questions about the prologue — 'In the beginning was the Word.' She thinks she understands now why the Word had to become flesh. Why God couldn't just send a message. You sit with that. 'I've never heard it put that way,' you tell her. 'It's exactly right.'"
     },
     {
@@ -247,15 +295,39 @@
 
   "visit_hiro": [
     {
-      "conditions": { "stageMin_hiro": 0, "stageMax_hiro": 1 },
+      "conditions": { "stageMin_hiro": 0, "stageMax_hiro": 1, "langMax": 0 },
+      "text": "You get two cans of coffee from the vending machine and sit beside him. He accepts his without looking at you. The pigeons come and go. You don't understand most of what he says — you catch 奥さん, wife, and 毎日, every day. You nod. He keeps talking anyway, softly, more to himself than to you. Sometimes that's enough."
+    },
+    {
+      "conditions": { "stageMin_hiro": 0, "stageMax_hiro": 1, "langMin": 1, "langMax": 1 },
+      "text": "You bring coffee from the vending machine. Hiro accepts it and speaks slowly — he's patient with your Japanese, more than most people. He tells you her name. Emiko. Just once. He looks at the pigeons after. You don't push. You've learned not to push with Hiro."
+    },
+    {
+      "conditions": { "stageMin_hiro": 0, "stageMax_hiro": 1, "langMin": 2 },
       "text": "You bring two cans of coffee from the vending machine. Hiro accepts his without looking at you. You sit beside him. The pigeons circle. He tells you about his wife — her name was Emiko, she liked chrysanthemums, she used to get up before dawn to pray. He doesn't say what she prayed to. He doesn't have to."
     },
     {
-      "conditions": { "stageMin_hiro": 2, "stageMax_hiro": 2 },
+      "conditions": { "stageMin_hiro": 2, "stageMax_hiro": 2, "langMax": 0 },
+      "text": "Hiro asks you something slowly. You catch only part of it — 死んだ人、聞こえる？ The dead... hear? You look it up on your phone. He watches you read. When you look up, you say yes — you believe so. He nods once and looks back at the pigeons. That nod means something."
+    },
+    {
+      "conditions": { "stageMin_hiro": 2, "stageMax_hiro": 2, "langMin": 1, "langMax": 1 },
+      "text": "Hiro asks today, carefully: 'Dead people... can they hear us?' You tell him you believe so — not because you can prove it, but because you trust it. He sits with that for a long time. Then quietly: 'Emiko would have liked you.' You don't say anything. Some things don't need a response."
+    },
+    {
+      "conditions": { "stageMin_hiro": 2, "stageMax_hiro": 2, "langMin": 2 },
       "text": "Hiro asks you today: 'Do you think the dead can hear us?' You pause. He's not asking academically. You tell him you believe so — not from proof, but from faith. He sits with that for a long time. 'Emiko would have liked you,' he says finally. That undoes you a little."
     },
     {
-      "conditions": { "stageMin_hiro": 3 },
+      "conditions": { "stageMin_hiro": 3, "langMax": 0 },
+      "text": "Hiro reaches into his jacket and brings out a small Bible — worn, marked with paper strips. He opens to a page and reads aloud very slowly. You don't understand every word. But you recognize the cadence. Someone underlined that verse a long time ago. He closes it carefully and looks at the pigeons."
+    },
+    {
+      "conditions": { "stageMin_hiro": 3, "langMin": 1, "langMax": 1 },
+      "text": "Hiro brings Emiko's Bible to the bench today. He opens it to a bookmarked page. 'She marked this,' he says simply. He reads it aloud. Your Japanese is just good enough to follow. Afterward he says nothing. You say nothing. The park is very quiet."
+    },
+    {
+      "conditions": { "stageMin_hiro": 3, "langMin": 2 },
       "text": "Hiro tells you he started reading the Bible Emiko kept in the bedside drawer. He found her bookmarks inside — she had underlined things. He reads you one of them aloud, slowly. His voice doesn't shake. He's past the stage where it does."
     },
     {
@@ -266,8 +338,24 @@
 
   "deep_kenji": [
     {
-      "conditions": { "stageMin_kenji": 3 },
+      "conditions": { "stageMin_kenji": 3, "langMax": 0 },
+      "text": "Two hours at the café. Most of it is through phone translation — slow and imperfect. But something still happens. He types about his father: 父は... disappeared. He looks up from the screen. You type back: 'Mine too, in a different way.' He reads it carefully. You sit in that for a while. Some things translate."
+    },
+    {
+      "conditions": { "stageMin_kenji": 3, "langMin": 1, "langMax": 1 },
+      "text": "Kenji talks for almost two hours. He uses simple words — he's patient with you, and you with him. His father worked until he vanished from the family without dying. His mother prayed at the altar every morning. He says: 'I don't understand... how to believe something.' You tell him: that might be the beginning. He writes that down in his phone."
+    },
+    {
+      "conditions": { "stageMin_kenji": 3, "langMin": 2 },
       "text": "Two hours over ramen. Kenji talks about his father — a man who worked until he disappeared from the family without dying. A mother who prayed at the altar every morning for a husband who had already left in every way that mattered. 'I don't know how to believe in anything,' he says. You tell him that might be exactly the right place to start."
+    },
+    {
+      "conditions": { "stageMin_kenji": 0, "langMax": 0 },
+      "text": "A long time at the café. Half translation app, half silence, half something you don't have a word for. Kenji stays the whole time. That's not nothing."
+    },
+    {
+      "conditions": { "stageMin_kenji": 0, "langMin": 1 },
+      "text": "A long conversation with Kenji. Not everything landed perfectly — but enough did. The kind of conversation you come away from changed, even if you can't say exactly how."
     },
     {
       "conditions": {},
@@ -277,8 +365,24 @@
 
   "deep_yuki": [
     {
-      "conditions": { "stageMin_yuki": 3 },
+      "conditions": { "stageMin_yuki": 3, "langMax": 0 },
+      "text": "Yuki types and talks and shows you things in her notebook for almost two hours. At one point she cries a little — you catch the word 家族, family — and keeps going like it didn't happen. You don't know all of what she said. But you know something came out that had been held in for a long time."
+    },
+    {
+      "conditions": { "stageMin_yuki": 3, "langMin": 1, "langMax": 1 },
+      "text": "Yuki tells you she's afraid to believe — not because it isn't true, but because of her family. She's an only child. Her grandmother burned incense every morning. 'Is that... wrong?' she asks carefully. You tell her: loving the dead is not wrong. She sits with that. Her eyes are wet. She doesn't apologize for it."
+    },
+    {
+      "conditions": { "stageMin_yuki": 3, "langMin": 2 },
       "text": "Yuki tells you she's been afraid to believe — not because she thinks it's untrue, but because of what her parents would think. She's an only child. Her grandmother burned incense for her grandfather every morning. 'Is that wrong?' she asks. You tell her that loving the dead is not wrong. That love doesn't have to be opposed to faith. She cries a little. You're not sorry it came out."
+    },
+    {
+      "conditions": { "stageMin_yuki": 0, "langMax": 0 },
+      "text": "A long café conversation, mostly in English with her leading. Something real passed between you anyway. That's becoming a pattern with Yuki."
+    },
+    {
+      "conditions": { "stageMin_yuki": 0, "langMin": 1 },
+      "text": "A long conversation with Yuki. You followed more than you expected. She's close to something — you can feel it even when you can't always say the right words."
     },
     {
       "conditions": {},
@@ -288,8 +392,24 @@
 
   "deep_hiro": [
     {
-      "conditions": { "stageMin_hiro": 3 },
+      "conditions": { "stageMin_hiro": 3, "langMax": 0 },
+      "text": "Hiro gestures at you — pray. He folds his hands loosely, the way he's seen you do it. You pray out loud, in English, slowly. He closes his eyes. The park is quiet. When you finish he sits for a long time. Then one sentence, soft: something about Emiko. You catch her name. That's enough."
+    },
+    {
+      "conditions": { "stageMin_hiro": 3, "langMin": 1, "langMax": 1 },
+      "text": "Hiro asks you to pray — in Japanese, if you can. You try. It comes out rough. He keeps his eyes closed the whole time. When you finish he says quietly: 'Emiko wa... so prayed.' His voice stays level. He's practiced this particular stillness for a long time."
+    },
+    {
+      "conditions": { "stageMin_hiro": 3, "langMin": 2 },
       "text": "Hiro asks you to pray — out loud, in whatever language you like. He closes his eyes while you do. When you finish he sits quietly for a while. 'I think she prayed like that,' he says. 'Emiko.' He doesn't say anything after that. Neither do you. The silence is not empty."
+    },
+    {
+      "conditions": { "stageMin_hiro": 0, "langMax": 0 },
+      "text": "A long time on the bench together. Mostly quiet. That's how it works with Hiro — the length of the silence is a kind of language."
+    },
+    {
+      "conditions": { "stageMin_hiro": 0, "langMin": 1 },
+      "text": "Time with Hiro. Something between you that doesn't fully need words. Something is growing."
     },
     {
       "conditions": {},

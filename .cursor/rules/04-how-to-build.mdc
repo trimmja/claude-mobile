@@ -14,7 +14,7 @@ Read `CLAUDE.md` for full tables (actions, NPCs, milestones, CSS tokens, DOM IDs
 | Day length, faith regen, payday | `data/timing.json` |
 | New action | `data/actions.json` + `ACTION_UNLOCK` in `js/actions.js` + `ACTION_TEXT` in `js/language.js` |
 | New location | `js/locations.js` + bg class in `css/style.css` |
-| New NPC | `js/npcs.js` + default in `js/state.js` |
+| New NPC | Follow New NPC checklist in `CLAUDE.md` — includes `CHARACTERS.md`, `js/npcs.js`, `js/state.js`, `data/actions.json`, `js/actions.js`, `js/language.js`, `data/stories.json` (3 lang tiers × 3 stage tiers) |
 | New milestone | `js/milestones.js` |
 | UI / layout | `index.html` + `js/ui.js` |
 | Save key / format | `js/save.js` (bump key if breaking saves) |
@@ -26,3 +26,5 @@ Read `CLAUDE.md` for full tables (actions, NPCs, milestones, CSS tokens, DOM IDs
 **Locked actions — always show why:** Any gated action must list every requirement on its card with current progress (✓ done / ○ missing + “Now: …”). Implement in `getActionRequirements()` + `REQUIREMENT_BUILDERS` in `js/actions.js` and render via `action-requirements` in `js/ui.js`. Do not rely on `unlockHint` alone or hide requirements when locked.
 
 **Japan authenticity:** Preserve onsen, English events, station tracts, slow trust arcs, monthly support, shame/wa in stage gates — see `CLAUDE.md` § Authentic Japan touches.
+
+**NPC language system:** Every NPC visit/deep action is language-aware. Each NPC has a `langWeight` (1.0 = verbal, 0.3 = presence-based). Trust gain is scaled by lang level. Every `visit_*`/`deep_*` story entry needs 3 language tiers (`langMax:0`, `langMin:1 langMax:1`, `langMin:2`). NPC actions must have specific locations (never `null`). Read `CHARACTERS.md` before editing NPC content or mechanics.

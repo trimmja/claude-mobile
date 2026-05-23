@@ -80,42 +80,42 @@
       "unlockHint": "Requires 30 Contacts"
     },
     "visit_kenji": {
-      "location": null,
+      "location": "station",
       "icon": "👔",
       "duration": "45 seconds",
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "kenji", "amount": 12 } }
     },
     "visit_yuki": {
-      "location": null,
+      "location": "cafe",
       "icon": "📚",
       "duration": "45 seconds",
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "yuki", "amount": 12 } }
     },
     "visit_hiro": {
-      "location": null,
+      "location": "park",
       "icon": "🌿",
       "duration": "45 seconds",
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "hiro", "amount": 12 } }
     },
     "deep_kenji": {
-      "location": null,
+      "location": "cafe",
       "icon": "💛",
       "duration": "1 minute",
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "kenji", "amount": 22 }, "wisdom": 3 }
     },
     "deep_yuki": {
-      "location": null,
+      "location": "cafe",
       "icon": "💛",
       "duration": "1 minute",
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "yuki", "amount": 22 }, "wisdom": 3 }
     },
     "deep_hiro": {
-      "location": null,
+      "location": "park",
       "icon": "💛",
       "duration": "1 minute",
       "cost": { "faith": 20 },

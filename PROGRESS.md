@@ -19,7 +19,7 @@ Everything below is **coded and functional** but should be considered a first dr
 
 **Story Popups** — ⚠️ infrastructure done, content is a first draft
 - System: `data/stories.json` + `js/stories.js` condition-matching selector
-- 60+ story beats written covering all actions, NPC stages, day ranges, language levels
+- 90+ story beats written covering all actions, NPC stages, day ranges, language levels
 - Popup slides up after action, shows NPC portrait for visit/deep actions, auto-dismisses 6s
 - **Not yet reviewed:** Jacob has not read through the story text. Quality is unknown. Some beats may feel generic or off-tone.
 - **Not yet played:** Whether the popup timing, frequency, and length feel right in practice is unknown
@@ -28,13 +28,23 @@ Everything below is **coded and functional** but should be considered a first dr
 - Tab labels shift JP→EN at level 1 ✅
 - Contacts HUD label shifts 知人→Contacts at level 1 ✅
 - NPC first-meet intros have 3 language tiers (level 0 / 1 / 2+) written in — **text not reviewed**
-- Story popup text uses `langMin`/`langMax` conditions to show Japanese-heavy beats at low levels — **coverage is partial, not systematic**
+- All visit/deep story beats now have 3 language tiers — **text not reviewed**
+
+**NPC Language-Tiered Relationship System** — ⚠️ coded, balance untested
+- `langWeight` per NPC in `NPC_DEFS` controls how much language matters to trust gain
+  - Kenji: 1.0 (verbal) — 40% trust at lang 0, 100% at lang 2, bonus at lang 3+
+  - Yuki: 1.0 (verbal) — same
+  - Hiro: 0.3 (presence-based) — 82% trust even at lang 0
+- All NPC interaction story beats now have 3 language tiers (lang 0 / lang 1 / lang 2+)
+- Intro texts updated: Kenji gives business card at first meet; Yuki exchanges LINE IDs
+- NPC actions locked to specific locations: Kenji → station (visit) + café (deep); Yuki → café; Hiro → park
+- Action card names updated: "Coffee with Kenji", "Sit with Hiro", "Heart-to-Heart with Yuki", etc.
+- **Character bios + arc + langWeight documented in `CHARACTERS.md`** — read before any NPC changes
 
 **Stat Multipliers** — ⚠️ coded, balance untested
 - Language level → bonus contacts on communication actions (×0.25 per level)
 - Wisdom → bonus faith on spiritual actions (wisdom/100 × base)
-- Language level → bonus trust on visit/deep actions (×0.2 per level)
-- **Not verified:** Whether these bonuses are noticeable but not game-breaking in practice
+- Language level → trust scaling on NPC actions (see langWeight system above)
 
 **Portrait System** — ⚠️ infrastructure only, no real images
 - `assets/images/npcs/{kenji,yuki,hiro}.png` — system ready, images not sourced yet

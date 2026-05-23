@@ -8,15 +8,17 @@ export const NPC_DEFS = {
     emoji: '👔',
     portraitClass: 'portrait-kenji',
     cardClass: 'npc-kenji',
+    // langWeight: how much language level affects trust gain (1.0 = fully verbal)
+    langWeight: 1.0,
     // Language-gated first-meet text. Index = minimum language level required.
     // Higher levels use the last entry in the array.
     introByLang: [
       // Level 0 — barely any Japanese
-      `A suited man nearly knocks your tracts to the ground. He stops, bows quickly. He picks one up and reads the title aloud, uncertainly: "クリスチャン..." He looks at you. "あなたは... this is... your?" He trails off. You don't fully understand his question. He doesn't walk away.`,
+      `A suited man nearly knocks your tracts to the ground. He stops, bows quickly. He picks one up and reads the title aloud: "クリスチャン..." He looks at you, starts to say something, then thinks better of it. Instead he reaches into his jacket and places a business card in your hand — printed both sides, Kitamura Kenji — and bows before hurrying off. You don't know what to make of it. But you have his number.`,
       // Level 1 — can follow the basics
-      `A man in a suit rushes past and nearly knocks your tracts away. He pauses, bows. "Ah... Christian?" he says carefully. "I have... question. Maybe later." His name is Kenji. He leaves — but something in the way he held the tract stays with you.`,
+      `A man in a suit rushes past and nearly knocks your tracts away. He pauses, bows. "Ah... Christian?" he says carefully. "I have... question. Maybe later." He reaches into his jacket and hands you his business card — Kitamura Kenji — before merging back into the crowd. Something in the way he held the tract stays with you.`,
       // Level 2+ — full exchange
-      `A man in a suit rushes past and nearly knocks your tracts out of your hand. He pauses, bows quickly, and notices the pamphlet. "Ah... Christian?" he says carefully in English. His name is Kenji. He's polite, guarded — but he didn't walk away.`,
+      `A man in a suit rushes past and nearly knocks your tracts out of your hand. He pauses, bows quickly, and reads the title. "Ah... Christian?" he says in careful English. His name is Kenji — Kitamura Kenji. He's polite, guarded. Before he leaves he hands you his business card. "Maybe we can... talk. Sometime." He doesn't look back.`,
     ],
     stages: [
       'Stranger',
@@ -47,13 +49,15 @@ export const NPC_DEFS = {
     emoji: '📚',
     portraitClass: 'portrait-yuki',
     cardClass: 'npc-yuki',
+    // langWeight: how much language level affects trust gain (1.0 = fully verbal)
+    langWeight: 1.0,
     introByLang: [
       // Level 0
-      `A young woman stays after your English event while you clean up. She says something in Japanese — you catch the word 違う, "different." She smiles when you look confused and switches to halting English: "Your English... kind." Her name is Yuki. She seems like she has a lot more to say.`,
+      `A young woman stays after your English event while you stack chairs. She says something in Japanese — you catch the word 違う, "different." She smiles when you look confused and switches to English: "Your English... kind." She opens her phone, types something, and holds it out — a LINE QR code. Her name is Yuki. She seems like she has a lot more to say.`,
       // Level 1
-      `A young woman stays after the English event. "Your English feels... more human than textbooks," she says. "I have many questions." She's smiling but serious. Her name is Yuki. You believe her about the questions.`,
+      `A young woman stays after the English event. "Your English feels... more human than textbooks," she says. "I have many questions." She's smiling but serious. Before you finish cleaning up she pulls out her phone: "Can I... LINE you?" Her name is Yuki. You believe her about the questions.`,
       // Level 2+
-      `A young woman at your English event stays after everyone else leaves. "Your English... it's different," she says, smiling shyly. "More kind." Her name is Yuki. She's studying linguistics. She's genuinely curious about everything — including you.`,
+      `A young woman at your English event stays after everyone else leaves. "Your English — it's different," she says, smiling. "More kind." Her name is Yuki. She's studying linguistics. Before she goes she adds you on LINE. "I have questions," she says. "Many." She clearly means it.`,
     ],
     stages: [
       'Stranger',
@@ -82,13 +86,15 @@ export const NPC_DEFS = {
     emoji: '🌿',
     portraitClass: 'portrait-hiro',
     cardClass: 'npc-hiro',
+    // langWeight: low — presence and silence are this relationship
+    langWeight: 0.3,
     introByLang: [
       // Level 0 — very little understood
-      `An old man sits on a park bench feeding pigeons. He watches you with tired eyes. When you sit beside him, he doesn't leave. After a long silence he says something slowly — too slowly to be for you, more like he's talking to himself. You catch 奥さん — wife. And 毎日 — every day. He looks at you when you don't leave. His name is Hiro.`,
+      `An old man sits on a park bench feeding pigeons. He watches you with tired eyes. When you sit beside him, he doesn't leave. After a long silence he says something slowly — too slowly to be for you, more like he's talking to himself. You catch 奥さん — wife. And 毎日 — every day. He looks at you when you don't leave. His name is Hiro. He's here every morning.`,
       // Level 1
-      `An old man on a bench. He watches you preach, then keeps sitting when you finish. "You... preacher?" he asks carefully. "My wife... she believed." He says her name once, quietly, then says nothing more. His name is Hiro. He comes here every day.`,
+      `An old man on a bench. He watches you preach, then keeps sitting when you finish. "You... preacher?" he asks carefully. "My wife... she believed." He says her name once, quietly, then says nothing more. His name is Hiro. He comes here every day — same bench, same direction, same time.`,
       // Level 2+
-      `An old man sits on a park bench feeding pigeons. He watches you preach with tired eyes. When you sit beside him, he doesn't leave. After a long silence he says, in slow Japanese, something about his wife. She died last year. His name is Hiro. He comes to this park every day.`,
+      `An old man sits on a park bench feeding pigeons. He watches you preach with tired eyes. When you sit beside him, he doesn't leave. After a long silence he says, in slow Japanese, something about his wife. She died last year. He comes here every morning. His name is Hiro. You can find him here anytime.`,
     ],
     stages: [
       'Stranger',

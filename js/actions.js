@@ -251,10 +251,31 @@ function applyRewards(id, reward) {
     if (bonus > 0) { gain('faith', bonus); bonuses.faith = bonus; }
   }
 
-  // Language bonus: NPC visit actions gain +trust
-  if (NPC_VISIT_ACTIONS.has(id) && reward.npcTrust && lang > 0) {
-    const bonus = Math.floor(lang * 0.2 * reward.npcTrust.amount);
-    if (bonus > 0) { addNPCTrust(reward.npcTrust.id, bonus); bonuses.npcTrust = bonus; }
+  // Language-weighted trust scaling for NPC visit/deep actions.
+  // Each NPC has a langWeight (0.0–1.0) in NPC_DEFS:
+  //   1.0 = verbal relationship (Kenji, Yuki) — low language heavily penalises trust gain
+  //   0.3 = presence-based (Hiro) — silence is enough; language matters less
+  //
+  // langFactor at each level (lang 2 = full baseline):
+  //   Kenji/Yuki (lw 1.0): 0.4 / 0.7 / 1.0 / 1.0 / 1.0 / 1.0
+  //   Hiro       (lw 0.3): 0.82 / 0.91 / 1.0 / 1.0 / 1.0 / 1.0
+  //
+  // Separate bonus at lang 3+ rewards high fluency on top of baseline.
+  if (NPC_VISIT_ACTIONS.has(id) && reward.npcTrust) {
+    const LANG_SCALE = [0.4, 0.7, 1.0, 1.0, 1.0, 1.0]; // capped at 1.0; bonus below handles 3+
+    const npcDef = NPC_DEFS[reward.npcTrust.id];
+    const lw = npcDef?.langWeight ?? 1.0;
+    const scale = LANG_SCALE[Math.min(lang, 5)];
+    const langFactor = 1 - (lw * (1 - scale));
+    // Base trust was already applied above. Apply delta to reach scaled amount.
+    const baseTrust = reward.npcTrust.amount;
+    const delta = Math.round((langFactor - 1) * baseTrust); // negative at low lang
+    if (delta !== 0) addNPCTrust(reward.npcTrust.id, delta);
+    // Fluency bonus: lang 3 = +20%, lang 4 = +40%, lang 5 = +60% on top of baseline
+    if (lang >= 3) {
+      const bonus = Math.floor((lang - 2) * 0.2 * baseTrust);
+      if (bonus > 0) { addNPCTrust(reward.npcTrust.id, bonus); bonuses.npcTrust = bonus; }
+    }
   }
 
   return bonuses;

@@ -23,12 +23,12 @@ export const ACTION_TEXT = {
   host_english:     { jp: '英会話イベント', en: 'Host English Event' },
   observe_shrine:   { jp: '神社を観察する', en: 'Observe & Listen' },
   onsen_visit:      { jp: '温泉に行く',     en: 'Onsen Visit' },
-  visit_kenji:      { jp: '健二を訪ねる',   en: 'Visit Kenji' },
-  visit_yuki:       { jp: '由紀を訪ねる',   en: 'Visit Yuki' },
-  visit_hiro:       { jp: '浩を訪ねる',     en: 'Visit Hiro' },
-  deep_kenji:       { jp: '健二と深く話す', en: 'Deep Talk — Kenji' },
-  deep_yuki:        { jp: '由紀と深く話す', en: 'Deep Talk — Yuki' },
-  deep_hiro:        { jp: '浩と深く話す',   en: 'Deep Talk — Hiro' },
+  visit_kenji:      { jp: '健二とコーヒー',   en: 'Coffee with Kenji' },
+  visit_yuki:       { jp: '由紀と話す',       en: 'Chat with Yuki' },
+  visit_hiro:       { jp: '浩と座る',         en: 'Sit with Hiro' },
+  deep_kenji:       { jp: '健二と深く話す',   en: 'Heart-to-Heart with Kenji' },
+  deep_yuki:        { jp: '由紀と深く話す',   en: 'Heart-to-Heart with Yuki' },
+  deep_hiro:        { jp: '浩と深く話す',     en: 'Heart-to-Heart with Hiro' },
 };
 
 // UI labels that shift to Japanese at language level 0

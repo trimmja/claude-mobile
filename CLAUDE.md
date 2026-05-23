@@ -3,6 +3,7 @@
 Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Claude should read this file. When either changes project context, the plan, or developer notes, **update both** this file and the matching `.cursor/rules/*.mdc` file.
 
 @PROGRESS.md
+@CHARACTERS.md
 
 ---
 
@@ -323,6 +324,77 @@ Story beats are shown after every action completion (bottom-sheet popup).
 - **Save** — auto-saves every 30 engine ticks + on every action complete.
 - **Version bump** — when deploying: bump `APP_VERSION` in `js/version.js`, `CACHE` in `sw.js`, and `?v=` param on script tag in `index.html`.
 
+---
+
+## NPC interaction system (language-tiered)
+
+**Read `CHARACTERS.md` before writing any NPC story text or changing NPC mechanics.** It has each character's personality, arc, communication style, and langWeight.
+
+### Trust scaling by language level
+
+Each NPC_DEF has a `langWeight` field (0.0–1.0):
+- `1.0` = highly language-dependent (Kenji, Yuki) — verbal communication IS the relationship
+- `0.3` = presence-based (Hiro) — silence and being there is enough
+
+Trust gain formula (applied in `applyRewards()` in `actions.js`):
+```js
+const LANG_SCALE = [0.4, 0.7, 1.0, 1.15, 1.3, 1.5]; // indexed by language level 0–5
+const langFactor = 1 - (npcDef.langWeight * (1 - LANG_SCALE[lang]));
+// Apply langFactor to base npcTrust amount. Then existing lang bonus applies on top.
+```
+
+At level 0, Kenji (langWeight 1.0): 40% of base trust — communication is stilted, progress is slow.
+At level 0, Hiro (langWeight 0.3): ~82% of base trust — presence counts even without words.
+At level 2+: 100% base + existing lang bonus.
+
+### Story branches (3 language tiers)
+
+Every `visit_*` and `deep_*` story entry in `stories.json` must have 3 language-tiered versions:
+- `"langMax": 0` — phone translator, gestures, long silences, presence
+- `"langMin": 1, "langMax": 1` — basics flow, simple questions, cautious exchange
+- `"langMin": 2` — real conversation, things are learned and shared
+
+Combine `langMin`/`langMax` with `stageMin`/`stageMax` as needed.
+
+### NPC action locations (never `null` for NPC visit/deep actions)
+
+| Action | Location | Reason |
+|--------|----------|--------|
+| visit_kenji | station | He's a commuter; station kiosk coffee. Station always available (avoids café-gate blocking). |
+| deep_kenji | cafe | Deeper relationship → proper sit-down café meetup |
+| visit_yuki | cafe | Where she is; café unlocks same time as host_english (when you meet her) |
+| deep_yuki | cafe | Same venue, deeper depth |
+| visit_hiro | park | He's always on the bench |
+| deep_hiro | park | Deepest moments happen on the same bench |
+
+### Contact-info rule
+
+NPCs need a plausible reason you can reach them after first meeting:
+- **Kenji**: hands you his business card before hurrying off (update intro text)
+- **Yuki**: LINE ID exchange at end of English event (update intro text)
+- **Hiro**: always at the same park bench — no contact needed
+
+### Action naming convention
+
+NPC interaction cards use narrative names, not generic ones:
+- `visit_*` → describes what you're actually doing ("Coffee with Kenji", "Sit with Hiro")
+- `deep_*` → "Heart-to-Heart with [Name]"
+- JP labels: action-specific, not just "visit"
+
+---
+
+## New NPC checklist
+
+When adding a new NPC, do ALL of these:
+1. Add bio to `CHARACTERS.md` — personality, language notes, arc, church role, `langWeight`
+2. Add state entry in `js/state.js`: `{ met: false, trust: 0, stage: 0 }`
+3. Add `NPC_DEFS` entry in `js/npcs.js` — include `langWeight` + `introByLang[]` with 3 tiers (level 0 / 1 / 2+). Intro text at level 0 must include how the player can reach the NPC again (business card, LINE, or "they're always here").
+4. Add `visit_{npc}` + `deep_{npc}` to `data/actions.json` with correct `"location"` (not null)
+5. Add unlock/visible rules in `js/actions.js` (ACTION_UNLOCK, ACTION_VISIBLE, REQUIREMENT_BUILDERS, NPC_VISIT_ACTIONS set)
+6. Add narrative labels to `js/language.js` ACTION_TEXT
+7. Add `npcChance` to the relevant outreach action in `data/actions.json`
+8. Write story beats in `data/stories.json` — 3 lang tiers × ~3 stage tiers ≈ ~9 beats per action
+
 ## Authentic Japan touches to preserve
 - Onsens as relationship-building (costs money, big trust reward)
 - English conversation events as a real outreach method
@@ -340,7 +412,7 @@ Story beats are shown after every action completion (bottom-sheet popup).
 - **Add an action**: entry in `data/actions.json` + `ACTION_UNLOCK` + `ACTION_VISIBLE` (if NPC-gated) + `REQUIREMENT_BUILDERS` + `ACTION_TEXT` in `language.js`
 - **Add NPC portrait**: drop `{npcId}.png` in `assets/images/npcs/` — appears everywhere automatically
 - **Add a location**: extend `LOCATION_DEFS` in `locations.js` + bg CSS class in `style.css`
-- **Add an NPC**: extend `NPC_DEFS` in `npcs.js` + state entry in `state.js`
+- **Add an NPC**: follow the New NPC checklist above — don't skip steps
 - **Add milestones**: extend `MILESTONE_DEFS` in `milestones.js`
 - **Add BGM**: load `<audio>` in `audio.js`, play on location change
 - **Add real location art**: set `background-image` on `.location-bg` elements in CSS
