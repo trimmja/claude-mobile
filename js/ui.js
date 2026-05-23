@@ -406,12 +406,9 @@ export function showStoryPopup(text, icon, npcId, bonuses) {
     bonusEl.classList.add('hidden');
   }
 
-  // Show popup
+  // Show popup — stays until tapped
   popup.classList.remove('hidden');
-
-  // Auto-dismiss after 6s
-  if (storyPopupTimer) clearTimeout(storyPopupTimer);
-  storyPopupTimer = setTimeout(() => dismissStoryPopup(), 6000);
+  if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
 }
 
 function dismissStoryPopup() {

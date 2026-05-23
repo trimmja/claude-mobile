@@ -1,5 +1,5 @@
 // Bump when you need phones to pick up a new build (shown in Settings).
-export const APP_VERSION = '12';
+export const APP_VERSION = '13';
 
 const SKIP_CONTROLLER_RELOAD_KEY = 'jeb_skip_controller_reload';
 const DEFER_SW_KEY = 'jeb_defer_sw';
