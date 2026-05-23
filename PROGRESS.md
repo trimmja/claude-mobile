@@ -5,39 +5,40 @@ The architecture reference lives in `CLAUDE.md`. This file is the living tracker
 
 ---
 
-## ✅ Phase 1A — Narrative depth & language immersion (complete)
+## 🔶 Phase 1A — Narrative depth & language immersion (mechanics built, content draft)
 
-**NPC Reveal System**
-- NPCs are completely hidden until encountered (no greyed-out placeholders)
-- Visit/deep-talk action cards are invisible until NPC is met
-- People tab shows empty state with hint when no one met yet
-- Met NPC cards show: portrait slot (image + kanji fallback), name EN + JP, stage, trust bar, advance hint ("12 trust to next stage" / "Needs: Wisdom 15")
+Everything below is **coded and functional** but should be considered a first draft until it's been played through and approved. Story text was written by Claude and has not been reviewed by Jacob. Portrait images are placeholders. Balance is untested.
 
-**Story Popups**
-- Every action completion slides up a story beat from the bottom
-- `data/stories.json` — 60+ curated story beats, keyed to: day, wisdom, language level, who you've met, NPC stage
-- `js/stories.js` — condition-matching selector; catch-all fallback if no specific match
-- Popup shows NPC portrait header for visit/deep actions
-- Skipped when NPC first-meet modal is about to appear
-- Auto-dismisses after 6 seconds or tap to dismiss
+---
 
-**Language Barrier as Living UI**
-- Tab labels show 行動 / 人々 / 目標 at level 0, English at level 1+
-- Contacts HUD shows 知人 at level 0, "Contacts" at level 1+
-- NPC first-meet intros written in 3 language tiers (level 0 / 1 / 2+)
-  - Level 0: mostly Japanese, player catches a few words
-  - Level 1: mix of both
-  - Level 2+: full English exchange
+**NPC Reveal System** — ✅ mechanics solid
+- NPCs hidden until encountered; visit/deep action cards invisible until met
+- People tab shows empty state with hint when no NPCs met
+- Met NPC cards: portrait slot (image + kanji fallback), name EN+JP, stage, trust bar, advance hint
+- *No known issues — this one feels genuinely done*
 
-**Stat Multipliers**
-- Language level → bonus contacts on communication actions
-- Wisdom → bonus faith on spiritual actions
-- Language level → bonus NPC trust on visit/deep actions
-- Bonuses appear in story popup
+**Story Popups** — ⚠️ infrastructure done, content is a first draft
+- System: `data/stories.json` + `js/stories.js` condition-matching selector
+- 60+ story beats written covering all actions, NPC stages, day ranges, language levels
+- Popup slides up after action, shows NPC portrait for visit/deep actions, auto-dismisses 6s
+- **Not yet reviewed:** Jacob has not read through the story text. Quality is unknown. Some beats may feel generic or off-tone.
+- **Not yet played:** Whether the popup timing, frequency, and length feel right in practice is unknown
 
-**Portrait System Ready**
-- `assets/images/npcs/{kenji,yuki,hiro}.png` — add images, they appear everywhere automatically
-- Kanji fallback (健 / 由 / 浩) while no images exist
+**Language Barrier as Living UI** — ⚠️ mechanics done, content draft
+- Tab labels shift JP→EN at level 1 ✅
+- Contacts HUD label shifts 知人→Contacts at level 1 ✅
+- NPC first-meet intros have 3 language tiers (level 0 / 1 / 2+) written in — **text not reviewed**
+- Story popup text uses `langMin`/`langMax` conditions to show Japanese-heavy beats at low levels — **coverage is partial, not systematic**
+
+**Stat Multipliers** — ⚠️ coded, balance untested
+- Language level → bonus contacts on communication actions (×0.25 per level)
+- Wisdom → bonus faith on spiritual actions (wisdom/100 × base)
+- Language level → bonus trust on visit/deep actions (×0.2 per level)
+- **Not verified:** Whether these bonuses are noticeable but not game-breaking in practice
+
+**Portrait System** — ⚠️ infrastructure only, no real images
+- `assets/images/npcs/{kenji,yuki,hiro}.png` — system ready, images not sourced yet
+- Currently showing kanji fallback (健 / 由 / 浩) everywhere
 - See `assets/images/npcs/README.md` for free asset sources
 
 ---
