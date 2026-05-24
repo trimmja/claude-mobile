@@ -43,11 +43,13 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 ---
 
 ## What this project is
-A PWA idle/management game about being an American missionary in Tokyo, Japan.
+A PWA simulation game about being an American missionary in Tokyo, Japan.
 Built by someone with real missionary experience in Japan — authenticity matters.
 Playable on iPhone via GitHub Pages (Add to Home Screen as a standalone app).
 Dark theme, cherry blossom + gold palette, Japanese kanji in the UI that translates
 as the player's language skill grows.
+
+**Game model:** Turn-based **phase + time + energy** simulation (NOT a real-time idle game). Each day has three phases — Morning / Afternoon / Evening. Each phase has a **time budget** (default 6 units); when time runs out the phase auto-advances. Across the whole day you have an **energy budget** (default 14) that refills only at the next morning. Every action costs both time AND energy in different ratios. See `ROADMAP.md` for the full design direction and the multi-step plan (Steps 1–7).
 
 ## Live game
 Deploy via: GitHub repo → Settings → Pages → branch `claude/environment-selection-iphone-EohwW` → root
@@ -62,78 +64,102 @@ URL: `https://trimmja.github.io/japan-evangelistic-band/` (not `claude-mobile` �
 
 ## File map
 ```
-data/actions.json   — action durations, costs, rewards (plain English times)
-data/timing.json    — faith regen, day length, payday amount/interval
-data/stories.json   — story beat text keyed by action + conditions (editable content)
-data/README.md      — how to edit the JSON files
-index.html          — full game shell (all DOM structure, all IDs)
-css/style.css       — all styles (dark theme, cherry blossom + gold palette)
-js/main.js          — entry point: boot, intro screen, startGame(), engine hooks
-js/gameData.js      — loads data/*.json at startup
-js/parseDuration.js — "30 seconds" / "2 minutes" → milliseconds
-js/state.js         — single mutable state object (source of truth, imported everywhere)
-js/engine.js        — setInterval 1s tick loop; fires hooks for actions/days/milestones
-js/save.js          — localStorage save/load/reset (key: 'tokyo_called_v1')
-js/language.js      — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
-js/resources.js     — tick() passive regen, advanceTime(), spend(), gain()
-js/actions.js       — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, start/complete/cancel
-js/locations.js     — LOCATION_DEFS, LOCATION_ORDER, goTo()
-js/npcs.js          — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
-js/stories.js       — getStoryText(actionId, state) — picks story beat from stories.json
-js/milestones.js    — MILESTONE_DEFS, checkMilestones() (called each engine tick)
-js/audio.js         — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute()
-js/ui.js            — all DOM rendering + showStoryPopup(); renderFrame() called on rAF
-js/version.js       — APP_VERSION (bump when deploying); hardRefreshApp()
-manifest.json       — PWA config (display: standalone)
-sw.js               — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION
-assets/images/npcs/ — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
-PROGRESS.md         — what's been built, what's planned, ideas backlog
+ROADMAP.md            — design direction, locked decisions, multi-step roadmap (Steps 1–7)
+PROGRESS.md           — what's actually shipped, ideas backlog
+CHARACTERS.md         — NPC bios (read before any NPC change)
+data/actions.json     — action defs: timeCost, energyCost, energyReward, cost, reward, npcChance
+data/timing.json      — timePerPhase, energyPerDay, faithPerDay, payday config
+data/stories.json     — story beat text keyed by action + conditions (editable content)
+data/reflections.json — short reflection lines for the end-of-day screen
+data/README.md        — how to edit the JSON files
+index.html            — full game shell (all DOM structure, all IDs)
+css/style.css         — all styles (dark theme, cherry blossom + gold palette)
+js/main.js            — entry point: boot, intro screen, startGame(), engine hooks
+js/gameData.js        — loads data/*.json at startup
+js/state.js           — single mutable state object (source of truth, imported everywhere)
+js/engine.js          — event-driven engine: doAction, endPhase, endDay; hooks
+js/save.js            — localStorage save/load/reset (key: 'tokyo_called_v2')
+js/language.js        — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
+js/resources.js       — spend/gain (incl. spendTime + spendEnergy + refillTime + refillEnergyDaily)
+js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, hasFittingAction
+js/locations.js       — LOCATION_DEFS, LOCATION_ORDER (flavor only — not navigation)
+js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
+js/stories.js         — getStoryText(actionId, state) — picks story beat from stories.json
+js/reflections.js     — pickReflection() — random line for end-of-day screen
+js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
+js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute()
+js/ui.js              — all DOM rendering + phase strip + end-of-day screen; renderFrame() on rAF
+js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
+js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
+manifest.json         — PWA config (display: standalone)
+sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION
+assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
 ```
 
 ---
 
 ## Architecture
 
-### State → Engine → UI flow
-1. `js/state.js` exports one mutable `state` object. All modules import and mutate it directly.
-2. `js/engine.js` runs `setInterval(tick, 1000)`. Each tick: advances time, passive resource regen, checks if active action is complete, checks milestones. Fires hook callbacks into `main.js`.
-3. `js/main.js` wires hooks: `hooks.onActionComplete`, `hooks.onNewDay`, `hooks.onPayday`, `hooks.onMilestone`, `hooks.onNPCMeet`.
-4. `requestAnimationFrame(loop)` in `main.js` calls `renderFrame()` on every frame (~60fps). `renderFrame()` calls `renderHUD()`, `renderHeader()`, `renderActions()`, `renderActionBar()`.
-5. Heavy rebuilds (action list, NPC panel, milestones) only trigger when tracked values change.
+### Event-driven (no setInterval)
+The engine is event-driven. There is **no tick loop**. Actions resolve instantly when the player taps a card; phase transitions fire when time hits 0 (or the player taps End Phase); day transitions fire when the player taps Continue on the end-of-day screen.
 
-### Action completion flow
-`engine.js` detects timer expiry → calls `completeAction()` → returns `{ id, bonuses }` → engine calls `hooks.onActionComplete({ id, bonuses })` → `main.js` hook shows story popup (if no NPC meet pending) + triggers re-renders + saves.
+### Action flow
+1. UI → `bindActionList` click → `main.js` `handleAction(id)` → `engine.doAction(id)`
+2. `engine.doAction` calls `actions.js doAction` which: checks unlock → spends time → spends energy → spends other costs → applies rewards → updates dayLog → rolls NPC encounter.
+3. Engine fires hooks: `onActionComplete`, then `onNPCMeet` (if applicable), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each.
+4. Engine checks `state.time.remaining <= 0` → auto-calls `endPhase(true)`.
+5. `endPhase` fires `onBetweenPhases` (empty hook — future home for NPC moods/weather) + `onPhaseChange` to UI; refills time, does NOT refill energy. On evening end, sets `pendingEndOfDay` and fires `onEndOfDayReady` → UI shows reflection screen.
+6. `endDay` increments day, resets phase to morning, refills both time AND energy, restores small faith, runs payday check, runs milestone check.
+7. `requestAnimationFrame(loop)` in `main.js` calls `renderFrame()` ~60fps (HUD, header, phase strip, action list). Action list rebuild is gated by a cache key so it only rebuilds when something changed.
 
 ### State object shape
 ```js
 {
-  meta: { version: 1, saveDate: null },
+  meta: { version: 2, saveDate: null },
   character: { name: '' },
-  time: { day: 1, secondsPlayed: 0 },
+  time: {
+    day: 1,
+    phase: 'morning',          // 'morning' | 'afternoon' | 'evening' | 'reflecting'
+    actionsThisPhase: 0,
+    remaining: 6,              // time units left in current phase
+    max: 6,                    // from data/timing.json
+  },
   resources: {
-    faith:    { current: 50, max: 100 },  // passive regen configurable in timing.json
+    faith:    { current: 50, max: 100 },     // restored +faithPerDay at start of each day
     contacts: 0,
-    money:    { current: 300, nextPayday: 30 },
+    money:    { current: 300, nextPayday: 6 },
     wisdom:   0,
+    energy:   { current: 14, max: 14 },      // DAILY pool — refills only at start of new day
   },
-  language: { xp: 0, level: 0 },   // 0–5
-  location: 'apartment',
-  action: { id: null, startTime: null, duration: 0, label: '' },
+  language: { xp: 0, level: 0 },             // 0–5
+  location: 'apartment',                     // auto-updates to last-action's location (flavor)
   npcs: {
-    kenji: { met: false, trust: 0, stage: 0 },
-    yuki:  { met: false, trust: 0, stage: 0 },
-    hiro:  { met: false, trust: 0, stage: 0 },
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
   },
+  world: {},                                 // empty — placeholder for future weather/events (Step 4)
   milestones: { completed: [] },
-  stats: { converts: 0, actionsCompleted: 0, onsenVisited: false },
-  flags: { muted: false, pendingNPCMeet: null, pendingMilestone: null },
+  stats: { converts: 0, actionsCompleted: 0, onsenVisited: false, daysSurvived: 0 },
+  flags: {
+    muted: false,
+    pendingNPCMeet: null,
+    pendingMilestone: null,
+    pendingEndOfDay: false,                  // true → UI shows reflection screen
+  },
+  dayLog: { phases: { morning: [], afternoon: [], evening: [] } },  // rebuilt each day
 }
 ```
 
-### Timing
-- `advanceTime()` increments `state.time.secondsPlayed` each engine tick
-- `day = Math.floor(secondsPlayed / 60) + 1` → 1 in-game day = 60 real seconds
-- Monthly support fires when `state.time.day >= state.resources.money.nextPayday`
+### Time and energy
+- **Time** is per-phase. `state.time.remaining` ticks down from `state.time.max` (default 6) as actions are taken. When it hits 0, the phase auto-advances. Refilled at the start of each phase.
+- **Energy** is per-day. `state.resources.energy.current` ticks down from `.max` (default 14) across all three phases. Only refills at the start of a new day.
+- **Faith** is restored by +`faithPerDay` (default 3) at the start of each day. No per-tick regen anywhere.
+- **Payday** fires when `state.time.day >= state.resources.money.nextPayday` (default every 6 days).
+
+### Hooks for future steps (empty no-ops in Step 1)
+- `hooks.onBetweenPhases({ from, to })` — fires on each phase transition. Future home for NPC mood drift, weather re-rolls.
+- `hooks.onEndOfDay({ dayLog })` — fires before the reflection screen. Future home for emergent events (persecution, letters from home, NPC inter-interactions).
 
 ---
 
@@ -146,7 +172,7 @@ PROGRESS.md         — what's been built, what's planned, ideas backlog
 --text: #F0EDE8         /* warm white */
 --text-muted: #8080A8
 --text-dim: #454568
---sakura: #FF8FAB       /* cherry blossom pink — primary accent */
+--sakura: #FF8FAB       /* cherry blossom pink — primary accent; also time bar */
 --sakura-light: #FFB3C6
 --gold: #F0C040         /* gold — milestones, achievements */
 --faith: #A78BFA        /* purple */
@@ -154,6 +180,7 @@ PROGRESS.md         — what's been built, what's planned, ideas backlog
 --money: #FBBF24        /* amber */
 --wisdom: #60A5FA       /* blue */
 --lang: #FB7185         /* coral/red */
+--energy: #FCD34D       /* warm yellow — energy bar + ⚡ tags */
 --danger: #F87171
 --success: #34D399
 ```
@@ -163,16 +190,18 @@ Fonts: `Nunito` (English UI) + `Noto Sans JP` (Japanese text) — Google Fonts i
 
 ## Locations
 
-| ID | Tab icon | Tab label | Unlock condition | BG class |
-|----|----------|-----------|-----------------|----------|
-| apartment | 🏠 | アパート | always | bg-apartment (purple gradient) |
-| station   | 🚉 | 駅       | day >= 1        | bg-station (blue gradient) |
-| park      | 🌸 | 公園     | day >= 1        | bg-park (green gradient) |
-| cafe      | ☕ | カフェ   | wisdom >= 10    | bg-cafe (brown gradient) |
-| shrine    | ⛩️ | 神社     | day >= 3        | bg-shrine (red gradient) |
-| onsen     | ♨️ | 温泉     | contacts >= 30  | bg-onsen (teal gradient) |
+**Locations are flavor now, not navigation.** Each action card carries a location chip (e.g. `☕ Café`). The `.location-view` background image at the top of the screen reflects the **location of the last action you took** for atmospheric continuity.
 
-Location names: shown in JP kanji until language level >= 1, then English.
+| ID | Icon | JP | EN | BG class |
+|----|------|----|----|----------|
+| apartment | 🏠 | アパート | Your Apartment | bg-apartment (purple) |
+| station   | 🚉 | 駅       | Shinjuku Station | bg-station (blue) |
+| park      | 🌸 | 公園     | Yoyogi Park    | bg-park (green) |
+| cafe      | ☕ | カフェ   | English Café   | bg-cafe (brown) |
+| shrine    | ⛩️ | 神社     | Local Shrine   | bg-shrine (red) |
+| onsen     | ♨️ | 温泉     | Onsen          | bg-onsen (teal) |
+
+The previous per-location unlock conditions (e.g. café requires wisdom 10) are now baked into the individual **action** unlocks instead. E.g. `host_english` requires wisdom ≥ 10; the café-located action is hidden behind that, but the café "location" itself isn't gated.
 
 ---
 
@@ -192,18 +221,28 @@ XP thresholds: `[0, 20, 50, 80, 95, 100]`
 
 ## Actions (js/actions.js)
 
-All costs deducted at action START. Rewards at completion. One action at a time.
+Actions resolve **instantly** when tapped (with a brief CSS card-flash animation + story popup). Costs and rewards apply in the same call inside `doAction()`. No "in-flight" action state, no progress bar, no cancel.
 
-**Visibility vs. unlock:** Actions have two separate concepts:
+**Each action costs both time AND energy** (in different ratios — see `data/actions.json`). Time gates the phase, energy gates the day. Examples:
+- `pray` = 1 time, 0 energy (always-available filler)
+- `rest` = 3 time, +3 energy (half-phase recovery)
+- `open_air_preach` = 2 time, 3 energy (short + intense)
+- `visit_hiro` = 3 time, 1 energy (long + restful — Hiro is presence-based)
+- `host_english` = 4 time, 3 energy (whole evening)
+
+**Visibility vs. unlock vs. fits-now:** Actions have three separate concepts:
 - `visible()` — if false, card is completely hidden (NPC actions before NPC is met)
 - `unlocked()` — if false, card shows as locked/greyed with requirements visible
+- `disabled-time` / `disabled-energy` — visually dimmed when current time/energy can't afford the cost
 
-**Stat bonuses (applied in `completeAction()`):**
+**`hasFittingAction()`** in `actions.js` returns whether any visible+unlocked+affordable action exists. UI uses this to glow the End Phase button + show "— nothing more fits this phase —" nudge.
+
+**Stat bonuses (applied in `applyRewards()`):**
 - Communication actions (`hand_tracts`, `commuter_convo`, `casual_convo`, `host_english`): +contacts scaled to language level
 - Spiritual actions (`pray`, `study_scripture`, `observe_shrine`): +faith scaled to wisdom
-- NPC visit/deep actions: +trust scaled to language level
+- NPC visit/deep actions: +trust scaled to language level (langWeight)
 
-Adding a new action: entry in `data/actions.json` + rule in `ACTION_UNLOCK` + rule in `ACTION_VISIBLE` (if NPC-gated) + entry in `REQUIREMENT_BUILDERS` (if it has visible requirements) + name in `js/language.js` `ACTION_TEXT`.
+Adding a new action: entry in `data/actions.json` (with `timeCost` + `energyCost`) + rule in `ACTION_UNLOCK` + rule in `ACTION_VISIBLE` (if NPC-gated) + entry in `REQUIREMENT_BUILDERS` (if it has visible requirements) + name in `js/language.js` `ACTION_TEXT`.
 
 ---
 
@@ -295,35 +334,40 @@ Story beats are shown after every action completion (bottom-sheet popup).
 ## UI layout (index.html)
 
 ```
-[#story-popup]      — bottom-sheet; slides up after action complete; tap to dismiss
-[action-bar]        — hidden by default; shows active action progress + cancel button
+[#story-popup]      — bottom-sheet; slides up after action; tap to dismiss
+[#end-of-day]       — full-overlay reflection screen; appears when evening ends
 [game-header]       — character name | "Day N" | ⚙ settings button
-[.hud]              — 5 resource widgets: Faith ✦ | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
-[.location-view]    — 160px tall; CSS gradient bg + JP name + EN name overlaid
+[.hud]              — 6 resource widgets: Faith ✦ | Energy ⚡ N/M | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
+[.location-view]    — 160px tall; CSS gradient bg of last-action location + JP/EN name
 [.content-area]
-  [.content-tabs]   — tab labels shift JP→EN at language level 1
-  [#tab-actions]    — .action-list (rebuilt on location/action/NPC-met change)
+  [#tab-actions]    — phase strip (icon + ⏳ time bar + End Phase button) + nudge + action list
   [#tab-people]     — .people-list (only met NPCs; empty state if none) + contacts-summary
   [#tab-milestones] — .milestones-list (15 rows, gold when complete)
-[.location-tabs]    — bottom nav; 6 location buttons (locked ones dimmed)
-[#toast]            — fixed, bottom-center; slides up on milestone/payday
+[.content-tabs]     — bottom nav: Activities | People | Goals (replaces old location tabs)
+[#toast]            — fixed, bottom-center; slides up on milestone/payday/phase-auto-advance
 [#modal]            — full-screen overlay; NPC first meetings + reset confirm
 [#settings-overlay] — bottom sheet; mute + reset buttons
 ```
+
+**Phase strip** (top of Activities tab) shows: phase icon (☀️ Morning / 🌤 Afternoon / 🌙 Evening + JP), ⏳ time bar (pink, draining as actions are taken), End Phase button (glows when no action fits).
+
+**End-of-day screen** (`#end-of-day`) shows: "Day N" header, per-phase summary of actions taken, totals (actions / contacts / lang level / goals), one random reflection line from `data/reflections.json`, Continue button.
 
 ---
 
 ## Design decisions
 
+- **Turn-based, not real-time** — engine is event-driven; no `setInterval`. Days only advance when the player completes all three phases.
+- **Time and energy are different things** — time gates the phase (per-phase budget), energy gates the day (across-phase budget). Different actions cost them in different ratios. See `ROADMAP.md` Section 3 for the rationale.
+- **Pray as filler** — `pray` is 1 time, 0 energy, +faith. Always available; absorbs leftover time slots naturally so there's no "stuck with 1 time and nothing to do" corner case.
+- **Rest as sabbath** — `rest` is 3 time, 0 energy, +3 energy reward. Half-a-phase commitment for real recovery; can't be looped because of the time cost.
 - **NPC visibility** — NPC action cards are invisible until NPC is met (`ACTION_VISIBLE` in `actions.js`). Other gated actions show as locked with requirements.
 - **Story popup skips NPC meet** — `pendingNPCMeet` flag is checked; if set, story popup is suppressed so the NPC modal takes focus.
 - **Language barrier is a UI mechanic** — tab labels, HUD labels, NPC intro text all shift based on language level. Add more as the game grows.
 - **Stat bonuses are modest** — multipliers (lang × 0.25 × contacts, etc.) are noticeable but not game-breaking.
 - **Action requirements always visible** — gated actions show every unlock rule on the card. New gated actions need a `REQUIREMENT_BUILDERS` entry.
-- **Active-only** — no offline progress, secondsPlayed only increments while engine runs.
-- **One action at a time** — cancelling refunds half faith cost.
-- **Save** — auto-saves every 30 engine ticks + on every action complete.
-- **Version bump** — when deploying: bump `APP_VERSION` in `js/version.js`, `CACHE` in `sw.js`, and `?v=` param on script tag in `index.html`.
+- **Save** — auto-saves after every action, on every phase end, and on every day end. localStorage key `tokyo_called_v2`. Saves with `meta.version < 2` are wiped on load.
+- **Version bump** — when deploying: bump `APP_VERSION` in `js/version.js`, `CACHE` in `sw.js`, and `?v=` param on script tag in `index.html`. All three should match.
 
 ---
 
@@ -407,13 +451,16 @@ When adding a new NPC, do ALL of these:
 
 ## How to continue building
 
-- **Tune action balance**: edit `data/actions.json`, push, refresh
-- **Tune pacing**: edit `data/timing.json`, push, refresh
-- **Add/edit story text**: edit `data/stories.json` only — no JS needed
-- **Add an action**: entry in `data/actions.json` + `ACTION_UNLOCK` + `ACTION_VISIBLE` (if NPC-gated) + `REQUIREMENT_BUILDERS` + `ACTION_TEXT` in `language.js`
-- **Add NPC portrait**: drop `{npcId}.png` in `assets/images/npcs/` — appears everywhere automatically
-- **Add a location**: extend `LOCATION_DEFS` in `locations.js` + bg CSS class in `style.css`
-- **Add an NPC**: follow the New NPC checklist above — don't skip steps
-- **Add milestones**: extend `MILESTONE_DEFS` in `milestones.js`
-- **Add BGM**: load `<audio>` in `audio.js`, play on location change
-- **Add real location art**: set `background-image` on `.location-bg` elements in CSS
+- **Tune action balance**: edit `data/actions.json` (timeCost, energyCost, energyReward, cost.faith, reward.*), push, refresh.
+- **Tune day pacing**: edit `data/timing.json` (timePerPhase, energyPerDay, faithPerDay, paydayEveryDays), push, refresh.
+- **Add/edit story text**: edit `data/stories.json` only — no JS needed.
+- **Add/edit end-of-day reflection lines**: edit `data/reflections.json` (just an array of strings).
+- **Add an action**: entry in `data/actions.json` (with `timeCost` + `energyCost`) + `ACTION_UNLOCK` + `ACTION_VISIBLE` (if NPC-gated) + `REQUIREMENT_BUILDERS` (if it has visible requirements) + `ACTION_TEXT` in `language.js`.
+- **Add NPC portrait**: drop `{npcId}.png` in `assets/images/npcs/` — appears everywhere automatically.
+- **Add a location** (flavor): extend `LOCATION_DEFS` in `locations.js` + bg CSS class in `style.css`. Reference it as a string in any action's `location` field.
+- **Add an NPC**: follow the New NPC checklist above — don't skip steps.
+- **Add milestones**: extend `MILESTONE_DEFS` in `milestones.js`.
+- **Add BGM**: load `<audio>` in `audio.js`, play on phase change or day change.
+- **Add real location art**: set `background-image` on `.location-bg` elements in CSS.
+- **Add a new system that runs between phases** (NPC mood, weather, etc.): hook into `engine.hooks.onBetweenPhases` in `main.js`. The hook is wired but no-op in Step 1.
+- **Add a new system that runs at end of day** (events, persecution, etc.): hook into `engine.hooks.onEndOfDay` in `main.js`. Same — wired but no-op in Step 1.
