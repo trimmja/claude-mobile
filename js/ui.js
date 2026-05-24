@@ -734,11 +734,35 @@ export function bindSettings(onReset) {
 }
 
 // ─── FULL RENDER (called on rAF) ────────────────────────────────────────────
+// Each render is wrapped so a single throw doesn't kill the whole loop.
+// If one breaks, the others still update and the game stays responsive.
+function safeRender(name, fn) {
+  try { fn(); }
+  catch (e) {
+    console.error(`[render:${name}]`, e);
+    showDebugError(`${name}: ${e.message}`);
+  }
+}
+
 export function renderFrame() {
-  renderHUD();
-  renderHeader();
-  renderLocation();
-  renderPhaseStrip();
-  renderTravelRow();
-  renderActions();
+  safeRender('HUD',         renderHUD);
+  safeRender('Header',      renderHeader);
+  safeRender('Location',    renderLocation);
+  safeRender('PhaseStrip',  renderPhaseStrip);
+  safeRender('TravelRow',   renderTravelRow);
+  safeRender('Actions',     () => renderActions());
+}
+
+// Temporary visible debug — shows the last render error at the bottom of the
+// screen so it can be diagnosed on iPhone where there's no easy console.
+// Safe to remove once the travel-row mystery is resolved.
+let debugErrorEl = null;
+function showDebugError(msg) {
+  if (!debugErrorEl) {
+    debugErrorEl = document.createElement('div');
+    debugErrorEl.id = 'debug-error';
+    debugErrorEl.style.cssText = 'position:fixed;left:8px;right:8px;bottom:74px;z-index:9999;background:rgba(220,38,38,0.92);color:#fff;font:11px/1.4 monospace;padding:8px 10px;border-radius:6px;max-height:120px;overflow:auto;';
+    document.body.appendChild(debugErrorEl);
+  }
+  debugErrorEl.textContent = '[ERR] ' + msg;
 }
