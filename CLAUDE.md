@@ -40,6 +40,8 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 
 **3. Goal-driven execution** — Turn asks into verifiable goals (tests, repro steps, before/after checks). Multi-step work gets a short plan with a verify line per step. Prefer strong success criteria over "make it work."
 
+**4. No conflicting cost+reward on the same stat** — Never define an action that both costs AND rewards the same resource (e.g. `cost.faith: 5, reward.faith: 3` is forbidden — that's a net-negative on faith). If an action is meant to grow a stat, the cost goes to a *different* stat (time, energy, money, etc.). If it's meant to drain a stat, no reward on that stat. This rule applies to every action in `data/actions.json` and any future action definitions. Caught once on `study_scripture` — don't reintroduce.
+
 ---
 
 ## What this project is
@@ -71,6 +73,7 @@ data/actions.json     — action defs: timeCost, energyCost, energyReward, cost,
 data/timing.json      — timePerPhase, energyPerDay, faithPerDay, payday config
 data/stories.json     — story beat text keyed by action + conditions (editable content)
 data/reflections.json — short reflection lines for the end-of-day screen
+data/stageAdvances.json — text shown when an NPC advances to a new relationship stage (per NPC, per stage)
 data/README.md        — how to edit the JSON files
 index.html            — full game shell (all DOM structure, all IDs)
 css/style.css         — all styles (dark theme, cherry blossom + gold palette)
@@ -82,13 +85,16 @@ js/save.js            — localStorage save/load/reset (key: 'tokyo_called_v2')
 js/language.js        — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
 js/resources.js       — spend/gain (incl. spendTime + spendEnergy + refillTime + refillEnergyDaily)
 js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, hasFittingAction
-js/locations.js       — LOCATION_DEFS, LOCATION_ORDER (flavor only — not navigation)
+js/locations.js       — LOCATION_DEFS, LOCATION_ORDER, TRAVEL_COSTS, travelTo() — real navigation, see "Travel" section
 js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
 js/stories.js         — getStoryText(actionId, state) — picks story beat from stories.json
 js/reflections.js     — pickReflection() — random line for end-of-day screen
 js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
+js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
+js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
 js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute()
 js/ui.js              — all DOM rendering + phase strip + end-of-day screen; renderFrame() on rAF
+js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
 js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
 js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
 manifest.json         — PWA config (display: standalone)
@@ -103,10 +109,19 @@ assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallb
 ### Event-driven (no setInterval)
 The engine is event-driven. There is **no tick loop**. Actions resolve instantly when the player taps a card; phase transitions fire when time hits 0 (or the player taps End Phase); day transitions fire when the player taps Continue on the end-of-day screen.
 
+### Notification queue (`js/notifications.js`)
+All player-facing events — story popups, NPC first-meet modal, stage-advance moments, milestone toasts, payday toasts, phase auto-advance toasts, end-of-day overlay — go through a single queue. The queue shows ONE event at a time; the next event does not fire until the current one is dismissed (tap, button, or auto-timeout).
+
+- **Renderers** are registered in `main.js` (`registerNotificationRenderer(type, fn)`) — each renderer takes the event payload and a `done()` callback it must invoke when its UI is dismissed.
+- **Enqueue** with `enqueueNotification({ type, ...payload })` — engine hooks in `main.js` do this instead of calling `showToast/showStoryPopup/showModal` directly.
+- **Why this exists:** Without the queue, end-of-day overlay would cover a story popup and the popup would only surface again after the day had already advanced. The queue enforces strict FIFO order.
+- **Registered types:** `story`, `toast`, `npcMeet`, `endOfDay`. Future: `journalEntry` (Step D), `unlockNotice` (Step F).
+- **Queue is in-memory only** — on page reload the in-flight queue is lost. Persistent flags like `pendingEndOfDay` survive in save and re-enqueue on boot.
+
 ### Action flow
 1. UI → `bindActionList` click → `main.js` `handleAction(id)` → `engine.doAction(id)`
 2. `engine.doAction` calls `actions.js doAction` which: checks unlock → spends time → spends energy → spends other costs → applies rewards → updates dayLog → rolls NPC encounter.
-3. Engine fires hooks: `onActionComplete`, then `onNPCMeet` (if applicable), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each.
+3. Engine fires hooks in order: `onActionComplete`, then `onNPCMeet` (if NPC first-met this action), then `onNPCStageAdvance` (for each stage advance queued by `addNPCTrust`), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each. The story popup is suppressed if a first-meet or stage advance is about to fire — those bigger moments take precedence.
 4. Engine checks `state.time.remaining <= 0` → auto-calls `endPhase(true)`.
 5. `endPhase` fires `onBetweenPhases` (empty hook — future home for NPC moods/weather) + `onPhaseChange` to UI; refills time, does NOT refill energy. On evening end, sets `pendingEndOfDay` and fires `onEndOfDayReady` → UI shows reflection screen.
 6. `endDay` increments day, resets phase to morning, refills both time AND energy, restores small faith, runs payday check, runs milestone check.
@@ -140,12 +155,16 @@ The engine is event-driven. There is **no tick loop**. Actions resolve instantly
   },
   world: {},                                 // empty — placeholder for future weather/events (Step 4)
   milestones: { completed: [] },
+  journal: [],                               // append-only: { id, day, phase, icon, title, body, type, npcId? }
   stats: { converts: 0, actionsCompleted: 0, onsenVisited: false, daysSurvived: 0 },
   flags: {
     muted: false,
     pendingNPCMeet: null,
     pendingMilestone: null,
     pendingEndOfDay: false,                  // true → UI shows reflection screen
+    pendingStageAdvances: [],                // [{ npcId, newStage }] — drained by engine after each action
+    pendingLangLevelUp: 0,                   // 0 if none; otherwise new level — drained by engine
+    unreadJournalCount: 0,                   // badge on Journal tab; resets when player taps it
   },
   dayLog: { phases: { morning: [], afternoon: [], evening: [] } },  // rebuilt each day
 }
@@ -190,7 +209,9 @@ Fonts: `Nunito` (English UI) + `Noto Sans JP` (Japanese text) — Google Fonts i
 
 ## Locations
 
-**Locations are flavor now, not navigation.** Each action card carries a location chip (e.g. `☕ Café`). The `.location-view` background image at the top of the screen reflects the **location of the last action you took** for atmospheric continuity.
+**Locations are real now — `state.location` is where you ARE.** Actions are filtered by it (a station action only appears when you're at the station). The `.location-view` background reflects your current location.
+
+You change location with **Travel** — see the Travel section below.
 
 | ID | Icon | JP | EN | BG class |
 |----|------|----|----|----------|
@@ -216,6 +237,33 @@ XP thresholds: `[0, 20, 50, 80, 95, 100]`
 - Level 5: full fluency
 
 `TAB_LABELS` exported from `language.js` — used by `renderHUD()` to update tab text when level changes.
+
+---
+
+## Travel (js/locations.js)
+
+Travel is how `state.location` changes. It costs **time only** (never energy). Cost is destination-based and independent of where you came from:
+
+| Destination | Time |
+|-------------|------|
+| Apartment (home) | 1 |
+| Station | 1 |
+| Shrine | 1 |
+| Café | 2 |
+| Park (Yoyogi) | 2 |
+| Onsen | 3 |
+
+**Where you wake up:** `engine.endDay()` resets `state.location = 'apartment'` — each new morning starts at home.
+
+**Travel UI:** Top of the Activities tab shows a `📍 You are at: …` header and a row of `Travel to …` buttons (one per other location, with ⏳cost). Disabled when you can't afford the cost. Tapping a button calls `engine.doTravel(locId)`.
+
+**People-tab tap-to-visit:** Each met NPC card has "Visit" and (if unlocked) "Heart-to-Heart" buttons. Tapping handles travel automatically: if the relevant action's location differs from `state.location`, travel runs first, then the action runs. Button shows `→ ☕ ⏳2` chip when travel is needed.
+
+**Action filtering:** `allVisibleActions()` filters by `state.location`. An action's `location` field must equal `state.location` for the card to appear. A `null` location means "available anywhere" — currently only `pray` (1 time / 0 energy filler — missionaries pray everywhere).
+
+**Actions no longer auto-update location.** The old auto-set in `doAction` is removed; only `doTravel()` writes to `state.location`.
+
+**The `hasFittingAction()` shortcut:** Returns true if there's at least 1 time left (since travel costs 1 minimum, you can always go somewhere). Only returns false when the time bar is genuinely empty.
 
 ---
 
@@ -309,6 +357,26 @@ Story beats are shown after every action completion (bottom-sheet popup).
 
 ---
 
+## Journal (js/journal.js)
+
+Append-only record of important moments in the player's missionary life. Rendered on the bottom-nav "Journal" tab. Empty at start of a new game.
+
+**Entries are added automatically** in response to engine events:
+- **Milestone unlock** (`onMilestone`) — every milestone becomes a journal entry
+- **NPC first-meet** (`onNPCMeet`) — body = the lang-tiered intro text
+- **NPC stage advance** (`onNPCStageAdvance`) — body = the stage-advance moment text from `data/stageAdvances.json`
+- **Language level-up** (`onLangLevelUp`) — body = a short flavor line
+
+Entries don't trigger their own notifications — the engine event that produced them already does (toast / modal / popup). The Journal tab badge ("(N)" suffix on the tab label) is the persistent indicator that fresh entries are waiting. Tapping the tab calls `markJournalRead()` and resets the badge to 0.
+
+**Entry shape:** `{ id, day, phase, icon, title, body, type, npcId? }` — `id` is the dedupe key (same id never appears twice).
+
+**Backfill on load:** Saves made before the journal existed have an empty `state.journal`. On load, `save.js` backfills entries for every completed milestone with placeholder day=1/phase=morning (real day isn't recoverable from historical data).
+
+**To add a new journal-triggering event:** wire it in `js/main.js` next to the existing hooks: `addJournalEntry({...})` + `renderJournal()`. The Journal tab DOM is rebuilt on hook so even if the tab is currently visible, new entries appear immediately.
+
+---
+
 ## Milestones (js/milestones.js)
 
 | ID | Icon | Name | Trigger |
@@ -342,8 +410,8 @@ Story beats are shown after every action completion (bottom-sheet popup).
 [.content-area]
   [#tab-actions]    — phase strip (icon + ⏳ time bar + End Phase button) + nudge + action list
   [#tab-people]     — .people-list (only met NPCs; empty state if none) + contacts-summary
-  [#tab-milestones] — .milestones-list (15 rows, gold when complete)
-[.content-tabs]     — bottom nav: Activities | People | Goals (replaces old location tabs)
+  [#tab-journal]    — .journal-list (empty on day 1; entries added on milestones, NPC meets, stage advances, lang level-ups; tap to expand body)
+[.content-tabs]     — bottom nav: Activities | People | Journal (📖 — shows "(N)" badge when there are unread entries)
 [#toast]            — fixed, bottom-center; slides up on milestone/payday/phase-auto-advance
 [#modal]            — full-screen overlay; NPC first meetings + reset confirm
 [#settings-overlay] — bottom sheet; mute + reset buttons

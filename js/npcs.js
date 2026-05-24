@@ -173,10 +173,28 @@ export function addNPCTrust(npcId, amount) {
     if (npc.trust >= needed && cond()) {
       npc.stage++;
       if (npc.stage === 5) state.stats.converts++;
-      return true; // stage advanced
+      // queue a stage-advance moment for the engine to fire after the action settles
+      state.flags.pendingStageAdvances.push({ npcId, newStage: npc.stage });
+      return true;
     }
   }
   return false;
+}
+
+// ─── Stage-advance moments ──────────────────────────────────────────────────
+// Text shown when an NPC reaches a new stage. Loaded from data/stageAdvances.json.
+let STAGE_ADVANCE_TEXT = {};
+
+export function initStageAdvancesFromData(data) {
+  STAGE_ADVANCE_TEXT = {};
+  for (const [npcId, byStage] of Object.entries(data || {})) {
+    if (npcId.startsWith('_')) continue;
+    STAGE_ADVANCE_TEXT[npcId] = byStage;
+  }
+}
+
+export function getStageAdvanceText(npcId, stage) {
+  return STAGE_ADVANCE_TEXT[npcId]?.[String(stage)] || null;
 }
 
 export function metNPCCount() {

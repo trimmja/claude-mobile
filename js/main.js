@@ -7,18 +7,22 @@ import {
 } from './version.js';
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
-import { doAction, endPhase, endDay, hooks } from './engine.js';
+import { doAction, doTravel, endPhase, endDay, hooks } from './engine.js';
 import * as audio from './audio.js';
 import { ACTION_DEFS } from './actions.js';
 import { getStoryText } from './stories.js';
+import { NPC_DEFS, getStageAdvanceText, getIntroText } from './npcs.js';
+import { addJournalEntry } from './journal.js';
 import { refillTime, refillEnergyDaily } from './resources.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
-  renderActions, renderPeople, renderMilestones,
-  showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup,
-  bindContentTabs, bindSettings, bindActionList, bindEndPhase,
-  flashActionCard, showEndOfDayScreen,
+  renderActions, renderPeople, renderJournal, invalidateTravelRow,
+  showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup, bindJournalList,
+  bindContentTabs, bindSettings, bindActionList, bindEndPhase, bindTravelRow,
+  bindPeopleList, flashActionCard, showEndOfDayScreen,
 } from './ui.js';
+import { enqueueNotification, registerNotificationRenderer } from './notifications.js';
+import { silentBackfillUnlocks } from './unlocks.js';
 
 window._audio = audio;
 
@@ -57,6 +61,9 @@ async function boot() {
   }
 
   const hasSaved = loadGame();
+
+  // For existing v16-or-earlier saves loading v17: don't fire retroactive unlock toasts.
+  if (hasSaved) silentBackfillUnlocks();
 
   if (hasSaved && state.character.name) {
     startGame();
@@ -108,6 +115,9 @@ function startGame() {
   bindContentTabs();
   bindSettings(resetGame);
   bindStoryPopup();
+  bindJournalList();
+  bindTravelRow(handleTravel);
+  bindPeopleList(handleNpcAction);
 
   // Click an action card → run it
   bindActionList(handleAction);
@@ -115,26 +125,99 @@ function startGame() {
   // End-phase button
   bindEndPhase(handleEndPhase);
 
-  // Wire engine hooks
+  // ─── Notification renderers ────────────────────────────────────────────────
+  // Every renderer must call `done()` when its UI is dismissed so the queue advances.
+  registerNotificationRenderer('story', (e, done) => {
+    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, done);
+  });
+  registerNotificationRenderer('toast', (e, done) => {
+    showToast(e.icon, e.title, e.desc, done);
+  });
+  registerNotificationRenderer('npcMeet', (e, done) => {
+    showNPCMeetModal(e.npcId, done);
+  });
+  registerNotificationRenderer('endOfDay', (e, done) => {
+    showEndOfDayScreen(() => { handleEndDay(); done(); });
+  });
+
+  // ─── Engine hooks → enqueue notifications ──────────────────────────────────
   hooks.onActionComplete = ({ id, bonuses }) => {
     audio.playActionComplete();
     flashActionCard(id);
 
-    // Show story popup unless an NPC first-meet is about to pop
-    if (!state.flags.pendingNPCMeet) {
-      const text = getStoryText(id, state);
-      if (text) {
-        const def = ACTION_DEFS[id];
-        const visitMatch = id.match(/^(?:visit|deep)_(\w+)$/);
-        const npcId = visitMatch ? visitMatch[1] : null;
-        showStoryPopup(text, def?.icon, npcId, bonuses);
-      }
+    // Skip the routine story popup if a bigger moment is about to land:
+    // NPC first-meet modal, or NPC stage advance. Those will take the stage.
+    const willMeetNPC      = !!state.flags.pendingNPCMeet;
+    const willAdvanceStage = state.flags.pendingStageAdvances.length > 0;
+    if (willMeetNPC || willAdvanceStage) return;
+
+    const text = getStoryText(id, state);
+    if (text) {
+      const def = ACTION_DEFS[id];
+      const visitMatch = id.match(/^(?:visit|deep)_(\w+)$/);
+      const npcId = visitMatch ? visitMatch[1] : null;
+      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses });
     }
+  };
+
+  hooks.onNPCStageAdvance = ({ npcId, newStage }) => {
+    const def = NPC_DEFS[npcId];
+    if (!def) return;
+    const stageName = def.stages[newStage] || `Stage ${newStage}`;
+    const moment    = getStageAdvanceText(npcId, newStage);
+    const headline  = `✨ ${def.name} is now ${stageName}.`;
+    const text      = moment ? `${headline} ${moment}` : headline;
+    audio.playMilestone();
+    addJournalEntry({
+      id: `stage_${npcId}_${newStage}`,
+      icon: '✨',
+      title: `${def.name} — ${stageName}`,
+      body: moment || headline,
+      type: 'stageAdvance',
+      npcId,
+    });
+    renderJournal();
+    enqueueNotification({ type: 'story', text, icon: '✨', npcId, bonuses: null });
+  };
+
+  hooks.onLangLevelUp = (newLevel) => {
+    addJournalEntry({
+      id: `lang_${newLevel}`,
+      icon: '語',
+      title: `Japanese Level ${newLevel}`,
+      body: `Your Japanese has reached level ${newLevel}. The world translates a little more.`,
+      type: 'langLevelUp',
+    });
+    renderJournal();
+    enqueueNotification({
+      type: 'toast',
+      icon: '語',
+      title: `Japanese Level ${newLevel}`,
+      desc: 'You understand more now.',
+    });
+  };
+
+  hooks.onEndOfDayReady = () => {
+    enqueueNotification({ type: 'endOfDay' });
+  };
+
+  hooks.onNewDay = () => {
+    renderHeader();
+    renderPhaseStrip();
+    renderActions(true);
+    invalidateTravelRow();
+  };
+
+  hooks.onTravel = () => {
+    invalidateTravelRow();
+    renderActions(true);
+    renderPeople();
   };
 
   hooks.onPhaseChange = ({ to, auto }) => {
     renderPhaseStrip();
     renderActions(true);
+    invalidateTravelRow();
     if (auto) {
       const labels = {
         morning:   ['☀️', 'Morning',   'A new morning begins'],
@@ -142,42 +225,48 @@ function startGame() {
         evening:   ['🌙', 'Evening',   'The day is winding down'],
       };
       const [icon, title, desc] = labels[to] || ['•', to, ''];
-      showToast(icon, title, desc);
+      enqueueNotification({ type: 'toast', icon, title, desc });
     }
-  };
-
-  hooks.onEndOfDayReady = () => {
-    // Small delay so the last story popup has a beat to settle visually
-    setTimeout(() => {
-      showEndOfDayScreen(handleEndDay);
-    }, 200);
-  };
-
-  hooks.onNewDay = () => {
-    renderHeader();
-    renderPhaseStrip();
-    renderActions(true);
   };
 
   hooks.onPayday = () => {
     audio.playPayday();
-    showToast('💰', 'Support Arrived', '+¥500 from your home church');
+    enqueueNotification({ type: 'toast', icon: '💰', title: 'Support Arrived', desc: '+¥500 from your home church' });
   };
 
   hooks.onMilestone = (def) => {
     audio.playMilestone();
-    showToast(def.icon, def.name, def.desc || '');
-    renderMilestones();
+    addJournalEntry({
+      id: `milestone_${def.id}`,
+      icon: def.icon,
+      title: def.name,
+      body: def.desc || `You reached this milestone.`,
+      type: 'milestone',
+    });
+    renderJournal();
+    enqueueNotification({ type: 'toast', icon: def.icon, title: def.name, desc: def.desc || '' });
   };
 
   hooks.onNPCMeet = (npcId) => {
     audio.playNPCMeet();
-    showNPCMeetModal(npcId);
+    const def = NPC_DEFS[npcId];
+    if (def) {
+      addJournalEntry({
+        id: `meet_${npcId}`,
+        icon: def.emoji || '👤',
+        title: `Met ${def.name}`,
+        body: getIntroText(npcId),
+        type: 'npcMeet',
+        npcId,
+      });
+      renderJournal();
+    }
+    enqueueNotification({ type: 'npcMeet', npcId });
   };
 
   // If we loaded into a pending end-of-day state, show the screen immediately.
   if (state.flags.pendingEndOfDay) {
-    showEndOfDayScreen(handleEndDay);
+    enqueueNotification({ type: 'endOfDay' });
   }
 
   // rAF render loop
@@ -197,12 +286,23 @@ function handleAction(actionId) {
   audio.playTap();
 }
 
-function handleEndPhase() {
-  endPhase();
+function handleTravel(locId) {
+  const result = doTravel(locId);
+  if (!result.ok) return;
+  audio.playTap();
 }
 
-function handleEndDay() {
-  endDay();
+// People-tab action: if the NPC's action is at a different location, travel first, then act.
+// Travel and action are independent — travel may succeed and the action then fail for energy
+// reasons; that's intentional (you committed to going). UI prevents clicks unless both fit.
+function handleNpcAction(actionId) {
+  const def = ACTION_DEFS[actionId];
+  if (!def) return;
+  if (def.location && def.location !== state.location) {
+    const travelResult = doTravel(def.location);
+    if (!travelResult.ok) return;
+  }
+  handleAction(actionId);
 }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { MILESTONE_DEFS } from './milestones.js';
 
 const KEY = 'tokyo_called_v2';
 const LEGACY_KEYS = ['tokyo_called_v1'];
@@ -70,12 +71,35 @@ export function loadGame() {
 
     state.world = saved.world || {};
     state.milestones.completed = saved.milestones?.completed || [];
+    state.journal = Array.isArray(saved.journal) ? saved.journal : [];
+
+    // Backfill journal from completed milestones for saves made before the journal existed.
+    // Day/phase aren't recoverable for historical milestones — use day 1, morning as a placeholder.
+    if (state.journal.length === 0 && state.milestones.completed.length > 0) {
+      state.milestones.completed.forEach(milestoneId => {
+        const def = MILESTONE_DEFS.find(m => m.id === milestoneId);
+        if (!def) return;
+        state.journal.push({
+          id: `milestone_${def.id}`,
+          day: 1,
+          phase: 'morning',
+          icon: def.icon,
+          title: def.name,
+          body: def.desc || 'You reached this milestone.',
+          type: 'milestone',
+        });
+      });
+    }
     Object.assign(state.stats, saved.stats || {});
     Object.assign(state.flags, {
       muted: saved.flags?.muted || false,
       pendingNPCMeet: null,
       pendingMilestone: null,
       pendingEndOfDay: saved.flags?.pendingEndOfDay || false,
+      pendingStageAdvances: [],
+      pendingLangLevelUp: 0,
+      unreadJournalCount: saved.flags?.unreadJournalCount ?? 0,
+      notifiedUnlocks: Array.isArray(saved.flags?.notifiedUnlocks) ? saved.flags.notifiedUnlocks : [],
     });
     state.location = saved.location || 'apartment';
     state.dayLog = saved.dayLog || { phases: { morning: [], afternoon: [], evening: [] } };

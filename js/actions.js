@@ -80,6 +80,7 @@ export function actionUnlockCacheKey() {
     state.resources.wisdom,
     state.resources.contacts,
     state.resources.energy.current,
+    state.location,
     `k:${n.kenji.met}:${n.kenji.stage}`,
     `y:${n.yuki.met}:${n.yuki.stage}`,
     `h:${n.hiro.met}:${n.hiro.stage}`,
@@ -142,10 +143,14 @@ const REQUIREMENT_BUILDERS = {
   deep_hiro: () => [reqMet('hiro'), reqFriendStage('hiro')],
 };
 
-// All visible activity IDs, in stable order — locations become flavor not nav.
+// All visible activity IDs, in stable order.
+// Filtered by current location — actions whose `location` differs from `state.location`
+// are hidden. Actions with no `location` (null) are always shown (location-agnostic, like global help).
 export function allVisibleActions() {
+  const here = state.location;
   return Object.entries(ACTION_DEFS)
     .filter(([, def]) => def.visible())
+    .filter(([, def]) => def.location == null || def.location === here)
     .map(([id]) => id);
 }
 
@@ -184,7 +189,8 @@ export function doAction(actionId) {
   state.stats.actionsCompleted++;
   state.time.actionsThisPhase++;
 
-  if (def.location) state.location = def.location;
+  // Note: state.location is NOT updated here. Location only changes via travelTo().
+  // Actions are filtered by the player's current location (see allVisibleActions).
 
   if (def.npcChance) {
     const { id: npcId, chance } = def.npcChance;
@@ -214,14 +220,26 @@ export function doAction(actionId) {
   };
 }
 
-// Does the player have at least one available action that fits remaining time + energy?
-// Used by UI to nudge End Phase when nothing else can be done.
+// Does the player have at least one available action OR a travel option that fits remaining time + energy?
+// Used by UI to nudge End Phase when nothing else can be done. With travel as a real option,
+// you almost always have *something* you could do (travel home costs 1 time), so this only returns
+// false when time is literally exhausted.
 export function hasFittingAction() {
   const t = state.time.remaining;
   const e = state.resources.energy.current;
+  const here = state.location;
+
+  // Any travel destination affordable? (cheapest = 1 time)
+  if (t >= 1) {
+    // If we have at least 1 time and there's any location other than current, travel is possible.
+    // (The actual destinations have varied costs but the minimum is 1.)
+    return true;
+  }
+
   return Object.values(ACTION_DEFS).some(def => {
     if (!def.visible()) return false;
     if (!def.unlocked()) return false;
+    if (def.location != null && def.location !== here) return false;
     if (def.timeCost > t) return false;
     if (def.energyCost > e) return false;
     if (def.cost?.faith  && state.resources.faith.current  < def.cost.faith)  return false;

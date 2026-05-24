@@ -31,6 +31,10 @@ export const state = {
 
   milestones: { completed: [] },
 
+  // Player-facing journal — append-only record of important moments.
+  // Each entry: { id, day, phase, icon, title, body, type, npcId? }
+  journal: [],
+
   stats: {
     converts: 0,
     actionsCompleted: 0,
@@ -43,6 +47,10 @@ export const state = {
     pendingNPCMeet: null,
     pendingMilestone: null,
     pendingEndOfDay: false,
+    pendingStageAdvances: [],   // [{ npcId, newStage }] — drained after action by engine
+    pendingLangLevelUp: 0,      // 0 if none; otherwise the new level — drained by engine
+    unreadJournalCount: 0,      // resets when player taps the Journal tab
+    notifiedUnlocks: [],        // action IDs already announced as unlocked (dedupe)
   },
 
   dayLog: { phases: { morning: [], afternoon: [], evening: [] } },

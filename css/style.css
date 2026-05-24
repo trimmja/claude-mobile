@@ -824,7 +824,124 @@ input { user-select: text; }
   margin-top: 4px;
 }
 
-/* ─── MILESTONES ─── */
+/* ─── TRAVEL ROW ─── */
+.travel-row {
+  margin: 6px 0 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid rgba(255,143,171,0.18);
+  border-radius: var(--radius-sm);
+}
+
+.travel-here {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.travel-here-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.travel-here-name  { font-size: 14px; color: var(--sakura-light); font-weight: 700; }
+
+.travel-dests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.travel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.travel-btn:active:not(:disabled) { background: var(--surface-3); }
+.travel-btn.disabled-time { opacity: 0.4; cursor: not-allowed; }
+.travel-btn-icon { font-size: 15px; }
+.travel-btn-name { font-weight: 600; }
+.travel-btn-cost { font-size: 11px; color: var(--text-muted); }
+
+/* ─── NPC ACTION BUTTONS (People tab) ─── */
+.npc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.npc-act-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 10px;
+  background: var(--surface-3);
+  border: 1px solid rgba(255,143,171,0.25);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.npc-act-btn:active:not(:disabled) { background: var(--surface-2); }
+.npc-act-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.npc-act-label { font-weight: 700; color: var(--sakura-light); }
+.npc-act-meta  { font-size: 10px; color: var(--text-muted); display: inline-flex; gap: 6px; }
+.npc-act-travel { color: var(--text-dim); }
+
+/* ─── JOURNAL ─── */
+.journal-list { display: flex; flex-direction: column; gap: 8px; }
+
+.journal-empty {
+  text-align: center;
+  padding: 36px 18px;
+  color: var(--text-muted);
+}
+.journal-empty .empty-icon { font-size: 36px; margin-bottom: 12px; }
+.journal-empty p { font-size: 14px; line-height: 1.7; margin: 0; }
+.journal-empty-sub { font-size: 12px !important; color: var(--text-dim); margin-top: 8px !important; font-style: italic; }
+
+.journal-row {
+  background: var(--surface);
+  border: 1px solid rgba(240,192,64,0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.journal-row:active { background: var(--surface-2); }
+.journal-row.open { border-color: rgba(240,192,64,0.55); }
+
+.journal-row .j-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+}
+.journal-row .j-icon { font-size: 22px; width: 28px; text-align: center; flex-shrink: 0; }
+.journal-row .j-meta { flex: 1; min-width: 0; }
+.journal-row .j-title { font-size: 14px; font-weight: 700; color: var(--gold); line-height: 1.3; }
+.journal-row .j-day { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.journal-row .j-chevron { font-size: 14px; color: var(--text-dim); flex-shrink: 0; }
+
+.journal-row .j-body {
+  display: none;
+  padding: 0 14px 14px 54px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.7;
+}
+.journal-row.open .j-body { display: block; }
+
+/* ─── MILESTONES (legacy — kept for any straggler references; not rendered) ─── */
 .milestones-list { display: flex; flex-direction: column; gap: 6px; }
 
 .milestone-row {

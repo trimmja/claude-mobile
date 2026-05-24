@@ -1,0 +1,24 @@
+{
+  "_readme": "Stage-advance moments per NPC per stage. Triggered when an NPC's stage increases. Stage index matches NPC_DEFS.stages (0=Stranger, 1=Acquaintance, 2=Friend, 3=Open, 4=Studying, 5=Believer). Index 0 is never used (it's the starting stage, not an advancement).",
+  "kenji": {
+    "1": "Kenji nods at you across the station platform now. He remembers your face.",
+    "2": "Kenji is no longer formal with you. He stays longer, talks more, lets things slip.",
+    "3": "Kenji has started asking real questions — the kind you only ask people you trust.",
+    "4": "Kenji has asked to read scripture with you. He brings a notebook and writes everything down.",
+    "5": "Kenji has put his trust in Christ. He says it quietly, like he's afraid of breaking something. The first of many, you pray."
+  },
+  "yuki": {
+    "1": "Yuki LINEs you a question from her notebook. The first of many.",
+    "2": "Yuki shows up to events with friends now. She's introducing you.",
+    "3": "Yuki has started reading the Bible — Japanese and English side by side. She has questions she's been saving.",
+    "4": "Yuki is studying the Gospel of John with you weekly. She marks every page.",
+    "5": "Yuki believes. 'God couldn't just send a message,' she says. 'He had to come.' She understands the Incarnation in a way that undoes her."
+  },
+  "hiro": {
+    "1": "Hiro brings you coffee from the vending machine without asking now. He pays.",
+    "2": "Hiro tells you Emiko's name. He tells you she prayed.",
+    "3": "Hiro has asked you if the dead can hear us. He wasn't asking philosophically.",
+    "4": "Hiro is reading Emiko's Bible with you. He keeps her bookmarks where she left them.",
+    "5": "Hiro asked you to pray out loud. He closed his eyes. 'I think she prayed like that,' he said."
+  }
+}

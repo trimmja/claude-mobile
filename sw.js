@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v16';
+const CACHE = 'jeb-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './data/timing.json',
   './data/stories.json',
   './data/reflections.json',
+  './data/stageAdvances.json',
   './js/main.js',
   './js/version.js',
   './js/state.js',
@@ -24,6 +25,9 @@ const ASSETS = [
   './js/ui.js',
   './js/stories.js',
   './js/reflections.js',
+  './js/notifications.js',
+  './js/journal.js',
+  './js/unlocks.js',
 ];
 
 self.addEventListener('install', () => {

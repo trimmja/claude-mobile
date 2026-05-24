@@ -2,7 +2,7 @@
   "_readme": "Phase + time + energy model. timeCost = time units consumed in current phase (out of timePerPhase). energyCost = energy from daily pool (out of energyPerDay). energyReward = energy restored (rest). Time and energy diverge intentionally — some actions are short+intense (open_air_preach), some long+restful (sit with Hiro).",
   "actions": {
     "pray": {
-      "location": "apartment",
+      "location": null,
       "icon": "🙏",
       "timeCost": 1,
       "energyCost": 0,
@@ -23,8 +23,8 @@
       "icon": "📖",
       "timeCost": 2,
       "energyCost": 1,
-      "cost": { "faith": 5 },
-      "reward": { "wisdom": 8, "faith": 3 }
+      "cost": {},
+      "reward": { "wisdom": 8, "faith": 5 }
     },
     "study_japanese": {
       "location": "apartment",

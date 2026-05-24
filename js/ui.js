@@ -3,13 +3,13 @@ import {
   ACTION_DEFS, allVisibleActions, getActionRequirements, actionUnlockCacheKey,
   hasFittingAction,
 } from './actions.js';
-import { LOCATION_DEFS } from './locations.js';
+import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo, currentLocation } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
-import { MILESTONE_DEFS, completedCount } from './milestones.js';
 import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
 import { playTap } from './audio.js';
 import { APP_VERSION, hardRefreshApp } from './version.js';
 import { pickReflection } from './reflections.js';
+import { getJournalEntries, markJournalRead, unreadJournalCount } from './journal.js';
 
 // ─── DOM refs ───────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -22,6 +22,7 @@ const el = (tag, cls, html) => {
 
 // ─── HUD ────────────────────────────────────────────────────────────────────
 let lastLangLevelForUI = -1;
+let lastUnreadForUI    = -1;
 
 export function renderHUD() {
   const e = state.resources.energy;
@@ -37,18 +38,24 @@ export function renderHUD() {
   const pips = document.querySelectorAll('.lang-pip');
   pips.forEach((pip, i) => pip.classList.toggle('filled', i < lv));
 
-  if (lv !== lastLangLevelForUI) {
+  const unread = unreadJournalCount();
+  if (lv !== lastLangLevelForUI || unread !== lastUnreadForUI) {
     lastLangLevelForUI = lv;
+    lastUnreadForUI    = unread;
     updateLanguageLabels(lv);
   }
 }
 
 function updateLanguageLabels(lv) {
+  const unread = unreadJournalCount();
   document.querySelectorAll('.content-tab').forEach(tab => {
     const name = tab.dataset.tab;
     const text = TAB_LABELS[name];
     const lblEl = tab.querySelector('.content-tab-lbl');
-    if (text && lblEl) lblEl.textContent = lv >= 1 ? text.en : text.jp;
+    if (!text || !lblEl) return;
+    let label = lv >= 1 ? text.en : text.jp;
+    if (name === 'journal' && unread > 0) label += ` (${unread})`;
+    lblEl.textContent = label;
   });
   const cl = $('hud-contacts-lbl');
   if (cl) cl.textContent = lv >= 1 ? 'Contacts' : '知人';
@@ -112,6 +119,58 @@ export function renderPhaseStrip() {
     nudge.classList.toggle('hidden', !noFit);
   }
 }
+
+// ─── TRAVEL ROW ─────────────────────────────────────────────────────────────
+let lastTravelKey = '';
+
+export function renderTravelRow() {
+  const row = $('travel-row');
+  if (!row) return;
+
+  const t = state.time.remaining;
+  const key = `${state.location}|${t}`;
+  if (key === lastTravelKey) return;
+  lastTravelKey = key;
+
+  row.innerHTML = '';
+
+  const here = currentLocation();
+  const header = el('div', 'travel-here',
+    `<span class="travel-here-label">📍 You are at</span>
+     <span class="travel-here-name">${here.icon} ${here.nameEN}</span>`);
+  row.appendChild(header);
+
+  const dests = el('div', 'travel-dests');
+  LOCATION_ORDER.forEach(locId => {
+    if (locId === state.location) return;
+    const def  = LOCATION_DEFS[locId];
+    const cost = travelCostTo(locId);
+    const canAfford = t >= cost;
+    const btn = el('button',
+      'travel-btn' + (canAfford ? '' : ' disabled-time'),
+      `<span class="travel-btn-icon">${def.icon}</span>
+       <span class="travel-btn-name">${def.nameEN}</span>
+       <span class="travel-btn-cost">⏳${cost}</span>`);
+    btn.dataset.travelTo = locId;
+    if (!canAfford) btn.disabled = true;
+    dests.appendChild(btn);
+  });
+  row.appendChild(dests);
+}
+
+export function bindTravelRow(onTravel) {
+  const row = $('travel-row');
+  if (!row) return;
+  row.addEventListener('click', e => {
+    const btn = e.target.closest('.travel-btn');
+    if (!btn || btn.disabled) return;
+    const locId = btn.dataset.travelTo;
+    if (locId) onTravel(locId);
+  });
+}
+
+// Force the travel row to rebuild on next render (used after location changes).
+export function invalidateTravelRow() { lastTravelKey = ''; }
 
 // ─── ACTIONS LIST ───────────────────────────────────────────────────────────
 let lastUnlockKey = '';
@@ -269,6 +328,20 @@ export function renderPeople() {
       const hint = getStageAdvanceHint(id);
       if (hint) info.appendChild(el('div', 'npc-advance-hint', hint));
 
+      // Interact buttons — auto-travel + run the action
+      const actions = el('div', 'npc-actions');
+      const visitId = `visit_${id}`;
+      const deepId  = `deep_${id}`;
+      const visitDef = ACTION_DEFS[visitId];
+      const deepDef  = ACTION_DEFS[deepId];
+      if (visitDef) {
+        actions.appendChild(buildNpcActionBtn(visitId, visitDef, 'Visit'));
+      }
+      if (deepDef && deepDef.unlocked()) {
+        actions.appendChild(buildNpcActionBtn(deepId, deepDef, 'Heart-to-Heart'));
+      }
+      info.appendChild(actions);
+
       card.appendChild(avatar);
       card.appendChild(info);
       list.appendChild(card);
@@ -280,6 +353,44 @@ export function renderPeople() {
     <div class="contacts-big">${state.resources.contacts}</div>
     <div class="contacts-sub">Total Contacts</div>
   `;
+}
+
+function buildNpcActionBtn(actionId, def, label) {
+  const locDef = LOCATION_DEFS[def.location];
+  const here = state.location;
+  const needsTravel = def.location && def.location !== here;
+  const travelCost  = needsTravel ? travelCostTo(def.location) : 0;
+  const totalTime   = (def.timeCost || 0) + travelCost;
+
+  const t = state.time.remaining;
+  const e = state.resources.energy.current;
+  const faithOK = !def.cost?.faith  || state.resources.faith.current  >= def.cost.faith;
+  const moneyOK = !def.cost?.money  || state.resources.money.current  >= def.cost.money;
+  const wisdomOK = !def.cost?.wisdom || state.resources.wisdom        >= def.cost.wisdom;
+  const affordable = t >= totalTime && e >= (def.energyCost || 0) && faithOK && moneyOK && wisdomOK;
+
+  const btn = el('button', 'npc-act-btn' + (affordable ? '' : ' disabled'));
+  btn.dataset.npcAction = actionId;
+  btn.innerHTML = `
+    <span class="npc-act-label">${label}</span>
+    <span class="npc-act-meta">
+      ${needsTravel ? `<span class="npc-act-travel">→ ${locDef?.icon || ''} ⏳${travelCost}</span>` : ''}
+      <span class="npc-act-cost">⏳${def.timeCost}${def.energyCost ? ` ⚡${def.energyCost}` : ''}</span>
+    </span>
+  `;
+  if (!affordable) btn.disabled = true;
+  return btn;
+}
+
+export function bindPeopleList(onNpcAction) {
+  const list = $('people-list');
+  if (!list) return;
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('.npc-act-btn');
+    if (!btn || btn.disabled) return;
+    const actionId = btn.dataset.npcAction;
+    if (actionId) onNpcAction(actionId);
+  });
 }
 
 function buildNpcAvatar(npcId, def, className) {
@@ -295,27 +406,58 @@ function buildNpcAvatar(npcId, def, className) {
   return wrap;
 }
 
-// ─── MILESTONES TAB ──────────────────────────────────────────────────────────
-export function renderMilestones() {
-  const list = $('milestones-list');
+// ─── JOURNAL TAB ────────────────────────────────────────────────────────────
+const PHASE_SHORT = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', reflecting: 'Evening' };
+const expandedJournalIds = new Set();
+
+export function renderJournal() {
+  const list = $('journal-list');
+  if (!list) return;
   list.innerHTML = '';
 
-  const done  = completedCount();
-  const total = MILESTONE_DEFS.length;
+  const entries = getJournalEntries();
+  if (entries.length === 0) {
+    list.appendChild(el('div', 'journal-empty',
+      `<div class="empty-icon">📖</div>
+       <p>Your journal is empty.</p>
+       <p class="journal-empty-sub">Important moments will be recorded here as you live them.</p>`
+    ));
+    return;
+  }
 
-  const header = el('div', 'milestones-header');
-  header.innerHTML = `<div class="milestones-count"><span>${done}</span> / ${total} completed</div>`;
-  list.appendChild(header);
-
-  MILESTONE_DEFS.forEach(def => {
-    const completed = state.milestones.completed.includes(def.id);
-    const row = el('div', 'milestone-row' + (completed ? ' done' : ''));
+  entries.forEach(entry => {
+    const isOpen = expandedJournalIds.has(entry.id);
+    const row = el('div', 'journal-row' + (isOpen ? ' open' : ''));
+    row.dataset.entryId = entry.id;
+    const phaseLabel = PHASE_SHORT[entry.phase] || '';
     row.innerHTML = `
-      <span class="m-icon">${def.icon}</span>
-      <span class="m-name">${def.name}${def.desc ? '<br><small style="font-weight:400;font-size:11px;color:var(--text-dim)">' + def.desc + '</small>' : ''}</span>
-      ${completed ? '<span class="m-check">✓</span>' : ''}
+      <div class="j-summary">
+        <span class="j-icon">${entry.icon || '·'}</span>
+        <div class="j-meta">
+          <div class="j-title">${entry.title}</div>
+          <div class="j-day">Day ${entry.day}${phaseLabel ? ' · ' + phaseLabel : ''}</div>
+        </div>
+        <span class="j-chevron">${isOpen ? '▾' : '▸'}</span>
+      </div>
+      <div class="j-body">${entry.body || ''}</div>
     `;
     list.appendChild(row);
+  });
+}
+
+// Tap-to-expand handler — wired once at boot.
+export function bindJournalList() {
+  const list = $('journal-list');
+  if (!list) return;
+  list.addEventListener('click', e => {
+    const row = e.target.closest('.journal-row');
+    if (!row) return;
+    const id = row.dataset.entryId;
+    if (!id) return;
+    if (expandedJournalIds.has(id)) expandedJournalIds.delete(id);
+    else                            expandedJournalIds.add(id);
+    renderJournal();
+    playTap();
   });
 }
 
@@ -329,8 +471,8 @@ export function bindContentTabs() {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
       $('tab-' + name).classList.remove('hidden');
 
-      if (name === 'people')     renderPeople();
-      if (name === 'milestones') renderMilestones();
+      if (name === 'people')  renderPeople();
+      if (name === 'journal') { markJournalRead(); renderJournal(); }
       playTap();
     });
   });
@@ -358,8 +500,9 @@ export function bindEndPhase(onEndPhase) {
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer = null;
+let toastOnDismiss = null;
 
-export function showToast(icon, title, desc = '') {
+export function showToast(icon, title, desc = '', onDismiss = null) {
   const toast = $('toast');
   $('toast-icon').textContent  = icon;
   $('toast-title').textContent = title;
@@ -367,14 +510,22 @@ export function showToast(icon, title, desc = '') {
 
   toast.classList.add('show');
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+  toastOnDismiss = onDismiss;
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    const cb = toastOnDismiss;
+    toastOnDismiss = null;
+    if (cb) cb();
+  }, 2800);
 }
 
 // ─── STORY POPUP ─────────────────────────────────────────────────────────────
 let storyPopupTimer = null;
+let storyPopupOnDismiss = null;
 
-export function showStoryPopup(text, icon, npcId, bonuses) {
-  if (!text) return;
+export function showStoryPopup(text, icon, npcId, bonuses, onDismiss = null) {
+  if (!text) { if (onDismiss) onDismiss(); return; }
+  storyPopupOnDismiss = onDismiss;
 
   const popup     = $('story-popup');
   const textEl    = $('story-popup-text');
@@ -419,6 +570,9 @@ export function showStoryPopup(text, icon, npcId, bonuses) {
 function dismissStoryPopup() {
   $('story-popup').classList.add('hidden');
   if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
+  const cb = storyPopupOnDismiss;
+  storyPopupOnDismiss = null;
+  if (cb) cb();
 }
 
 export function bindStoryPopup() {
@@ -502,7 +656,7 @@ export function showModal(html, onClose) {
   });
 }
 
-export function showNPCMeetModal(npcId) {
+export function showNPCMeetModal(npcId, onDismiss = null) {
   const def      = NPC_DEFS[npcId];
   const introText = getIntroText(npcId);
 
@@ -525,6 +679,7 @@ export function showNPCMeetModal(npcId) {
   `, () => {
     renderPeople();
     renderActions(true);
+    if (onDismiss) onDismiss();
   });
 }
 
@@ -584,5 +739,6 @@ export function renderFrame() {
   renderHeader();
   renderLocation();
   renderPhaseStrip();
+  renderTravelRow();
   renderActions();
 }

@@ -34,9 +34,9 @@ export const ACTION_TEXT = {
 
 // UI labels that shift to Japanese at language level 0
 export const TAB_LABELS = {
-  actions:    { jp: '行動', en: 'Actions' },
-  people:     { jp: '人々', en: 'People' },
-  milestones: { jp: '目標', en: '★ Goals' },
+  actions: { jp: '行動', en: 'Actions' },
+  people:  { jp: '人々', en: 'People' },
+  journal: { jp: '日記', en: 'Journal' },
 };
 
 export function langLevel() { return state.language.level; }
@@ -63,6 +63,7 @@ export function locName(id) {
 export function actionText(id) { return ACTION_TEXT[id] || { jp: id, en: id }; }
 
 // Adds XP, updates level. Returns true if leveled up.
+// On level-up, sets state.flags.pendingLangLevelUp so the engine can fire onLangLevelUp.
 export function addLangXP(amount) {
   if (state.language.level >= 5) return false;
   const oldLevel = state.language.level;
@@ -73,6 +74,7 @@ export function addLangXP(amount) {
   }
   if (newLevel > oldLevel) {
     state.language.level = newLevel;
+    state.flags.pendingLangLevelUp = newLevel;
     return true;
   }
   return false;

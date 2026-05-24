@@ -5,7 +5,9 @@
 import { state } from './state.js';
 import { refillTime, refillEnergyDaily, applyStartOfDayFaith, checkPayday } from './resources.js';
 import { doAction as runAction } from './actions.js';
+import { travelTo } from './locations.js';
 import { checkMilestones } from './milestones.js';
+import { checkUnlocks } from './unlocks.js';
 import { saveGame } from './save.js';
 
 const PHASE_ORDER = ['morning', 'afternoon', 'evening'];
@@ -23,7 +25,9 @@ export const hooks = {
   onPayday:          null, // () => void
   onMilestone:       null, // (milestoneDef) => void
   onNPCMeet:         null, // (npcId) => void
+  onNPCStageAdvance: null, // ({ npcId, newStage }) => void
   onLangLevelUp:     null, // (level) => void
+  onTravel:          null, // ({ from, to, cost }) => void
 };
 
 export function doAction(actionId) {
@@ -40,6 +44,24 @@ export function doAction(actionId) {
     state.flags.pendingNPCMeet = null;
   }
 
+  // Fire NPC stage advances queued by addNPCTrust during applyRewards.
+  // Process in FIFO order; clear the queue once drained.
+  if (state.flags.pendingStageAdvances.length > 0) {
+    const advances = state.flags.pendingStageAdvances.splice(0);
+    for (const adv of advances) hooks.onNPCStageAdvance?.(adv);
+  }
+
+  // Language level-up queued by addLangXP during applyRewards.
+  if (state.flags.pendingLangLevelUp > 0) {
+    const newLevel = state.flags.pendingLangLevelUp;
+    state.flags.pendingLangLevelUp = 0;
+    hooks.onLangLevelUp?.(newLevel);
+  }
+
+  // Action unlocks may have flipped (e.g., wisdom just crossed 10 → host_english).
+  // Check before milestones so unlock toasts queue before milestone toasts.
+  checkUnlocks();
+
   let m;
   while ((m = checkMilestones())) hooks.onMilestone?.(m);
 
@@ -48,6 +70,22 @@ export function doAction(actionId) {
     endPhase(true);
   }
 
+  saveGame();
+  return result;
+}
+
+// Travel to a location. Spends time, changes state.location. Auto-advances phase if time runs out.
+// Returns the same shape as travelTo from locations.js: { ok, reason?, cost? }.
+export function doTravel(targetLoc) {
+  const from = state.location;
+  const result = travelTo(targetLoc);
+  if (!result.ok) return result;
+
+  hooks.onTravel?.({ from, to: targetLoc, cost: result.cost });
+
+  if (state.time.remaining <= 0) {
+    endPhase(true);
+  }
   saveGame();
   return result;
 }
@@ -98,6 +136,7 @@ export function endDay() {
   state.time.actionsThisPhase = 0;
   state.flags.pendingEndOfDay = false;
   state.dayLog = { phases: { morning: [], afternoon: [], evening: [] } };
+  state.location = 'apartment';                  // wake up at home each new day
 
   applyStartOfDayFaith();
   refillTime();
@@ -105,6 +144,10 @@ export function endDay() {
 
   hooks.onNewDay?.(state.time.day);
   if (checkPayday()) hooks.onPayday?.();
+
+  // Day-based unlocks (e.g., observe_shrine on day 3) and stat-based unlocks tied
+  // to day start (faith refill, etc.) may have flipped.
+  checkUnlocks();
 
   let m;
   while ((m = checkMilestones())) hooks.onMilestone?.(m);
