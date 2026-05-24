@@ -1,14 +1,14 @@
 import { state } from './state.js';
 import {
-  ACTION_DEFS, actionsForLocation, actionProgress, startAction, cancelAction,
-  getActionRequirements, actionUnlockCacheKey,
+  ACTION_DEFS, allVisibleActions, getActionRequirements, actionUnlockCacheKey,
 } from './actions.js';
-import { LOCATION_DEFS, LOCATION_ORDER, goTo } from './locations.js';
+import { LOCATION_DEFS } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
 import { MILESTONE_DEFS, completedCount } from './milestones.js';
-import { locText, actionText, langLevel, langProgress, TAB_LABELS } from './language.js';
+import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
 import { playTap } from './audio.js';
 import { APP_VERSION, hardRefreshApp } from './version.js';
+import { pickReflection } from './reflections.js';
 
 // ─── DOM refs ───────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -24,6 +24,7 @@ let lastLangLevelForUI = -1;
 
 export function renderHUD() {
   $('res-faith').textContent    = Math.floor(state.resources.faith.current);
+  $('res-energy').textContent   = state.resources.energy.current;
   $('res-contacts').textContent = state.resources.contacts;
   $('res-money').textContent    = '¥' + Math.floor(state.resources.money.current);
   $('res-wisdom').textContent   = Math.floor(state.resources.wisdom);
@@ -31,13 +32,9 @@ export function renderHUD() {
   const lv = langLevel();
   $('res-lang').textContent = 'Lv.' + lv;
 
-  // Language pips (5 pips)
   const pips = document.querySelectorAll('.lang-pip');
-  pips.forEach((pip, i) => {
-    pip.classList.toggle('filled', i < lv);
-  });
+  pips.forEach((pip, i) => pip.classList.toggle('filled', i < lv));
 
-  // Language-aware UI labels — only update when level changes
   if (lv !== lastLangLevelForUI) {
     lastLangLevelForUI = lv;
     updateLanguageLabels(lv);
@@ -45,13 +42,12 @@ export function renderHUD() {
 }
 
 function updateLanguageLabels(lv) {
-  // Content tab labels
   document.querySelectorAll('.content-tab').forEach(tab => {
     const name = tab.dataset.tab;
     const text = TAB_LABELS[name];
-    if (text) tab.textContent = lv >= 1 ? text.en : text.jp;
+    const lblEl = tab.querySelector('.content-tab-lbl');
+    if (text && lblEl) lblEl.textContent = lv >= 1 ? text.en : text.jp;
   });
-  // Contacts HUD label
   const cl = $('hud-contacts-lbl');
   if (cl) cl.textContent = lv >= 1 ? 'Contacts' : '知人';
 }
@@ -68,7 +64,7 @@ export function renderLocation() {
   if (state.location === lastLocation) return;
   lastLocation = state.location;
 
-  const def   = LOCATION_DEFS[state.location];
+  const def   = LOCATION_DEFS[state.location] || LOCATION_DEFS.apartment;
   const texts = locText(state.location);
   const bg    = $('location-bg');
 
@@ -78,158 +74,152 @@ export function renderLocation() {
   $('location-name-en').textContent = texts.en;
 }
 
-// ─── LOCATION TABS ──────────────────────────────────────────────────────────
-export function renderLocationTabs() {
-  const nav = $('location-tabs');
-  nav.innerHTML = '';
+// ─── PHASE STRIP ────────────────────────────────────────────────────────────
+const PHASE_DISPLAY = {
+  morning:    { icon: '☀️', en: 'Morning',    jp: '朝' },
+  afternoon:  { icon: '🌤', en: 'Afternoon',  jp: '昼' },
+  evening:    { icon: '🌙', en: 'Evening',    jp: '夜' },
+  reflecting: { icon: '✨', en: 'Reflecting', jp: '振り返り' },
+};
 
-  LOCATION_ORDER.forEach(id => {
-    const def    = LOCATION_DEFS[id];
-    const locked = !def.unlocked();
-    const btn    = el('button', 'loc-tab' + (locked ? ' locked-tab' : '') + (state.location === id ? ' active' : ''));
-    btn.innerHTML = `<span class="loc-tab-icon">${def.tabIcon}</span><span class="loc-tab-lbl">${def.tabLabel}</span>`;
-    if (!locked) {
-      btn.addEventListener('click', () => {
-        if (state.location !== id) {
-          goTo(id);
-          renderLocation();
-          renderLocationTabs();
-          renderActions();
-          playTap();
-        }
-      });
-    } else {
-      btn.title = def.unlockHint ? 'Unlock: ' + def.unlockHint : 'Locked';
-    }
-    nav.appendChild(btn);
-  });
-}
+export function renderPhaseStrip() {
+  const phase = state.time.phase;
+  const d = PHASE_DISPLAY[phase] || PHASE_DISPLAY.morning;
+  $('phase-icon').textContent    = d.icon;
+  $('phase-name-en').textContent = d.en;
+  $('phase-name-jp').textContent = d.jp;
 
-// ─── ACTION BAR (top) ───────────────────────────────────────────────────────
-export function renderActionBar() {
-  const bar = $('action-bar');
-  if (!state.action.id) {
-    bar.classList.add('hidden');
-    return;
+  const e = state.resources.energy;
+  $('energy-count').textContent = `${e.current}/${e.max}`;
+  const pct = e.max > 0 ? (e.current / e.max) * 100 : 0;
+  $('energy-bar-fill').style.width = pct + '%';
+
+  // End-phase label hints at what's next
+  const btn = $('end-phase-btn');
+  if (btn) {
+    if (phase === 'morning')        btn.textContent = 'End Morning →';
+    else if (phase === 'afternoon') btn.textContent = 'End Afternoon →';
+    else if (phase === 'evening')   btn.textContent = 'End Evening →';
+    else                            btn.textContent = '…';
+    // Soft warning style when no actions taken yet
+    btn.classList.toggle('warn', state.time.actionsThisPhase === 0);
   }
-  bar.classList.remove('hidden');
-
-  const prog  = actionProgress();
-  const texts = actionText(state.action.id);
-
-  $('action-bar-label').textContent = texts.en;
-  $('action-bar-fill').style.width  = (prog * 100).toFixed(1) + '%';
 }
 
 // ─── ACTIONS LIST ───────────────────────────────────────────────────────────
-let lastActionLocation = null;
-let lastActionId       = null;
-let lastMetCount       = -1;
-let lastUnlockKey      = '';
+let lastUnlockKey = '';
+let lastPhase     = '';
+let lastMetCount  = -1;
 
-export function renderActions() {
-  const list    = $('action-list');
-  const locId   = state.location;
-  const activeId = state.action.id;
+export function renderActions(force = false) {
+  const list = $('action-list');
+  const unlockKey = actionUnlockCacheKey();
+  const phase = state.time.phase;
   const metCount = Object.values(state.npcs).filter(n => n.met).length;
 
-  const unlockKey = actionUnlockCacheKey();
+  if (!force && unlockKey === lastUnlockKey && phase === lastPhase && metCount === lastMetCount) return;
+  lastUnlockKey = unlockKey;
+  lastPhase     = phase;
+  lastMetCount  = metCount;
 
-  if (locId !== lastActionLocation || activeId !== lastActionId || metCount !== lastMetCount || unlockKey !== lastUnlockKey) {
-    lastActionLocation = locId;
-    lastActionId       = activeId;
-    lastMetCount       = metCount;
-    lastUnlockKey      = unlockKey;
-    list.innerHTML = '';
+  list.innerHTML = '';
 
-    const ids = actionsForLocation(locId);
-    if (ids.length === 0) {
-      list.appendChild(el('div', 'empty-state', '<div class="empty-icon">🤫</div><p>Nothing to do here yet.</p>'));
-      return;
-    }
-
-    ids.forEach(id => {
-      const def    = ACTION_DEFS[id];
-      const texts  = actionText(id);
-      const isActive = activeId === id;
-      const isLocked = !def.unlocked();
-      const isDisabled = !isActive && !!activeId;
-
-      const card = el('div', [
-        'action-card',
-        isActive   ? 'is-active'  : '',
-        isLocked   ? 'locked'     : '',
-        isDisabled ? 'disabled'   : '',
-      ].filter(Boolean).join(' '));
-
-      const iconEl = el('div', 'action-icon', def.icon);
-      const infoEl = el('div', 'action-info');
-
-      const jpEl = el('div', 'action-name-jp', texts.jp);
-      const enEl = el('div', 'action-name-en', texts.en);
-      infoEl.appendChild(jpEl);
-      infoEl.appendChild(enEl);
-
-      const meta = el('div', 'action-meta');
-      if (def.cost?.faith)  meta.appendChild(el('span', 'tag tag-cost',  '-' + def.cost.faith  + ' Faith'));
-      if (def.cost?.money)  meta.appendChild(el('span', 'tag tag-cost',  '-¥' + def.cost.money));
-      if (def.reward?.faith)    meta.appendChild(el('span', 'tag tag-faith',  '+' + def.reward.faith   + ' Faith'));
-      if (def.reward?.contacts) meta.appendChild(el('span', 'tag tag-trust',  '+' + def.reward.contacts + ' contacts'));
-      if (def.reward?.wisdom)   meta.appendChild(el('span', 'tag tag-wisdom', '+' + def.reward.wisdom   + ' wisdom'));
-      if (def.reward?.langXP)   meta.appendChild(el('span', 'tag tag-lang',   '+lang'));
-      if (def.reward?.npcTrust) meta.appendChild(el('span', 'tag tag-trust',  '+trust'));
-      meta.appendChild(el('span', 'tag tag-time', fmtDuration(def.duration)));
-      infoEl.appendChild(meta);
-
-      const requirements = getActionRequirements(id);
-      if (requirements?.length) {
-        const reqBox = el('div', 'action-requirements');
-        requirements.forEach(req => {
-          reqBox.appendChild(el(
-            'div',
-            'action-req-line' + (req.met ? ' met' : ' unmet'),
-            (req.met ? '✓ ' : '○ ') + req.label + ' — ' + req.detail,
-          ));
-        });
-        infoEl.appendChild(reqBox);
-      }
-
-      const progBar = el('div', 'action-prog');
-      progBar.style.width = '0%';
-
-      card.appendChild(iconEl);
-      card.appendChild(infoEl);
-      card.appendChild(progBar);
-
-      if (!isLocked && !isDisabled && !isActive) {
-        card.addEventListener('click', () => {
-          if (startAction(id)) {
-            playTap();
-            renderActions();
-            renderActionBar();
-          }
-        });
-      }
-
-      list.appendChild(card);
-    });
+  const ids = allVisibleActions();
+  if (ids.length === 0) {
+    list.appendChild(el('div', 'empty-state', '<div class="empty-icon">🤫</div><p>Nothing to do here yet.</p>'));
+    return;
   }
 
-  // Update progress bar on active card without rebuilding
-  if (activeId) {
-    const prog = actionProgress();
-    const bar  = list.querySelector('.action-card.is-active .action-prog');
-    if (bar) bar.style.width = (prog * 100).toFixed(1) + '%';
-  }
+  // Sort: unlocked first, then locked
+  ids.sort((a, b) => {
+    const ua = ACTION_DEFS[a].unlocked() ? 0 : 1;
+    const ub = ACTION_DEFS[b].unlocked() ? 0 : 1;
+    return ua - ub;
+  });
+
+  ids.forEach(id => {
+    list.appendChild(buildActionCard(id));
+  });
 }
 
-// ─── CANCEL BUTTON ──────────────────────────────────────────────────────────
-export function bindCancelButton() {
-  $('action-cancel').addEventListener('click', () => {
-    cancelAction();
-    renderActions();
-    renderActionBar();
-  });
+function buildActionCard(id) {
+  const def    = ACTION_DEFS[id];
+  const texts  = actionText(id);
+  const isLocked = !def.unlocked();
+  const energy = state.resources.energy.current;
+  const cost   = def.energyCost ?? 0;
+  const isDisabledEnergy = !isLocked && cost > 0 && energy < cost;
+
+  const card = el('div', [
+    'action-card',
+    isLocked         ? 'locked'          : '',
+    isDisabledEnergy ? 'disabled-energy' : '',
+  ].filter(Boolean).join(' '));
+  card.dataset.actionId = id;
+
+  const iconEl = el('div', 'action-icon', def.icon || '·');
+  const infoEl = el('div', 'action-info');
+
+  infoEl.appendChild(el('div', 'action-name-jp', texts.jp));
+  infoEl.appendChild(el('div', 'action-name-en', texts.en));
+
+  const meta = el('div', 'action-meta');
+
+  // Location chip
+  const locDef = def.location ? LOCATION_DEFS[def.location] : null;
+  if (locDef) {
+    const chip = el('span', 'location-chip');
+    chip.innerHTML = `<span class="lc-icon">${locDef.icon}</span> ${locDef.nameEN}`;
+    meta.appendChild(chip);
+  }
+
+  // Energy cost / reward
+  if (cost > 0) {
+    meta.appendChild(el('span', 'tag tag-energy', '⚡ ' + cost));
+  } else if (def.energyReward) {
+    meta.appendChild(el('span', 'tag tag-energy-up', '+⚡ ' + def.energyReward));
+  }
+  if (cost > 0 && def.energyReward) {
+    meta.appendChild(el('span', 'tag tag-energy-up', '+⚡ ' + def.energyReward));
+  }
+
+  if (def.cost?.faith)      meta.appendChild(el('span', 'tag tag-cost',   '-' + def.cost.faith + ' Faith'));
+  if (def.cost?.money)      meta.appendChild(el('span', 'tag tag-cost',   '-¥' + def.cost.money));
+  if (def.reward?.faith)    meta.appendChild(el('span', 'tag tag-faith',  '+' + def.reward.faith   + ' Faith'));
+  if (def.reward?.contacts) meta.appendChild(el('span', 'tag tag-trust',  '+' + def.reward.contacts + ' contacts'));
+  if (def.reward?.wisdom)   meta.appendChild(el('span', 'tag tag-wisdom', '+' + def.reward.wisdom   + ' wisdom'));
+  if (def.reward?.langXP)   meta.appendChild(el('span', 'tag tag-lang',   '+lang'));
+  if (def.reward?.npcTrust) meta.appendChild(el('span', 'tag tag-trust',  '+trust'));
+
+  infoEl.appendChild(meta);
+
+  const requirements = getActionRequirements(id);
+  if (requirements?.length) {
+    const reqBox = el('div', 'action-requirements');
+    requirements.forEach(req => {
+      reqBox.appendChild(el(
+        'div',
+        'action-req-line' + (req.met ? ' met' : ' unmet'),
+        (req.met ? '✓ ' : '○ ') + req.label + ' — ' + req.detail,
+      ));
+    });
+    infoEl.appendChild(reqBox);
+  }
+
+  card.appendChild(iconEl);
+  card.appendChild(infoEl);
+
+  return card;
+}
+
+// Briefly pulse the card that was just used.
+export function flashActionCard(actionId) {
+  const card = document.querySelector(`.action-card[data-action-id="${actionId}"]`);
+  if (!card) return;
+  card.classList.remove('flash');
+  // force reflow so the animation can restart
+  void card.offsetWidth;
+  card.classList.add('flash');
 }
 
 // ─── PEOPLE TAB ─────────────────────────────────────────────────────────────
@@ -240,7 +230,6 @@ export function renderPeople() {
   const metNPCs = Object.entries(NPC_DEFS).filter(([id]) => state.npcs[id].met);
 
   if (metNPCs.length === 0) {
-    // Empty state — nobody met yet
     list.appendChild(el('div', 'empty-state',
       '<div class="empty-icon">🌆</div>' +
       '<p>Tokyo is full of people.<br>Hand out tracts at the station,<br>or try the park.</p>'
@@ -250,7 +239,6 @@ export function renderPeople() {
       const npc  = state.npcs[id];
       const card = el('div', ['npc-card', def.cardClass, npc.stage === 5 ? 'believer' : ''].filter(Boolean).join(' '));
 
-      // Portrait (image with kanji fallback)
       const avatar = buildNpcAvatar(id, def, 'npc-avatar');
 
       const info = el('div', 'npc-info');
@@ -266,11 +254,8 @@ export function renderPeople() {
       barWrap.appendChild(barFill);
       info.appendChild(barWrap);
 
-      // Stage advance hint
       const hint = getStageAdvanceHint(id);
-      if (hint) {
-        info.appendChild(el('div', 'npc-advance-hint', hint));
-      }
+      if (hint) info.appendChild(el('div', 'npc-advance-hint', hint));
 
       card.appendChild(avatar);
       card.appendChild(info);
@@ -278,7 +263,6 @@ export function renderPeople() {
     });
   }
 
-  // Contacts summary — always show
   const summary = $('contacts-summary');
   summary.innerHTML = `
     <div class="contacts-big">${state.resources.contacts}</div>
@@ -286,16 +270,13 @@ export function renderPeople() {
   `;
 }
 
-// Build an NPC avatar element with portrait image + JP kanji fallback
 function buildNpcAvatar(npcId, def, className) {
   const wrap = el('div', className);
-  // Portrait image — shows if file exists, hidden via onerror otherwise
   const img = document.createElement('img');
   img.src       = `assets/images/npcs/${npcId}.png`;
   img.alt       = def.name;
   img.className = 'npc-portrait-img';
   img.onerror   = () => img.style.display = 'none';
-  // Kanji fallback
   const fallback = el('span', 'npc-portrait-fallback', def.nameJP[0]);
   wrap.appendChild(img);
   wrap.appendChild(fallback);
@@ -343,6 +324,25 @@ export function bindContentTabs() {
   });
 }
 
+// Click handler for the action list (delegation)
+export function bindActionList(onAction) {
+  $('action-list').addEventListener('click', e => {
+    const card = e.target.closest('.action-card');
+    if (!card) return;
+    if (card.classList.contains('locked')) return;
+    if (card.classList.contains('disabled-energy')) return;
+    const id = card.dataset.actionId;
+    if (id) onAction(id);
+  });
+}
+
+export function bindEndPhase(onEndPhase) {
+  $('end-phase-btn').addEventListener('click', () => {
+    onEndPhase();
+    playTap();
+  });
+}
+
 // ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer = null;
 
@@ -360,9 +360,6 @@ export function showToast(icon, title, desc = '') {
 // ─── STORY POPUP ─────────────────────────────────────────────────────────────
 let storyPopupTimer = null;
 
-// Show the story popup after an action completes.
-// npcId: optional NPC to show portrait + name for.
-// bonuses: optional { contacts?, faith?, npcTrust? } object.
 export function showStoryPopup(text, icon, npcId, bonuses) {
   if (!text) return;
 
@@ -371,17 +368,14 @@ export function showStoryPopup(text, icon, npcId, bonuses) {
   const npcEl     = $('story-popup-npc');
   const bonusEl   = $('story-popup-bonus');
 
-  // Story text
   textEl.textContent = text;
 
-  // NPC portrait header (if a specific NPC is involved)
   if (npcId && NPC_DEFS[npcId]) {
     const def = NPC_DEFS[npcId];
     npcEl.classList.remove('hidden');
     npcEl.innerHTML = '';
 
     const avatarWrap = buildNpcAvatar(npcId, def, 'story-npc-avatar');
-    // Apply card colour class to the avatar wrapper
     avatarWrap.classList.add(def.cardClass);
 
     const infoDiv = el('div', 'story-npc-info');
@@ -393,7 +387,6 @@ export function showStoryPopup(text, icon, npcId, bonuses) {
     npcEl.classList.add('hidden');
   }
 
-  // Bonus line
   const bonusParts = [];
   if (bonuses?.contacts) bonusParts.push(`+${bonuses.contacts} contacts (language)`);
   if (bonuses?.faith)    bonusParts.push(`+${bonuses.faith} faith (wisdom)`);
@@ -406,7 +399,6 @@ export function showStoryPopup(text, icon, npcId, bonuses) {
     bonusEl.classList.add('hidden');
   }
 
-  // Show popup — stays until tapped
   popup.classList.remove('hidden');
   if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
 }
@@ -417,11 +409,69 @@ function dismissStoryPopup() {
 }
 
 export function bindStoryPopup() {
-  const popup   = $('story-popup');
+  const popup    = $('story-popup');
   const backdrop = $('story-popup-backdrop');
-  const card    = popup?.querySelector('.story-popup-card');
+  const card     = popup?.querySelector('.story-popup-card');
   if (backdrop) backdrop.addEventListener('click', dismissStoryPopup);
   if (card)     card.addEventListener('click', dismissStoryPopup);
+}
+
+// ─── END-OF-DAY SCREEN ──────────────────────────────────────────────────────
+export function showEndOfDayScreen(onContinue) {
+  $('end-of-day-title').textContent = `Day ${state.time.day}`;
+
+  const summary = $('end-of-day-summary');
+  summary.innerHTML = '';
+
+  const phases = state.dayLog?.phases || { morning: [], afternoon: [], evening: [] };
+  let totalActions = 0;
+
+  ['morning', 'afternoon', 'evening'].forEach(p => {
+    const acts = phases[p] || [];
+    totalActions += acts.length;
+    const row = el('div', 'end-of-day-phase');
+    const d = PHASE_DISPLAY[p];
+    row.innerHTML = `
+      <span class="eod-phase-icon">${d.icon}</span>
+      <span class="eod-phase-name">${d.en}</span>
+      <span class="eod-phase-actions">${acts.length === 0 ? '— quiet —' : summarizeActions(acts)}</span>
+    `;
+    summary.appendChild(row);
+  });
+
+  const totals = el('div', 'end-of-day-totals');
+  totals.innerHTML = `
+    <span class="eod-total-row">📌 <strong>${totalActions}</strong> actions</span>
+    <span class="eod-total-row">◈ <strong>${state.resources.contacts}</strong> contacts</span>
+    <span class="eod-total-row">語 <strong>Lv.${state.language.level}</strong></span>
+    <span class="eod-total-row">✓ <strong>${state.milestones.completed.length}</strong> goals</span>
+  `;
+  summary.appendChild(totals);
+
+  $('end-of-day-reflection').textContent = pickReflection();
+
+  const continueBtn = $('end-of-day-continue');
+  continueBtn.textContent = `Continue to Day ${state.time.day + 1} →`;
+
+  $('end-of-day').classList.remove('hidden');
+
+  // Replace listener each show to avoid stacking
+  const newBtn = continueBtn.cloneNode(true);
+  continueBtn.parentNode.replaceChild(newBtn, continueBtn);
+  newBtn.addEventListener('click', () => {
+    $('end-of-day').classList.add('hidden');
+    onContinue();
+  });
+}
+
+function summarizeActions(acts) {
+  if (acts.length === 0) return '';
+  const counts = {};
+  acts.forEach(a => { counts[a.id] = (counts[a.id] || 0) + 1; });
+  return Object.entries(counts).map(([id, n]) => {
+    const label = actionText(id).en;
+    return n > 1 ? `${label} ×${n}` : label;
+  }).join(', ');
 }
 
 // ─── MODAL ──────────────────────────────────────────────────────────────────
@@ -443,7 +493,6 @@ export function showNPCMeetModal(npcId) {
   const def      = NPC_DEFS[npcId];
   const introText = getIntroText(npcId);
 
-  // Build portrait HTML: image with kanji fallback
   const portraitHtml = `
     <div class="modal-portrait ${def.portraitClass}">
       <img src="assets/images/npcs/${npcId}.png"
@@ -462,7 +511,7 @@ export function showNPCMeetModal(npcId) {
     <button class="modal-btn modal-btn-primary" data-close>Nice to meet you</button>
   `, () => {
     renderPeople();
-    renderActions();
+    renderActions(true);
   });
 }
 
@@ -520,12 +569,7 @@ export function bindSettings(onReset) {
 export function renderFrame() {
   renderHUD();
   renderHeader();
+  renderLocation();
+  renderPhaseStrip();
   renderActions();
-  renderActionBar();
-}
-
-// ─── HELPERS ────────────────────────────────────────────────────────────────
-function fmtDuration(ms) {
-  const s = ms / 1000;
-  return s >= 60 ? Math.round(s / 60) + 'm' : s + 's';
 }

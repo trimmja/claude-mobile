@@ -1,31 +1,40 @@
 {
-  "_readme": "Pacing pass: ~half previous durations. Edit, save, push to GitHub, refresh on phone.",
+  "_readme": "Phase + energy model. energyCost = energy each action consumes. energyReward = energy each action restores (rest, pray). cost.faith / cost.money still apply. duration is no longer used.",
   "actions": {
     "pray": {
       "location": "apartment",
       "icon": "🙏",
-      "duration": "15 seconds",
+      "energyCost": 1,
+      "energyReward": 1,
       "cost": {},
       "reward": { "faith": 15, "wisdom": 1 }
+    },
+    "rest": {
+      "location": "apartment",
+      "icon": "😌",
+      "energyCost": 0,
+      "energyReward": 2,
+      "cost": {},
+      "reward": { "faith": 4 }
     },
     "study_scripture": {
       "location": "apartment",
       "icon": "📖",
-      "duration": "30 seconds",
+      "energyCost": 1,
       "cost": { "faith": 5 },
       "reward": { "wisdom": 8, "faith": 3 }
     },
     "study_japanese": {
       "location": "apartment",
       "icon": "📝",
-      "duration": "45 seconds",
+      "energyCost": 1,
       "cost": { "faith": 5 },
       "reward": { "langXP": 10 }
     },
     "hand_tracts": {
       "location": "station",
       "icon": "📄",
-      "duration": "20 seconds",
+      "energyCost": 1,
       "cost": { "faith": 10 },
       "reward": { "contacts": 2 },
       "npcChance": { "id": "kenji", "chance": 0.3 }
@@ -33,7 +42,7 @@
     "commuter_convo": {
       "location": "station",
       "icon": "💬",
-      "duration": "30 seconds",
+      "energyCost": 2,
       "cost": { "faith": 15 },
       "reward": { "contacts": 1, "langXP": 3 },
       "unlockHint": "Requires Japanese Level 1"
@@ -41,7 +50,7 @@
     "open_air_preach": {
       "location": "park",
       "icon": "📢",
-      "duration": "1 minute",
+      "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "contacts": 5, "faith": 5 },
       "npcChance": { "id": "hiro", "chance": 0.35 }
@@ -49,14 +58,14 @@
     "casual_convo": {
       "location": "park",
       "icon": "☕",
-      "duration": "20 seconds",
+      "energyCost": 2,
       "cost": { "faith": 5 },
       "reward": { "contacts": 1, "langXP": 4 }
     },
     "host_english": {
       "location": "cafe",
       "icon": "🗣️",
-      "duration": "90 seconds",
+      "energyCost": 3,
       "cost": { "faith": 10, "money": 30 },
       "reward": { "contacts": 8, "wisdom": 3, "langXP": 2 },
       "npcChance": { "id": "yuki", "chance": 0.45 },
@@ -65,7 +74,7 @@
     "observe_shrine": {
       "location": "shrine",
       "icon": "⛩️",
-      "duration": "30 seconds",
+      "energyCost": 1,
       "cost": {},
       "reward": { "wisdom": 5, "langXP": 2 },
       "npcChance": { "id": "hiro", "chance": 0.25 },
@@ -74,7 +83,7 @@
     "onsen_visit": {
       "location": "onsen",
       "icon": "♨️",
-      "duration": "90 seconds",
+      "energyCost": 4,
       "cost": { "money": 50 },
       "reward": { "wisdom": 10, "langXP": 5 },
       "unlockHint": "Requires 30 Contacts"
@@ -82,42 +91,42 @@
     "visit_kenji": {
       "location": "station",
       "icon": "👔",
-      "duration": "45 seconds",
+      "energyCost": 2,
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "kenji", "amount": 12 } }
     },
     "visit_yuki": {
       "location": "cafe",
       "icon": "📚",
-      "duration": "45 seconds",
+      "energyCost": 2,
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "yuki", "amount": 12 } }
     },
     "visit_hiro": {
       "location": "park",
       "icon": "🌿",
-      "duration": "45 seconds",
+      "energyCost": 2,
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "hiro", "amount": 12 } }
     },
     "deep_kenji": {
       "location": "cafe",
       "icon": "💛",
-      "duration": "1 minute",
+      "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "kenji", "amount": 22 }, "wisdom": 3 }
     },
     "deep_yuki": {
       "location": "cafe",
       "icon": "💛",
-      "duration": "1 minute",
+      "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "yuki", "amount": 22 }, "wisdom": 3 }
     },
     "deep_hiro": {
       "location": "park",
       "icon": "💛",
-      "duration": "1 minute",
+      "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "hiro", "amount": 22 }, "wisdom": 3 }
     }

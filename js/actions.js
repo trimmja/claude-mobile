@@ -1,14 +1,14 @@
 import { state } from './state.js';
-import { spend, gain } from './resources.js';
+import { spend, gain, spendEnergy, gainEnergy } from './resources.js';
 import { addLangXP } from './language.js';
 import { addNPCTrust, NPC_DEFS } from './npcs.js';
-import { parseDuration } from './parseDuration.js';
 
 const DEEP_TALK_MIN_STAGE = 2; // Friend
 
-// Unlock rules stay in code; numbers and durations come from data/actions.json.
+// Unlock rules stay in code; numbers come from data/actions.json.
 const ACTION_UNLOCK = {
   pray: () => true,
+  rest: () => true,
   study_scripture: () => true,
   study_japanese: () => true,
   hand_tracts: () => true,
@@ -30,8 +30,7 @@ const ACTION_HOOKS = {
   onsen_visit: () => { state.stats.onsenVisited = true; },
 };
 
-// Actions that are completely hidden (not just locked) when conditions aren't met.
-// NPC-specific actions must not appear until the NPC has been met.
+// Actions completely hidden (not just locked) when conditions aren't met.
 const ACTION_VISIBLE = {
   visit_kenji: () => state.npcs.kenji.met,
   visit_yuki:  () => state.npcs.yuki.met,
@@ -52,9 +51,10 @@ export function initActionsFromData(data) {
     ACTION_DEFS[id] = {
       location: cfg.location ?? null,
       icon: cfg.icon,
-      duration: parseDuration(cfg.duration),
+      energyCost: cfg.energyCost ?? 1,
       cost: cfg.cost || {},
       reward: cfg.reward || {},
+      energyReward: cfg.energyReward || 0,
       npcChance: cfg.npcChance,
       unlockHint: cfg.unlockHint,
       unlocked: ACTION_UNLOCK[id] ?? (() => true),
@@ -64,7 +64,6 @@ export function initActionsFromData(data) {
   }
 }
 
-// Human-readable requirements (always shown on gated actions).
 export function getActionRequirements(actionId) {
   const reqs = REQUIREMENT_BUILDERS[actionId];
   return reqs ? reqs() : null;
@@ -77,6 +76,7 @@ export function actionUnlockCacheKey() {
     state.time.day,
     state.resources.wisdom,
     state.resources.contacts,
+    state.resources.energy.current,
     `k:${n.kenji.met}:${n.kenji.stage}`,
     `y:${n.yuki.met}:${n.yuki.stage}`,
     `h:${n.hiro.met}:${n.hiro.stage}`,
@@ -139,55 +139,43 @@ const REQUIREMENT_BUILDERS = {
   deep_hiro: () => [reqMet('hiro'), reqFriendStage('hiro')],
 };
 
-// Returns action IDs available at the current location
-export function actionsForLocation(locationId) {
+// All visible activity IDs, in stable order — locations become flavor not nav.
+export function allVisibleActions() {
   return Object.entries(ACTION_DEFS)
-    .filter(([, def]) => (def.location === locationId || def.location === null) && def.visible())
+    .filter(([, def]) => def.visible())
     .map(([id]) => id);
-}
-
-// Start an action. Returns false if not possible.
-export function startAction(actionId) {
-  if (state.action.id) return false;
-  const def = ACTION_DEFS[actionId];
-  if (!def) return false;
-  if (!def.unlocked()) return false;
-  if (!spendCosts(def.cost)) return false;
-
-  state.action.id        = actionId;
-  state.action.startTime = Date.now();
-  state.action.duration  = def.duration;
-  state.action.label     = actionId;
-  return true;
-}
-
-export function cancelAction() {
-  if (!state.action.id) return;
-  // Refund half the faith cost
-  const def = ACTION_DEFS[state.action.id];
-  if (def?.cost?.faith) gain('faith', Math.floor(def.cost.faith / 2));
-  clearAction();
 }
 
 // Communication actions that benefit from language level
 const COMM_ACTIONS    = new Set(['hand_tracts', 'commuter_convo', 'casual_convo', 'host_english']);
-// Spiritual actions that benefit from wisdom
 const SPIRIT_ACTIONS  = new Set(['pray', 'study_scripture', 'observe_shrine']);
-// NPC visit actions that benefit from language level (trust bonus)
 const NPC_VISIT_ACTIONS = new Set(['visit_kenji', 'visit_yuki', 'visit_hiro', 'deep_kenji', 'deep_yuki', 'deep_hiro']);
 
-// Called by engine when timer expires.
-// Returns { id, bonuses } where bonuses is an object of { contacts?, faith?, npcTrust? }.
-export function completeAction() {
-  const id  = state.action.id;
-  const def = ACTION_DEFS[id];
-  if (!def) { clearAction(); return null; }
+// Instant action. Returns { ok, id, bonuses, energySpent, reason }.
+// ok=false reasons: 'locked' | 'energy' | 'cost' | 'unknown'
+export function doAction(actionId) {
+  const def = ACTION_DEFS[actionId];
+  if (!def) return { ok: false, reason: 'unknown' };
+  if (!def.unlocked()) return { ok: false, reason: 'locked' };
 
-  const bonuses = applyRewards(id, def.reward);
+  // Energy first — cheaper to check
+  if (!spendEnergy(def.energyCost)) return { ok: false, reason: 'energy' };
+
+  // Then other costs. If they fail, refund energy.
+  if (!spendCosts(def.cost)) {
+    gainEnergy(def.energyCost);
+    return { ok: false, reason: 'cost' };
+  }
+
+  const bonuses = applyRewards(actionId, def.reward);
+  if (def.energyReward) gainEnergy(def.energyReward);
   if (def.onComplete) def.onComplete();
 
   state.stats.actionsCompleted++;
-  clearAction();
+  state.time.actionsThisPhase++;
+
+  // Update "last seen at" location for atmospheric continuity
+  if (def.location) state.location = def.location;
 
   // NPC encounter roll
   if (def.npcChance) {
@@ -198,23 +186,26 @@ export function completeAction() {
     }
   }
 
-  return { id, bonuses };
-}
+  // Update lastSeenDay if we visited a known NPC
+  const visitMatch = actionId.match(/^(?:visit|deep)_(\w+)$/);
+  if (visitMatch) {
+    const npcId = visitMatch[1];
+    if (state.npcs[npcId]) state.npcs[npcId].lastSeenDay = state.time.day;
+  }
 
-export function actionProgress() {
-  if (!state.action.id || !state.action.startTime) return 0;
-  return Math.min(1, (Date.now() - state.action.startTime) / state.action.duration);
-}
+  // Log for end-of-day summary
+  const phase = state.time.phase;
+  if (state.dayLog?.phases?.[phase]) {
+    state.dayLog.phases[phase].push({ id: actionId, location: def.location });
+  }
 
-export function isActionComplete() {
-  return state.action.id && actionProgress() >= 1;
+  return { ok: true, id: actionId, bonuses, energySpent: def.energyCost };
 }
 
 // ── internals ──────────────────────────────────────────────────
 
 function spendCosts(costs) {
   if (!costs) return true;
-  // Pre-check all costs before spending any
   if (costs.faith  && state.resources.faith.current  < costs.faith)  return false;
   if (costs.money  && state.resources.money.current  < costs.money)  return false;
   if (costs.wisdom && state.resources.wisdom         < costs.wisdom) return false;
@@ -224,7 +215,6 @@ function spendCosts(costs) {
   return true;
 }
 
-// Applies base rewards and stat bonuses. Returns bonus amounts for display.
 function applyRewards(id, reward) {
   if (!reward) return {};
 
@@ -239,39 +229,25 @@ function applyRewards(id, reward) {
   const lang    = state.language.level;
   const wisdom  = state.resources.wisdom;
 
-  // Language bonus: communication actions gain +contacts
   if (COMM_ACTIONS.has(id) && reward.contacts && lang > 0) {
     const bonus = Math.floor(lang * 0.25 * reward.contacts);
     if (bonus > 0) { gain('contacts', bonus); bonuses.contacts = bonus; }
   }
 
-  // Wisdom bonus: spiritual actions gain +faith
   if (SPIRIT_ACTIONS.has(id) && reward.faith && wisdom > 0) {
     const bonus = Math.floor((wisdom / 100) * reward.faith);
     if (bonus > 0) { gain('faith', bonus); bonuses.faith = bonus; }
   }
 
-  // Language-weighted trust scaling for NPC visit/deep actions.
-  // Each NPC has a langWeight (0.0–1.0) in NPC_DEFS:
-  //   1.0 = verbal relationship (Kenji, Yuki) — low language heavily penalises trust gain
-  //   0.3 = presence-based (Hiro) — silence is enough; language matters less
-  //
-  // langFactor at each level (lang 2 = full baseline):
-  //   Kenji/Yuki (lw 1.0): 0.4 / 0.7 / 1.0 / 1.0 / 1.0 / 1.0
-  //   Hiro       (lw 0.3): 0.82 / 0.91 / 1.0 / 1.0 / 1.0 / 1.0
-  //
-  // Separate bonus at lang 3+ rewards high fluency on top of baseline.
   if (NPC_VISIT_ACTIONS.has(id) && reward.npcTrust) {
-    const LANG_SCALE = [0.4, 0.7, 1.0, 1.0, 1.0, 1.0]; // capped at 1.0; bonus below handles 3+
+    const LANG_SCALE = [0.4, 0.7, 1.0, 1.0, 1.0, 1.0];
     const npcDef = NPC_DEFS[reward.npcTrust.id];
     const lw = npcDef?.langWeight ?? 1.0;
     const scale = LANG_SCALE[Math.min(lang, 5)];
     const langFactor = 1 - (lw * (1 - scale));
-    // Base trust was already applied above. Apply delta to reach scaled amount.
     const baseTrust = reward.npcTrust.amount;
-    const delta = Math.round((langFactor - 1) * baseTrust); // negative at low lang
+    const delta = Math.round((langFactor - 1) * baseTrust);
     if (delta !== 0) addNPCTrust(reward.npcTrust.id, delta);
-    // Fluency bonus: lang 3 = +20%, lang 4 = +40%, lang 5 = +60% on top of baseline
     if (lang >= 3) {
       const bonus = Math.floor((lang - 2) * 0.2 * baseTrust);
       if (bonus > 0) { addNPCTrust(reward.npcTrust.id, bonus); bonuses.npcTrust = bonus; }
@@ -279,11 +255,4 @@ function applyRewards(id, reward) {
   }
 
   return bonuses;
-}
-
-function clearAction() {
-  state.action.id        = null;
-  state.action.startTime = null;
-  state.action.duration  = 0;
-  state.action.label     = '';
 }

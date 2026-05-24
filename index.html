@@ -53,15 +53,6 @@
 <!-- ════════════════════════════════════════════════════════ GAME SCREEN -->
 <div id="game-screen" class="screen hidden">
 
-  <!-- ── Active action progress bar ────────────────────────── -->
-  <div id="action-bar" class="action-bar hidden">
-    <div id="action-bar-label" class="action-bar-label">…</div>
-    <div class="action-bar-track">
-      <div id="action-bar-fill" class="action-bar-fill"></div>
-    </div>
-    <button id="action-cancel" class="action-bar-cancel" title="Cancel action">✕</button>
-  </div>
-
   <!-- ── Header ─────────────────────────────────────────────── -->
   <header class="game-header">
     <div id="header-name" class="header-name">—</div>
@@ -75,6 +66,11 @@
       <div class="res-icon">✦</div>
       <div id="res-faith" class="res-val">50</div>
       <div class="res-lbl">Faith</div>
+    </div>
+    <div class="res energy">
+      <div class="res-icon">⚡</div>
+      <div id="res-energy" class="res-val">6</div>
+      <div class="res-lbl">Energy</div>
     </div>
     <div class="res trust">
       <div class="res-icon">◈</div>
@@ -104,7 +100,7 @@
     </div>
   </div>
 
-  <!-- ── Location view ──────────────────────────────────────── -->
+  <!-- ── Location view (reflects last action's location) ─── -->
   <div class="location-view">
     <div id="location-bg" class="location-bg bg-apartment"></div>
     <div class="location-info">
@@ -115,15 +111,24 @@
 
   <!-- ── Content area ───────────────────────────────────────── -->
   <div class="content-area">
-    <!-- Tab switcher -->
-    <div class="content-tabs">
-      <button class="content-tab active" data-tab="actions">Actions</button>
-      <button class="content-tab"        data-tab="people">People</button>
-      <button class="content-tab"        data-tab="milestones">★ Goals</button>
-    </div>
-
-    <!-- Actions panel -->
+    <!-- Activities panel -->
     <div id="tab-actions" class="tab-panel">
+      <!-- Phase strip: phase icon + label, energy bar, end-phase button -->
+      <div class="phase-strip">
+        <div class="phase-strip-left">
+          <span id="phase-icon" class="phase-icon">☀️</span>
+          <span class="phase-labels">
+            <span id="phase-name-en" class="phase-name-en">Morning</span>
+            <span id="phase-name-jp" class="phase-name-jp">朝</span>
+          </span>
+        </div>
+        <div class="energy-strip">
+          <span class="energy-icon">⚡</span>
+          <div class="energy-bar"><div id="energy-bar-fill" class="energy-bar-fill"></div></div>
+          <span id="energy-count" class="energy-count">6/6</span>
+        </div>
+        <button id="end-phase-btn" class="end-phase-btn">End Phase →</button>
+      </div>
       <div id="action-list" class="action-list"></div>
     </div>
 
@@ -139,8 +144,21 @@
     </div>
   </div>
 
-  <!-- ── Location tab bar ───────────────────────────────────── -->
-  <nav id="location-tabs" class="location-tabs"></nav>
+  <!-- ── Bottom nav: content tabs ────────────────────────── -->
+  <nav id="content-tabs" class="content-tabs">
+    <button class="content-tab active" data-tab="actions">
+      <span class="content-tab-icon">⛩</span>
+      <span class="content-tab-lbl">Actions</span>
+    </button>
+    <button class="content-tab" data-tab="people">
+      <span class="content-tab-icon">👥</span>
+      <span class="content-tab-lbl">People</span>
+    </button>
+    <button class="content-tab" data-tab="milestones">
+      <span class="content-tab-icon">★</span>
+      <span class="content-tab-lbl">Goals</span>
+    </button>
+  </nav>
 
 </div><!-- /game-screen -->
 
@@ -156,6 +174,24 @@
 <!-- ════════════════════════════════════════════════════════ MODAL -->
 <div id="modal" class="modal-overlay hidden">
   <div id="modal-card" class="modal-card"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ END-OF-DAY -->
+<div id="end-of-day" class="end-of-day hidden">
+  <div class="end-of-day-card">
+    <div class="end-of-day-header">
+      <div class="end-of-day-eyebrow">— End of Day —</div>
+      <div id="end-of-day-title" class="end-of-day-title">Day 1</div>
+    </div>
+
+    <div id="end-of-day-summary" class="end-of-day-summary"></div>
+
+    <div id="end-of-day-reflection" class="end-of-day-reflection"></div>
+
+    <button id="end-of-day-continue" class="modal-btn modal-btn-primary">
+      Continue to Day 2 →
+    </button>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════════════════════════ SETTINGS -->
@@ -186,6 +222,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=14"></script>
+<script type="module" src="js/main.js?v=15"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 
 Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Claude should read this file. When either changes project context, the plan, or developer notes, **update both** this file and the matching `.cursor/rules/*.mdc` file.
 
+@ROADMAP.md
 @PROGRESS.md
 @CHARACTERS.md
 

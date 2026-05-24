@@ -14,6 +14,7 @@ export const LOCATION_TEXT = {
 
 export const ACTION_TEXT = {
   pray:             { jp: '祈り',           en: 'Pray' },
+  rest:             { jp: '休む',           en: 'Rest' },
   study_scripture:  { jp: '聖書を読む',     en: 'Study Scripture' },
   study_japanese:   { jp: '日本語の勉強',   en: 'Study Japanese' },
   hand_tracts:      { jp: 'チラシを配る',   en: 'Hand Out Tracts' },

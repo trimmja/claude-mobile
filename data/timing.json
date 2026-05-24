@@ -1,7 +1,7 @@
 {
-  "_readme": "Pacing pass: shorter days, faster faith regen. Save, push, refresh on phone.",
-  "faithRegenPerSecond": 0.12,
-  "dayLength": "45 seconds",
+  "_readme": "Phase + energy model. Edit, save, push to GitHub, refresh on phone. energyPerPhase = energy budget per phase (Morning/Afternoon/Evening); faithPerDay = faith restored each new day; paydayEveryDays now counts real played days, not real seconds.",
+  "energyPerPhase": 6,
+  "faithPerDay": 3,
   "paydayAmount": 500,
-  "paydayEveryDays": 30
+  "paydayEveryDays": 6
 }

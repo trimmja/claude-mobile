@@ -7,19 +7,19 @@ import {
 } from './version.js';
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
-import { startEngine, hooks } from './engine.js';
+import { doAction, endPhase, endDay, hooks } from './engine.js';
 import * as audio from './audio.js';
 import { ACTION_DEFS } from './actions.js';
 import { getStoryText } from './stories.js';
+import { refillEnergy } from './resources.js';
 import {
-  renderFrame, renderHUD, renderHeader, renderLocation,
-  renderLocationTabs, renderActions, renderPeople, renderMilestones,
+  renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
+  renderActions, renderPeople, renderMilestones,
   showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup,
-  bindContentTabs, bindCancelButton, bindSettings,
-  renderActionBar,
+  bindContentTabs, bindSettings, bindActionList, bindEndPhase,
+  flashActionCard, showEndOfDayScreen,
 } from './ui.js';
 
-// Expose audio for settings panel
 window._audio = audio;
 
 let swReloading = false;
@@ -61,6 +61,8 @@ async function boot() {
   if (hasSaved && state.character.name) {
     startGame();
   } else {
+    // Ensure energy is at max on fresh start
+    refillEnergy();
     showIntro();
   }
 }
@@ -96,42 +98,55 @@ function startGame() {
 
   // Initial render
   renderLocation();
-  renderLocationTabs();
-  renderActions();
+  renderPhaseStrip();
+  renderActions(true);
   renderHUD();
   renderHeader();
 
   // Bind UI interactions
   bindContentTabs();
-  bindCancelButton();
   bindSettings(resetGame);
   bindStoryPopup();
+
+  // Click an action card → run it
+  bindActionList(handleAction);
+
+  // End-phase button
+  bindEndPhase(handleEndPhase);
 
   // Wire engine hooks
   hooks.onActionComplete = ({ id, bonuses }) => {
     audio.playActionComplete();
+    flashActionCard(id);
 
-    // Show story popup (skip if an NPC first-meet is about to appear)
+    // Show story popup unless an NPC first-meet is about to pop
     if (!state.flags.pendingNPCMeet) {
       const text = getStoryText(id, state);
       if (text) {
         const def = ACTION_DEFS[id];
-        // Determine if this action is associated with a known NPC
         const visitMatch = id.match(/^(?:visit|deep)_(\w+)$/);
         const npcId = visitMatch ? visitMatch[1] : null;
         showStoryPopup(text, def?.icon, npcId, bonuses);
       }
     }
-
-    renderActions();
-    renderActionBar();
-    renderLocationTabs();
-    saveGame();
   };
 
-  hooks.onNewDay = (day) => {
+  hooks.onPhaseChange = () => {
+    renderPhaseStrip();
+    renderActions(true);
+  };
+
+  hooks.onEndOfDayReady = () => {
+    // Small delay so the last story popup has a beat to settle visually
+    setTimeout(() => {
+      showEndOfDayScreen(handleEndDay);
+    }, 200);
+  };
+
+  hooks.onNewDay = () => {
     renderHeader();
-    renderLocationTabs();
+    renderPhaseStrip();
+    renderActions(true);
   };
 
   hooks.onPayday = () => {
@@ -150,8 +165,10 @@ function startGame() {
     showNPCMeetModal(npcId);
   };
 
-  // Start engine
-  startEngine();
+  // If we loaded into a pending end-of-day state, show the screen immediately.
+  if (state.flags.pendingEndOfDay) {
+    showEndOfDayScreen(handleEndDay);
+  }
 
   // rAF render loop
   function loop() {
@@ -159,6 +176,23 @@ function startGame() {
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
+}
+
+function handleAction(actionId) {
+  const result = doAction(actionId);
+  if (!result.ok) {
+    // Silently ignore — UI already prevents clicking when locked/no-energy
+    return;
+  }
+  audio.playTap();
+}
+
+function handleEndPhase() {
+  endPhase();
+}
+
+function handleEndDay() {
+  endDay();
 }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

@@ -1,11 +1,21 @@
 # JBE — Progress & Roadmap
 
 Tracks what's been built, what's planned, and ideas captured along the way.
-The architecture reference lives in `CLAUDE.md`. This file is the living tracker.
+The architecture reference lives in `CLAUDE.md`. The forward-looking design direction lives in `ROADMAP.md`. This file is the living tracker of what's actually shipped.
 
 ---
 
-## 🔶 Phase 1A — Narrative depth & language immersion (mechanics built, content draft)
+## ⚠️ Design pivot in progress — 2026-05-24
+
+The project is moving from a real-time timer/idle engine to a turn-based **phase + energy simulation** (Morning/Afternoon/Evening, no timers, NPC moods, dynamic locations, emergent stories). See **`ROADMAP.md`** for full direction, locked design decisions, and the multi-step roadmap (Steps 1–7).
+
+- **Step 1: Phase + energy engine** — IN PROGRESS this session. Replaces the wall-clock timer engine. All existing content (actions, NPCs, stories, milestones) preserved; only the timing engine and resource model change.
+- Everything in "Phase 1A" below was built for the **old** timer engine. After Step 1 lands, story popups, NPC mechanics, and milestones all keep working, but balance and pacing notes below will need re-evaluation.
+- Items in "Phase 2+" are now organized under ROADMAP Steps 2–7.
+
+---
+
+## 🔶 Phase 1A — Narrative depth & language immersion (mechanics built, content draft) [valid for old timer engine; will be re-evaluated after Step 1 simulation pivot lands]
 
 Everything below is **coded and functional** but should be considered a first draft until it's been played through and approved. Story text was written by Claude and has not been reviewed by Jacob. Portrait images are placeholders. Balance is untested.
 
