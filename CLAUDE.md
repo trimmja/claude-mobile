@@ -508,6 +508,32 @@ When adding a new NPC, do ALL of these:
 7. Add `npcChance` to the relevant outreach action in `data/actions.json`
 8. Write story beats in `data/stories.json` — 3 lang tiers × ~3 stage tiers ≈ ~9 beats per action
 
+## Local testing & debugging
+
+**For any UI bug Jacob reports on iPhone ("nothing happens when I tap", "blank area where X should be", "page acts dead"), run the local game with playwright and capture the actual `pageerror` / `console.error` before reading the source.** Reading code by inspection wastes hours; playwright surfaces the real cause in one run. We learned this the hard way debugging v17's "actions don't fire + travel row empty" — the root cause was a one-line `ReferenceError: handleEndPhase is not defined` that startGame() threw mid-execution, and it was invisible from code reading because everything looked syntactically fine.
+
+**Setup (one-time per machine):**
+
+```bash
+cd /tmp && npm install playwright
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers npx playwright install chromium
+```
+
+**Start local server** (port 8080 is held by Jacob's `start.command`; use 8090):
+
+```bash
+python3 -m http.server 8090 > /tmp/jbe-server.log 2>&1 &
+```
+
+**Test-script template:** see `~/.claude/projects/-Users-jacobtrimm-projects-jbe/memory/reference_playwright_jbe.md` — has a reusable script, key DOM selectors, and cleanup commands.
+
+**When debugging:**
+- Trust the **local** working tree, not deployed `curl https://trimmja.github.io/japan-evangelistic-band/...` output. Local is the source of truth for what changed; deployed-curl only confirms what got pushed.
+- Verify fixes with playwright before pushing. "It looks right" is not enough — confirm the runtime behavior.
+- The render loop in `js/ui.js` wraps each render in `safeRender(name, fn)` so a single throw doesn't kill the loop. If you see `[render:Foo]` errors in the console, that's safeRender catching them — find and fix the underlying error.
+
+---
+
 ## Authentic Japan touches to preserve
 - Onsens as relationship-building (costs money, big trust reward)
 - English conversation events as a real outreach method
