@@ -292,6 +292,14 @@ function handleTravel(locId) {
   audio.playTap();
 }
 
+function handleEndPhase() {
+  endPhase();
+}
+
+function handleEndDay() {
+  endDay();
+}
+
 // People-tab action: if the NPC's action is at a different location, travel first, then act.
 // Travel and action are independent — travel may succeed and the action then fail for energy
 // reasons; that's intentional (you committed to going). UI prevents clicks unless both fit.
