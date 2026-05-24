@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import {
   ACTION_DEFS, allVisibleActions, getActionRequirements, actionUnlockCacheKey,
+  hasFittingAction,
 } from './actions.js';
 import { LOCATION_DEFS } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
@@ -23,8 +24,9 @@ const el = (tag, cls, html) => {
 let lastLangLevelForUI = -1;
 
 export function renderHUD() {
+  const e = state.resources.energy;
   $('res-faith').textContent    = Math.floor(state.resources.faith.current);
-  $('res-energy').textContent   = state.resources.energy.current;
+  $('res-energy').textContent   = `${e.current}/${e.max}`;
   $('res-contacts').textContent = state.resources.contacts;
   $('res-money').textContent    = '¥' + Math.floor(state.resources.money.current);
   $('res-wisdom').textContent   = Math.floor(state.resources.wisdom);
@@ -89,20 +91,25 @@ export function renderPhaseStrip() {
   $('phase-name-en').textContent = d.en;
   $('phase-name-jp').textContent = d.jp;
 
-  const e = state.resources.energy;
-  $('energy-count').textContent = `${e.current}/${e.max}`;
-  const pct = e.max > 0 ? (e.current / e.max) * 100 : 0;
-  $('energy-bar-fill').style.width = pct + '%';
+  const t = state.time;
+  $('time-count').textContent = `${t.remaining}/${t.max}`;
+  const tpct = t.max > 0 ? (t.remaining / t.max) * 100 : 0;
+  $('time-bar-fill').style.width = tpct + '%';
 
-  // End-phase label hints at what's next
+  // End-phase button labelling + nudge state
   const btn = $('end-phase-btn');
+  const nudge = $('phase-nudge');
+  const noFit = !hasFittingAction() && phase !== 'reflecting';
+
   if (btn) {
     if (phase === 'morning')        btn.textContent = 'End Morning →';
     else if (phase === 'afternoon') btn.textContent = 'End Afternoon →';
     else if (phase === 'evening')   btn.textContent = 'End Evening →';
     else                            btn.textContent = '…';
-    // Soft warning style when no actions taken yet
-    btn.classList.toggle('warn', state.time.actionsThisPhase === 0);
+    btn.classList.toggle('warn', noFit);
+  }
+  if (nudge) {
+    nudge.classList.toggle('hidden', !noFit);
   }
 }
 
@@ -147,12 +154,16 @@ function buildActionCard(id) {
   const texts  = actionText(id);
   const isLocked = !def.unlocked();
   const energy = state.resources.energy.current;
-  const cost   = def.energyCost ?? 0;
-  const isDisabledEnergy = !isLocked && cost > 0 && energy < cost;
+  const time   = state.time.remaining;
+  const eCost  = def.energyCost ?? 0;
+  const tCost  = def.timeCost ?? 0;
+  const isDisabledEnergy = !isLocked && eCost > 0 && energy < eCost;
+  const isDisabledTime   = !isLocked && tCost > 0 && time   < tCost;
 
   const card = el('div', [
     'action-card',
     isLocked         ? 'locked'          : '',
+    isDisabledTime   ? 'disabled-time'   : '',
     isDisabledEnergy ? 'disabled-energy' : '',
   ].filter(Boolean).join(' '));
   card.dataset.actionId = id;
@@ -173,13 +184,14 @@ function buildActionCard(id) {
     meta.appendChild(chip);
   }
 
+  // Time cost
+  if (tCost > 0) meta.appendChild(el('span', 'tag tag-time', '⏳ ' + tCost));
+
   // Energy cost / reward
-  if (cost > 0) {
-    meta.appendChild(el('span', 'tag tag-energy', '⚡ ' + cost));
-  } else if (def.energyReward) {
-    meta.appendChild(el('span', 'tag tag-energy-up', '+⚡ ' + def.energyReward));
+  if (eCost > 0) {
+    meta.appendChild(el('span', 'tag tag-energy', '⚡ ' + eCost));
   }
-  if (cost > 0 && def.energyReward) {
+  if (def.energyReward) {
     meta.appendChild(el('span', 'tag tag-energy-up', '+⚡ ' + def.energyReward));
   }
 
@@ -331,6 +343,7 @@ export function bindActionList(onAction) {
     if (!card) return;
     if (card.classList.contains('locked')) return;
     if (card.classList.contains('disabled-energy')) return;
+    if (card.classList.contains('disabled-time')) return;
     const id = card.dataset.actionId;
     if (id) onAction(id);
   });

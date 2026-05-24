@@ -4,8 +4,10 @@ export const state = {
 
   time: {
     day: 1,
-    phase: 'morning',      // 'morning' | 'afternoon' | 'evening' | 'reflecting'
+    phase: 'morning',         // 'morning' | 'afternoon' | 'evening' | 'reflecting'
     actionsThisPhase: 0,
+    remaining: 6,             // time units left in current phase (per-phase resource)
+    max: 6,                   // refilled from data/timing.json at boot
   },
 
   resources: {
@@ -13,11 +15,11 @@ export const state = {
     contacts: 0,
     money:    { current: 300, nextPayday: 6 },
     wisdom:   0,
-    energy:   { current: 6, max: 6 },
+    energy:   { current: 14, max: 14 },   // daily pool — refills only at morning of new day
   },
 
   language: { xp: 0, level: 0 },
-  location: 'apartment',     // tracks last-action location for flavor
+  location: 'apartment',
 
   npcs: {
     kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null },
@@ -25,7 +27,7 @@ export const state = {
     hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
   },
 
-  world: {},                  // placeholder for future weather/events
+  world: {},
 
   milestones: { completed: [] },
 

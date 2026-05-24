@@ -1,6 +1,7 @@
 {
-  "_readme": "Phase + energy model. Edit, save, push to GitHub, refresh on phone. energyPerPhase = energy budget per phase (Morning/Afternoon/Evening); faithPerDay = faith restored each new day; paydayEveryDays now counts real played days, not real seconds.",
-  "energyPerPhase": 6,
+  "_readme": "Phase + energy + time model. timePerPhase = abstract time units a phase contains (could become real minutes later — a unit could be e.g. 30 min). energyPerDay = total energy budget refilled only at start of day. paydayEveryDays counts played in-game days, not real seconds.",
+  "timePerPhase": 6,
+  "energyPerDay": 14,
   "faithPerDay": 3,
   "paydayAmount": 500,
   "paydayEveryDays": 6

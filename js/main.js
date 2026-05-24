@@ -11,7 +11,7 @@ import { doAction, endPhase, endDay, hooks } from './engine.js';
 import * as audio from './audio.js';
 import { ACTION_DEFS } from './actions.js';
 import { getStoryText } from './stories.js';
-import { refillEnergy } from './resources.js';
+import { refillTime, refillEnergyDaily } from './resources.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
   renderActions, renderPeople, renderMilestones,
@@ -61,8 +61,9 @@ async function boot() {
   if (hasSaved && state.character.name) {
     startGame();
   } else {
-    // Ensure energy is at max on fresh start
-    refillEnergy();
+    // Ensure time + energy at max on fresh start
+    refillTime();
+    refillEnergyDaily();
     showIntro();
   }
 }
@@ -131,9 +132,18 @@ function startGame() {
     }
   };
 
-  hooks.onPhaseChange = () => {
+  hooks.onPhaseChange = ({ to, auto }) => {
     renderPhaseStrip();
     renderActions(true);
+    if (auto) {
+      const labels = {
+        morning:   ['☀️', 'Morning',   'A new morning begins'],
+        afternoon: ['🌤', 'Afternoon', 'Time slipped past noon'],
+        evening:   ['🌙', 'Evening',   'The day is winding down'],
+      };
+      const [icon, title, desc] = labels[to] || ['•', to, ''];
+      showToast(icon, title, desc);
+    }
   };
 
   hooks.onEndOfDayReady = () => {

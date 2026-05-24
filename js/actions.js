@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { spend, gain, spendEnergy, gainEnergy } from './resources.js';
+import { spend, gain, spendEnergy, gainEnergy, spendTime, gainTime } from './resources.js';
 import { addLangXP } from './language.js';
 import { addNPCTrust, NPC_DEFS } from './npcs.js';
 
@@ -51,7 +51,8 @@ export function initActionsFromData(data) {
     ACTION_DEFS[id] = {
       location: cfg.location ?? null,
       icon: cfg.icon,
-      energyCost: cfg.energyCost ?? 1,
+      timeCost: cfg.timeCost ?? 1,
+      energyCost: cfg.energyCost ?? 0,
       cost: cfg.cost || {},
       reward: cfg.reward || {},
       energyReward: cfg.energyReward || 0,
@@ -74,6 +75,8 @@ export function actionUnlockCacheKey() {
   return [
     state.language.level,
     state.time.day,
+    state.time.phase,
+    state.time.remaining,
     state.resources.wisdom,
     state.resources.contacts,
     state.resources.energy.current,
@@ -151,18 +154,25 @@ const COMM_ACTIONS    = new Set(['hand_tracts', 'commuter_convo', 'casual_convo'
 const SPIRIT_ACTIONS  = new Set(['pray', 'study_scripture', 'observe_shrine']);
 const NPC_VISIT_ACTIONS = new Set(['visit_kenji', 'visit_yuki', 'visit_hiro', 'deep_kenji', 'deep_yuki', 'deep_hiro']);
 
-// Instant action. Returns { ok, id, bonuses, energySpent, reason }.
-// ok=false reasons: 'locked' | 'energy' | 'cost' | 'unknown'
+// Instant action. Returns { ok, id, bonuses, timeSpent, energySpent, reason }.
+// ok=false reasons: 'locked' | 'time' | 'energy' | 'cost' | 'unknown'
 export function doAction(actionId) {
   const def = ACTION_DEFS[actionId];
   if (!def) return { ok: false, reason: 'unknown' };
   if (!def.unlocked()) return { ok: false, reason: 'locked' };
 
-  // Energy first — cheaper to check
-  if (!spendEnergy(def.energyCost)) return { ok: false, reason: 'energy' };
+  // Time first (cheapest check)
+  if (!spendTime(def.timeCost)) return { ok: false, reason: 'time' };
 
-  // Then other costs. If they fail, refund energy.
+  // Energy
+  if (!spendEnergy(def.energyCost)) {
+    gainTime(def.timeCost);
+    return { ok: false, reason: 'energy' };
+  }
+
+  // Other costs (faith, money, wisdom)
   if (!spendCosts(def.cost)) {
+    gainTime(def.timeCost);
     gainEnergy(def.energyCost);
     return { ok: false, reason: 'cost' };
   }
@@ -174,10 +184,8 @@ export function doAction(actionId) {
   state.stats.actionsCompleted++;
   state.time.actionsThisPhase++;
 
-  // Update "last seen at" location for atmospheric continuity
   if (def.location) state.location = def.location;
 
-  // NPC encounter roll
   if (def.npcChance) {
     const { id: npcId, chance } = def.npcChance;
     if (!state.npcs[npcId].met && Math.random() < chance) {
@@ -186,20 +194,41 @@ export function doAction(actionId) {
     }
   }
 
-  // Update lastSeenDay if we visited a known NPC
   const visitMatch = actionId.match(/^(?:visit|deep)_(\w+)$/);
   if (visitMatch) {
     const npcId = visitMatch[1];
     if (state.npcs[npcId]) state.npcs[npcId].lastSeenDay = state.time.day;
   }
 
-  // Log for end-of-day summary
   const phase = state.time.phase;
   if (state.dayLog?.phases?.[phase]) {
     state.dayLog.phases[phase].push({ id: actionId, location: def.location });
   }
 
-  return { ok: true, id: actionId, bonuses, energySpent: def.energyCost };
+  return {
+    ok: true,
+    id: actionId,
+    bonuses,
+    timeSpent: def.timeCost,
+    energySpent: def.energyCost,
+  };
+}
+
+// Does the player have at least one available action that fits remaining time + energy?
+// Used by UI to nudge End Phase when nothing else can be done.
+export function hasFittingAction() {
+  const t = state.time.remaining;
+  const e = state.resources.energy.current;
+  return Object.values(ACTION_DEFS).some(def => {
+    if (!def.visible()) return false;
+    if (!def.unlocked()) return false;
+    if (def.timeCost > t) return false;
+    if (def.energyCost > e) return false;
+    if (def.cost?.faith  && state.resources.faith.current  < def.cost.faith)  return false;
+    if (def.cost?.money  && state.resources.money.current  < def.cost.money)  return false;
+    if (def.cost?.wisdom && state.resources.wisdom         < def.cost.wisdom) return false;
+    return true;
+  });
 }
 
 // ── internals ──────────────────────────────────────────────────

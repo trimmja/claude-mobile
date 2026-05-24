@@ -47,14 +47,18 @@ These were resolved through Q&A. They are the ground rules for Step 1 and most o
 |---|---|---|
 | Day structure | 3 phases (Morning/Afternoon/Evening) × Energy budget per phase | Phases give narrative rhythm; Energy lets the player do multiple lightweight things per phase |
 | UI flow | Activity cards include their location; bottom location tabs removed | Phase becomes the primary mental model, not location |
-| Energy refill | Auto-refill each phase + bonus from Rest/Pray | Forgiving baseline, rewards intentional restorative actions |
+| Dual resources | Time (per-phase) + Energy (per-day) | Time gates phase length; energy gates daily total. Different ratios on different actions force real choices. |
+| Time refill | Refills at the start of each phase | Each phase has its own time budget — independent of energy |
+| Energy refill | Refills ONLY at start of new day | Saving energy actually compounds across phases (fixes "no point saving" issue) |
 | End of day | Explicit reflection screen | Surfaces emergent events; matches missionary theme |
-| Phase end | Explicit "End Phase" button + auto-end on 0 energy | Player can stop early or push to exhaustion |
-| Phase skip | Allowed (End Phase with zero actions taken) | Freedom to "rest" implicitly or pace yourself |
+| Phase end | Explicit "End Phase" button + auto-end when time hits 0 | Time, not energy, drives phase boundary |
+| Phase skip | Allowed (End Phase with zero actions taken) | Freedom to skip ahead |
 | Action animation | Brief 0.5–1s flash | Responsive feel without timer wait |
-| Saves | Wipe on `meta.version < 2` | Early playtesting — clean break is fine |
-| Energy budget | 6 per phase (tunable in `data/timing.json`) | Allows ~3 light actions per phase |
-| Restorative actions | `rest` (new, 0 cost, +2 energy) + `pray` gives +1 energy bonus | Two valid ways to recover, neither dominant |
+| Saves | Wipe on `meta.version < 2`; graceful migration within v2 | Early playtesting — clean break is fine |
+| Time budget | 6 time units per phase (tunable in `data/timing.json`) | Abstract units; can map to real-world minutes later without changing model |
+| Energy budget | 14 energy per day (tunable) | Roughly 7–9 actions per day at average cost; forces tradeoffs |
+| Rest action | Costs 3 time + 0 energy, gives +3 energy | Half-a-phase commitment for real recovery; can't be spammed because of time cost |
+| Pray as filler | 1 time + 0 energy + small faith | Always-available "quiet moment" action; absorbs leftover time naturally |
 
 ---
 
@@ -131,3 +135,4 @@ These are why the foundation matters. Step 1 enforces them. Every subsequent ste
 Append new entries here as roadmap-level decisions are made. Date format YYYY-MM-DD.
 
 - **2026-05-24** — Pivoted from real-time timer/idle to phase + energy simulation (this document). Locked decisions in Section 3. Step 1 plan written.
+- **2026-05-24 (later same day)** — Step 1 refinement after first playtest: introduced **Time** as a per-phase resource alongside **Energy** as a daily resource. Fixed two issues — (1) `rest` could loop infinitely because it had no real cost, (2) per-phase energy refill made conservation pointless. New model: actions cost both time and energy; rest costs time (half a phase) but recovers energy; pray is the 1-time / 0-energy "filler" action. Phase auto-advances when time runs out (with a toast). Bumped APP_VERSION to 16. Save format still v2 — gracefully migrates by initializing missing fields.

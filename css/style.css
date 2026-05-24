@@ -527,7 +527,7 @@ input { user-select: text; }
   margin-top: 1px;
 }
 
-.energy-strip {
+.time-strip {
   flex: 1;
   display: flex;
   align-items: center;
@@ -535,9 +535,9 @@ input { user-select: text; }
   min-width: 0;
 }
 
-.energy-icon { color: var(--energy); font-size: 14px; line-height: 1; flex-shrink: 0; }
+.time-icon { color: var(--sakura-light); font-size: 14px; line-height: 1; flex-shrink: 0; }
 
-.energy-bar {
+.time-bar {
   flex: 1;
   height: 8px;
   background: var(--surface-3);
@@ -546,20 +546,29 @@ input { user-select: text; }
   min-width: 30px;
 }
 
-.energy-bar-fill {
+.time-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--energy), #FBBF24);
+  background: linear-gradient(90deg, var(--sakura-light), var(--sakura));
   border-radius: 4px;
   transition: width 0.4s ease;
 }
 
-.energy-count {
+.time-count {
   font-size: 11px;
   font-weight: 800;
-  color: var(--energy);
+  color: var(--sakura-light);
   flex-shrink: 0;
   min-width: 32px;
   text-align: right;
+}
+
+.phase-nudge {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-dim);
+  text-align: center;
+  margin: -4px 0 10px;
+  letter-spacing: 0.5px;
 }
 
 .end-phase-btn {
@@ -604,7 +613,8 @@ input { user-select: text; }
 
 .action-card:active:not(.disabled):not(.locked) { transform: scale(0.985); }
 
-.action-card.disabled-energy { opacity: 0.4; cursor: not-allowed; }
+.action-card.disabled-energy,
+.action-card.disabled-time   { opacity: 0.4; cursor: not-allowed; }
 .action-card.locked          { opacity: 0.35; cursor: not-allowed; }
 
 /* Brief flash when an action resolves */
@@ -662,6 +672,7 @@ input { user-select: text; }
 .tag-cost   { color: var(--danger); background: rgba(248,113,113,0.10); }
 .tag-energy { color: var(--energy); background: rgba(252,211,77,0.14); }
 .tag-energy-up { color: var(--success); background: rgba(52,211,153,0.12); }
+.tag-time { color: var(--sakura-light); background: rgba(255,179,198,0.10); }
 
 /* Location chip on each action card */
 .location-chip {

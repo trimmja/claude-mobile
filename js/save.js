@@ -39,17 +39,25 @@ export function loadGame() {
       state.time.phase = 'morning';
     }
     if (typeof state.time.actionsThisPhase !== 'number') state.time.actionsThisPhase = 0;
+    // Pre-time-mechanic saves: init time.remaining/max if missing
+    if (typeof state.time.remaining !== 'number') state.time.remaining = state.time.max || 6;
+    if (typeof state.time.max !== 'number')       state.time.max = 6;
 
     // Resources
     Object.assign(state.resources.faith,  saved.resources?.faith  || {});
     Object.assign(state.resources.money,  saved.resources?.money  || {});
     state.resources.contacts = saved.resources?.contacts ?? 0;
     state.resources.wisdom   = saved.resources?.wisdom   ?? 0;
-    // Energy may have been carried over; clamp to max.
-    Object.assign(state.resources.energy, saved.resources?.energy || {});
+    // Energy is now a daily pool. Carry current; clamp to (possibly larger) max from config.
+    const savedEnergy = saved.resources?.energy || {};
+    if (typeof savedEnergy.current === 'number') {
+      state.resources.energy.current = savedEnergy.current;
+    }
+    // If the saved energy.max is smaller than current config (e.g., upgrade from per-phase 6 to daily 14),
+    // applyTimingFromData will have already raised state.resources.energy.max — just clamp current.
     state.resources.energy.current = Math.min(
-      state.resources.energy.max ?? 6,
-      state.resources.energy.current ?? 6
+      state.resources.energy.max,
+      state.resources.energy.current
     );
 
     Object.assign(state.language, saved.language || {});
