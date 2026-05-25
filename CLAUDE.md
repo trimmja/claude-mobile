@@ -1,10 +1,12 @@
 # Japan Evangelistic Band — Claude Context
 
-Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Claude should read this file. When either changes project context, the plan, or developer notes, **update both** this file and the matching `.cursor/rules/*.mdc` file.
+This file is the entry point for Claude. The auto-loaded companions are:
 
 @ROADMAP.md
 @PROGRESS.md
 @CHARACTERS.md
+
+`TODO.md` is read on demand when Jacob says "process todo" — see the TODO workflow section below.
 
 ---
 
@@ -12,27 +14,18 @@ Shared context for **Claude** and **Cursor**. Cursor loads `.cursor/rules/`; Cla
 
 - Beginner — no coding experience. Prefer plain-language explanations.
 - I work in the local folder `jbe` (GitHub repo: `trimmja/japan-evangelistic-band`).
-- I use **Claude** for planning and design, **Cursor** for edits and git.
+- I lean on Claude for everything — planning, design, code, commits.
 - Ask before pushing to GitHub unless I say to publish / push / save to GitHub.
 - **Hosting & testing:** GitHub Pages — https://trimmja.github.io/japan-evangelistic-band/ (not `claude-mobile`). Mostly test on **iPhone**. Push then refresh; stale PWA → Settings → **Load latest update** or reinstall Home Screen shortcut.
 - Real missionary experience in Japan — keep the game culturally authentic.
 
 ---
 
-## Working with AI
-
-| Tool | Reads | Role |
-|------|--------|------|
-| Claude | This file (`CLAUDE.md`) + `PROGRESS.md` | Planning, ideas, design review |
-| Cursor | `.cursor/rules/` + this file when needed | Code changes, commit, push |
-
-**Sync rule:** If context here changes, update the matching Cursor rule (and vice versa). Cursor rule files: `00-sync-claude-md`, `01-about-developer`, `02-project-overview`, `03-current-plan`, `04-how-to-build`, `05-coding-guidelines`.
-
-### Coding guidelines (AI)
+## Coding guidelines (AI)
 
 Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward caution over speed** — for trivial tasks, use judgment.
 
-**Project merge:** plain-language explanations; ask before push; balance changes in `data/*.json` → push → refresh on iPhone to verify.
+**Project rules:** plain-language explanations; ask before push; for balance changes, edit `data/*.json` → push → refresh on iPhone to verify.
 
 **1. Think before coding** — Don't assume or hide confusion. State assumptions; present multiple interpretations; suggest simpler approaches; stop and ask when unclear.
 
@@ -296,17 +289,13 @@ Adding a new action: entry in `data/actions.json` (with `timeCost` + `energyCost
 
 ## NPCs (js/npcs.js)
 
-**Kenji** (健二) — Salaryman, 34
-- Met via: hand_tracts at station (30% chance)
-- Future role: church elder / leader
+**Bios, arcs, langWeights, and future church roles all live in `CHARACTERS.md`** — always read that first before touching NPC code or content. This section covers code/data only.
 
-**Yuki** (由紀) — University student, 21
-- Met via: host_english at café (45% chance)
-- Future role: theologian / teacher
-
-**Hiro** (浩) — Retired, 68
-- Met via: open_air_preach at park (35%) or observe_shrine at shrine (25%)
-- Future role: pastoral heart
+| NPC | Met via | npcChance |
+|---|---|---|
+| Kenji (健二) | hand_tracts at station | 30% |
+| Yuki (由紀) | host_english at café | 45% |
+| Hiro (浩) | open_air_preach at park / observe_shrine at shrine | 35% / 25% |
 
 **NPC_DEF fields:**
 - `introByLang[]` — first-meet text indexed by language level (0/1/2+); picked by `getIntroText(npcId)`
@@ -507,6 +496,25 @@ When adding a new NPC, do ALL of these:
 6. Add narrative labels to `js/language.js` ACTION_TEXT
 7. Add `npcChance` to the relevant outreach action in `data/actions.json`
 8. Write story beats in `data/stories.json` — 3 lang tiers × ~3 stage tiers ≈ ~9 beats per action
+
+## TODO workflow
+
+`TODO.md` is a frictionless brain-dump for bugs and ideas Jacob notices mid-play (especially on iPhone). It's a scratch pad, not a third progress log — it's expected to fill up between sessions and get cleared.
+
+When Jacob says **"process todo"** (or "triage todo" / "clear todo" / similar), do this:
+
+1. Read `TODO.md`
+2. For each item, propose a triage:
+   - **Fix now** — small bug or quick polish, do it this session
+   - **Add to `PROGRESS.md`** — polish backlog item or new idea
+   - **Add to `ROADMAP.md`** — direction-level decision or roadmap step
+   - **Drop** — already done, duplicate, or not worth keeping
+3. Confirm the plan with Jacob before moving anything
+4. Apply the triage — write items into target files, then reset `TODO.md` back to the empty template (`## Bugs` / `## Ideas` headers, nothing under them)
+
+Never auto-clear without confirmation. The point of triage is that Jacob sees each item get a home.
+
+---
 
 ## Local testing & debugging
 
