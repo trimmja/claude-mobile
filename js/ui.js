@@ -130,9 +130,19 @@ export function renderPhaseStrip() {
   $('phase-name-jp').textContent = d.jp;
 
   const t = state.time;
-  $('time-count').textContent = `${t.remaining}/${t.max}`;
   const tpct = t.max > 0 ? (t.remaining / t.max) * 100 : 0;
+  $('time-count').textContent    = `${t.remaining}/${t.max}`;
   $('time-bar-fill').style.width = tpct + '%';
+
+  // ── Also update the always-visible scene overlay pill ──
+  const sIcon = $('scene-phase-icon');
+  const sName = $('scene-phase-name');
+  const sFill = $('scene-time-fill');
+  const sCnt  = $('scene-time-count');
+  if (sIcon) sIcon.textContent  = d.icon;
+  if (sName) sName.textContent  = d.en;
+  if (sFill) sFill.style.width  = tpct + '%';
+  if (sCnt)  sCnt.textContent   = `${t.remaining}/${t.max}`;
 
   // End-phase button labelling + nudge state
   const btn = $('end-phase-btn');

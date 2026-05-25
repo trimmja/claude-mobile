@@ -108,6 +108,21 @@
       <div id="location-name-jp" class="location-name-jp">アパート</div>
       <div id="location-name-en" class="location-name-en">Your Apartment</div>
     </div>
+
+    <!-- Scene overlay: phase status + travel, always visible without opening the sheet -->
+    <div class="scene-overlay">
+      <!-- Phase + time pill -->
+      <div class="scene-phase-pill">
+        <span id="scene-phase-icon" class="scene-phase-icon">☀️</span>
+        <span id="scene-phase-name" class="scene-phase-name">Morning</span>
+        <div class="scene-time-bar">
+          <div id="scene-time-fill" class="scene-time-fill"></div>
+        </div>
+        <span id="scene-time-count" class="scene-time-count">6/6</span>
+      </div>
+      <!-- Travel row (moved out of Activities tab so it's always accessible) -->
+      <div id="travel-row" class="travel-row"></div>
+    </div>
   </div>
 
   <!-- ── Bottom sheet: handle + tabs + content (slides up over scene) ── -->
@@ -140,7 +155,6 @@
           <button id="end-phase-btn" class="end-phase-btn">End Phase →</button>
         </div>
         <div id="phase-nudge" class="phase-nudge hidden">— nothing more fits this phase —</div>
-        <div id="travel-row" class="travel-row"></div>
         <div id="action-list" class="action-list"></div>
       </div>
 
@@ -236,6 +250,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=20"></script>
+<script type="module" src="js/main.js?v=21"></script>
 </body>
 </html>

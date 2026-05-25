@@ -434,6 +434,85 @@ input { user-select: text; }
   z-index: 3;
 }
 
+/* ── Scene overlay: always-visible panel at bottom of scene ── */
+.scene-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 86px;     /* sits above the collapsed sheet handle (~80px) */
+  z-index: 3;
+  padding: 0 12px;
+  pointer-events: all;
+}
+
+/* Phase + time pill */
+.scene-phase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10,10,22,0.78);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 6px 14px 6px 10px;
+  margin-bottom: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  white-space: nowrap;
+}
+
+.scene-phase-icon { font-size: 16px; line-height: 1; }
+
+.scene-phase-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.scene-time-bar {
+  width: 60px;
+  height: 5px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scene-time-fill {
+  height: 100%;
+  background: var(--sakura);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.scene-time-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Travel row when inside the scene overlay — glass styling */
+.scene-overlay .travel-row {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(10,10,22,0.78);
+  border: 1px solid rgba(255,143,171,0.18);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* In the scene, destination buttons scroll horizontally instead of wrapping */
+.scene-overlay .travel-dests {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px; /* avoid scroll bar clipping */
+  scrollbar-width: none;
+}
+.scene-overlay .travel-dests::-webkit-scrollbar { display: none; }
+
 .location-name-jp {
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 26px;
@@ -568,8 +647,9 @@ input { user-select: text; }
 
 .tab-panel {
   flex: 1;
+  min-height: 0;       /* needed in flex context so overflow-y actually constrains */
   overflow-y: auto;
-  padding: 12px 12px 16px;
+  padding: 12px 12px calc(24px + var(--safe-bottom));
   -webkit-overflow-scrolling: touch;
 }
 
