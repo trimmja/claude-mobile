@@ -100,6 +100,19 @@
     </div>
   </div>
 
+  <!-- ── Top info bar: phase + time + travel (always visible, under HUD) ── -->
+  <div class="top-bar">
+    <div class="top-bar-phase">
+      <span id="scene-phase-icon" class="top-phase-icon">☀️</span>
+      <span id="scene-phase-name" class="top-phase-name">Morning</span>
+      <div class="scene-time-bar">
+        <div id="scene-time-fill" class="scene-time-fill"></div>
+      </div>
+      <span id="scene-time-count" class="top-time-count">6/6</span>
+    </div>
+    <div id="travel-row" class="travel-row"></div>
+  </div>
+
   <!-- ── Location view — fills remaining space, scene background ── -->
   <div class="location-view">
     <img id="location-img" class="location-img" alt="" src="assets/images/locations/apartment.png">
@@ -107,21 +120,6 @@
     <div class="location-info">
       <div id="location-name-jp" class="location-name-jp">アパート</div>
       <div id="location-name-en" class="location-name-en">Your Apartment</div>
-    </div>
-
-    <!-- Scene overlay: phase status + travel, always visible without opening the sheet -->
-    <div class="scene-overlay">
-      <!-- Phase + time pill -->
-      <div class="scene-phase-pill">
-        <span id="scene-phase-icon" class="scene-phase-icon">☀️</span>
-        <span id="scene-phase-name" class="scene-phase-name">Morning</span>
-        <div class="scene-time-bar">
-          <div id="scene-time-fill" class="scene-time-fill"></div>
-        </div>
-        <span id="scene-time-count" class="scene-time-count">6/6</span>
-      </div>
-      <!-- Travel row (moved out of Activities tab so it's always accessible) -->
-      <div id="travel-row" class="travel-row"></div>
     </div>
   </div>
 
@@ -250,6 +248,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=22"></script>
+<script type="module" src="js/main.js?v=23"></script>
 </body>
 </html>
