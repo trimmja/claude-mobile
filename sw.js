@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v19';
+const CACHE = 'jeb-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -28,6 +28,12 @@ const ASSETS = [
   './js/notifications.js',
   './js/journal.js',
   './js/unlocks.js',
+  './assets/images/locations/apartment.png',
+  './assets/images/locations/station.png',
+  './assets/images/locations/park.png',
+  './assets/images/locations/cafe.png',
+  './assets/images/locations/shrine.png',
+  './assets/images/locations/onsen.png',
 ];
 
 self.addEventListener('install', () => {

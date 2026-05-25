@@ -67,6 +67,20 @@ export function renderHeader() {
   $('header-day').textContent  = 'Day ' + state.time.day;
 }
 
+// ─── BOTTOM SHEET PANEL ─────────────────────────────────────────────────────
+let _panelOpen = false;
+
+export function togglePanel(forceOpen) {
+  _panelOpen = (forceOpen !== undefined) ? forceOpen : !_panelOpen;
+  const sheet = $('bottom-sheet');
+  if (sheet) sheet.classList.toggle('sheet-open', _panelOpen);
+}
+
+export function bindSheetHandle() {
+  const handle = $('sheet-handle');
+  if (handle) handle.addEventListener('click', () => togglePanel());
+}
+
 // ─── LOCATION VIEW ──────────────────────────────────────────────────────────
 let lastLocation = null;
 export function renderLocation() {
@@ -78,6 +92,23 @@ export function renderLocation() {
   const bg    = $('location-bg');
 
   bg.className = 'location-bg ' + def.bgClass;
+
+  // Load scene image; fall back silently to gradient if image missing
+  const img = $('location-img');
+  if (img) {
+    const newSrc = `assets/images/locations/${def.id}.png`;
+    const sameSrc = img.getAttribute('src') === newSrc;
+    if (sameSrc) {
+      // Same source — just make sure it's visible if it loaded successfully
+      img.style.opacity = (img.complete && img.naturalWidth > 0) ? '1' : '0';
+    } else {
+      // New location — cross-fade to new scene
+      img.style.opacity = '0';
+      img.src = newSrc;
+      img.onerror = () => { img.style.opacity = '0'; };
+      img.onload  = () => { img.style.opacity = '1'; };
+    }
+  }
 
   $('location-name-jp').textContent = texts.jp;
   $('location-name-en').textContent = texts.en;
@@ -470,6 +501,9 @@ export function bindContentTabs() {
       tab.classList.add('active');
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
       $('tab-' + name).classList.remove('hidden');
+
+      // Opening any tab also opens the panel if it's collapsed
+      togglePanel(true);
 
       if (name === 'people')  renderPeople();
       if (name === 'journal') { markJournalRead(); renderJournal(); }

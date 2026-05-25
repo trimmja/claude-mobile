@@ -219,7 +219,8 @@ input { user-select: text; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: var(--safe-top) var(--safe-right) var(--tab-bar-height) var(--safe-left);
+  /* No bottom padding — bottom sheet is a fixed overlay, not in flow */
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
 }
 
 /* Game Header */
@@ -305,18 +306,33 @@ input { user-select: text; }
 
 .lang-pip.filled { background: var(--lang); }
 
-/* Location View */
+/* Location View — fills all remaining space in the flex column */
 .location-view {
   position: relative;
-  height: 160px;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
+/* Gradient fallback layer — shows through when image not loaded */
 .location-bg {
   position: absolute;
   inset: 0;
   transition: background 0.8s ease;
+  z-index: 0;
+}
+
+/* Scene photograph/illustration — above the gradient, below the vignette */
+.location-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  display: block;
+  transition: opacity 0.6s ease;
+  z-index: 1;
 }
 
 .bg-apartment { background: linear-gradient(155deg, #1A0A30 0%, #3A1560 40%, #2A0A50 100%); }
@@ -326,11 +342,30 @@ input { user-select: text; }
 .bg-shrine    { background: linear-gradient(155deg, #1A0505 0%, #4A0F0F 50%, #8A2020 100%); }
 .bg-onsen     { background: linear-gradient(155deg, #050F18 0%, #0F2A3A 40%, #1A5070 100%); }
 
-.location-bg::after {
+/* Dark vignette over the scene — keeps text readable at bottom.
+   Lives on .location-view::after so it sits above the img (z-index: 1) */
+.location-view::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(15,15,26,0.1) 30%, rgba(15,15,26,0.95) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(15,15,26,0.05) 0%,
+    rgba(15,15,26,0.15) 40%,
+    rgba(15,15,26,0.85) 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Subtle scene animation — slight slow zoom gives a living feel */
+@keyframes sceneBreathe {
+  0%, 100% { transform: scale(1.0); }
+  50%       { transform: scale(1.04); }
+}
+.location-img {
+  animation: sceneBreathe 18s ease-in-out infinite;
+  transform-origin: center 40%;
 }
 
 /* decorative elements per location */
@@ -396,7 +431,7 @@ input { user-select: text; }
   position: absolute;
   bottom: 14px;
   left: 16px;
-  z-index: 1;
+  z-index: 3;
 }
 
 .location-name-jp {
@@ -429,7 +464,62 @@ input { user-select: text; }
   z-index: 1;
 }
 
-/* Content Area */
+/* Bottom sheet — slides up over the scene */
+.bottom-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 75vh;
+  background: var(--bg);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.6);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(100% - 80px));
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.bottom-sheet.sheet-open {
+  transform: translateY(0);
+}
+
+/* Sheet drag handle */
+.sheet-handle {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 6px;
+  cursor: pointer;
+  border-radius: 20px 20px 0 0;
+}
+
+.sheet-pill {
+  width: 40px;
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 2px;
+}
+
+.sheet-handle-hint {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.bottom-sheet.sheet-open .sheet-handle-hint {
+  opacity: 0;
+}
+
+/* Content Area — inside the sheet */
 .content-area {
   flex: 1;
   display: flex;
@@ -438,13 +528,9 @@ input { user-select: text; }
   min-height: 0;
 }
 
-/* Bottom nav (content tabs) */
+/* Bottom nav (content tabs) — inside the sheet, not fixed */
 .content-tabs {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 40;
+  flex-shrink: 0;
   display: flex;
   align-items: flex-start;
   min-height: var(--tab-bar-height);
@@ -1088,7 +1174,7 @@ input { user-select: text; }
 /* ─── TOAST ─── */
 .toast {
   position: fixed;
-  bottom: calc(var(--tab-bar-height) + 10px);
+  bottom: calc(80px + 10px); /* sits above collapsed bottom sheet handle */
   left: 50%;
   transform: translateX(-50%) translateY(12px);
   background: var(--surface-2);
@@ -1471,7 +1557,7 @@ input { user-select: text; }
 .story-popup-card {
   background: var(--surface-2);
   border-top: 1px solid rgba(240, 192, 64, 0.2);
-  padding: 18px 20px calc(18px + var(--tab-bar-height));
+  padding: 18px 20px 24px;
   max-height: 60vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

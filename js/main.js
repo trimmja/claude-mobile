@@ -19,7 +19,7 @@ import {
   renderActions, renderPeople, renderJournal, invalidateTravelRow,
   showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup, bindJournalList,
   bindContentTabs, bindSettings, bindActionList, bindEndPhase, bindTravelRow,
-  bindPeopleList, flashActionCard, showEndOfDayScreen,
+  bindPeopleList, flashActionCard, showEndOfDayScreen, bindSheetHandle,
 } from './ui.js';
 import { enqueueNotification, registerNotificationRenderer } from './notifications.js';
 import { silentBackfillUnlocks } from './unlocks.js';
@@ -112,6 +112,7 @@ function startGame() {
   renderHeader();
 
   // Bind UI interactions
+  bindSheetHandle();
   bindContentTabs();
   bindSettings(resetGame);
   bindStoryPopup();

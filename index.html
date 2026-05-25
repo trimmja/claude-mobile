@@ -100,8 +100,9 @@
     </div>
   </div>
 
-  <!-- ── Location view (reflects last action's location) ─── -->
+  <!-- ── Location view — fills remaining space, scene background ── -->
   <div class="location-view">
+    <img id="location-img" class="location-img" alt="" src="assets/images/locations/apartment.png">
     <div id="location-bg" class="location-bg bg-apartment"></div>
     <div class="location-info">
       <div id="location-name-jp" class="location-name-jp">アパート</div>
@@ -109,58 +110,69 @@
     </div>
   </div>
 
-  <!-- ── Content area ───────────────────────────────────────── -->
-  <div class="content-area">
-    <!-- Activities panel -->
-    <div id="tab-actions" class="tab-panel">
-      <!-- Phase strip: phase icon + label, time bar, end-phase button -->
-      <div class="phase-strip">
-        <div class="phase-strip-left">
-          <span id="phase-icon" class="phase-icon">☀️</span>
-          <span class="phase-labels">
-            <span id="phase-name-en" class="phase-name-en">Morning</span>
-            <span id="phase-name-jp" class="phase-name-jp">朝</span>
-          </span>
+  <!-- ── Bottom sheet: handle + tabs + content (slides up over scene) ── -->
+  <div id="bottom-sheet" class="bottom-sheet">
+
+    <!-- Drag handle — tap to open/close -->
+    <div id="sheet-handle" class="sheet-handle">
+      <div class="sheet-pill"></div>
+      <div class="sheet-handle-hint" id="sheet-handle-hint">↑ tap to open</div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content-area">
+      <!-- Activities panel -->
+      <div id="tab-actions" class="tab-panel">
+        <!-- Phase strip: phase icon + label, time bar, end-phase button -->
+        <div class="phase-strip">
+          <div class="phase-strip-left">
+            <span id="phase-icon" class="phase-icon">☀️</span>
+            <span class="phase-labels">
+              <span id="phase-name-en" class="phase-name-en">Morning</span>
+              <span id="phase-name-jp" class="phase-name-jp">朝</span>
+            </span>
+          </div>
+          <div class="time-strip" title="Time left in this phase">
+            <span class="time-icon">⏳</span>
+            <div class="time-bar"><div id="time-bar-fill" class="time-bar-fill"></div></div>
+            <span id="time-count" class="time-count">6/6</span>
+          </div>
+          <button id="end-phase-btn" class="end-phase-btn">End Phase →</button>
         </div>
-        <div class="time-strip" title="Time left in this phase">
-          <span class="time-icon">⏳</span>
-          <div class="time-bar"><div id="time-bar-fill" class="time-bar-fill"></div></div>
-          <span id="time-count" class="time-count">6/6</span>
-        </div>
-        <button id="end-phase-btn" class="end-phase-btn">End Phase →</button>
+        <div id="phase-nudge" class="phase-nudge hidden">— nothing more fits this phase —</div>
+        <div id="travel-row" class="travel-row"></div>
+        <div id="action-list" class="action-list"></div>
       </div>
-      <div id="phase-nudge" class="phase-nudge hidden">— nothing more fits this phase —</div>
-      <div id="travel-row" class="travel-row"></div>
-      <div id="action-list" class="action-list"></div>
+
+      <!-- People panel -->
+      <div id="tab-people" class="tab-panel hidden">
+        <div id="people-list" class="people-list"></div>
+        <div id="contacts-summary" class="contacts-summary"></div>
+      </div>
+
+      <!-- Journal panel -->
+      <div id="tab-journal" class="tab-panel hidden">
+        <div id="journal-list" class="journal-list"></div>
+      </div>
     </div>
 
-    <!-- People panel -->
-    <div id="tab-people" class="tab-panel hidden">
-      <div id="people-list" class="people-list"></div>
-      <div id="contacts-summary" class="contacts-summary"></div>
-    </div>
+    <!-- Bottom nav: content tabs -->
+    <nav id="content-tabs" class="content-tabs">
+      <button class="content-tab active" data-tab="actions">
+        <span class="content-tab-icon">⛩</span>
+        <span class="content-tab-lbl">Actions</span>
+      </button>
+      <button class="content-tab" data-tab="people">
+        <span class="content-tab-icon">👥</span>
+        <span class="content-tab-lbl">People</span>
+      </button>
+      <button class="content-tab" data-tab="journal">
+        <span class="content-tab-icon">📖</span>
+        <span class="content-tab-lbl">Journal</span>
+      </button>
+    </nav>
 
-    <!-- Journal panel -->
-    <div id="tab-journal" class="tab-panel hidden">
-      <div id="journal-list" class="journal-list"></div>
-    </div>
-  </div>
-
-  <!-- ── Bottom nav: content tabs ────────────────────────── -->
-  <nav id="content-tabs" class="content-tabs">
-    <button class="content-tab active" data-tab="actions">
-      <span class="content-tab-icon">⛩</span>
-      <span class="content-tab-lbl">Actions</span>
-    </button>
-    <button class="content-tab" data-tab="people">
-      <span class="content-tab-icon">👥</span>
-      <span class="content-tab-lbl">People</span>
-    </button>
-    <button class="content-tab" data-tab="journal">
-      <span class="content-tab-icon">📖</span>
-      <span class="content-tab-lbl">Journal</span>
-    </button>
-  </nav>
+  </div><!-- /bottom-sheet -->
 
 </div><!-- /game-screen -->
 
@@ -224,6 +236,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=19"></script>
+<script type="module" src="js/main.js?v=20"></script>
 </body>
 </html>
