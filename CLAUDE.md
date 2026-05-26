@@ -33,7 +33,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 
 **3. Goal-driven execution** — Turn asks into verifiable goals (tests, repro steps, before/after checks). Multi-step work gets a short plan with a verify line per step. Prefer strong success criteria over "make it work."
 
-**4. No conflicting cost+reward on the same stat** — Never define an action that both costs AND rewards the same resource (e.g. `cost.faith: 5, reward.faith: 3` is forbidden — that's a net-negative on faith). If an action is meant to grow a stat, the cost goes to a *different* stat (time, energy, money, etc.). If it's meant to drain a stat, no reward on that stat. This rule applies to every action in `data/actions.json` and any future action definitions. Caught once on `study_scripture` — don't reintroduce.
+**4. No conflicting cost+reward on the same stat** — Never define an action's `reward` in `data/actions.json` to both cost AND reward the same resource (e.g. `cost.faith: 5, reward.faith: 3` is forbidden — that's a net-negative on faith). Story beats in `data/stories.json` are the exception: a beat's `rewards` field CAN give faith back even if the action costs faith — that's the variable-outcome design (you spend faith to preach; sometimes you get some back, sometimes you don't). The ban is on the base `reward` object in `actions.json`. Caught once on `study_scripture` — don't reintroduce in actions.json.
 
 ---
 
@@ -81,7 +81,7 @@ js/resources.js       — spend/gain (incl. spendTime + spendEnergy + refillTime
 js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, hasFittingAction
 js/locations.js       — LOCATION_DEFS, LOCATION_ORDER, TRAVEL_COSTS, travelTo() — real navigation, see "Travel" section
 js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
-js/stories.js         — getStoryText(actionId, state) — picks story beat from stories.json
+js/stories.js         — getStoryBeat(actionId, state) → { text, rewards? } — picks story beat from stories.json; getStoryText() is a thin wrapper for backward compat
 js/reflections.js     — pickReflection() — random line for end-of-day screen
 js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
 js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
@@ -115,7 +115,7 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 
 ### Action flow
 1. UI → `bindActionList` click → `main.js` `handleAction(id)` → `engine.doAction(id)`
-2. `engine.doAction` calls `actions.js doAction` which: checks unlock → spends time → spends energy → spends other costs → applies rewards → updates dayLog → rolls NPC encounter.
+2. `engine.doAction` calls `actions.js doAction` which: checks unlock → spends time → spends energy → spends other costs → **selects story beat** → applies rewards (beat.rewards if present, else def.reward) → updates dayLog → rolls NPC encounter. Beat is selected before rewards so its `rewards` field can override the blanket action reward.
 3. Engine fires hooks in order: `onActionComplete`, then `onNPCMeet` (if NPC first-met this action), then `onNPCStageAdvance` (for each stage advance queued by `addNPCTrust`), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each. The story popup is suppressed if a first-meet or stage advance is about to fire — those bigger moments take precedence.
 4. Engine checks `state.time.remaining <= 0` → auto-calls `endPhase(true)`.
 5. `endPhase` fires `onBetweenPhases` (empty hook — future home for NPC moods/weather) + `onPhaseChange` to UI; refills time, does NOT refill energy. On evening end, sets `pendingEndOfDay` and fires `onEndOfDayReady` → UI shows reflection screen.
@@ -337,20 +337,22 @@ Story beats are shown after every action completion (bottom-sheet popup).
 ```json
 {
   "action_id": [
-    { "conditions": { "dayMax": 7 }, "text": "..." },
+    { "conditions": { "dayMax": 7 }, "rewards": { "faith": 14, "wisdom": 1 }, "text": "..." },
     { "conditions": { "langMin": 2, "npcMet": "kenji" }, "text": "..." },
-    { "conditions": {}, "text": "catch-all fallback" }
+    { "conditions": {}, "rewards": {}, "text": "dry catch-all — no reward" }
   ]
 }
 ```
+
+**`rewards` field (optional):** When present on a beat, its values replace the action's `reward` in `actions.json` for non-trust stats (faith, wisdom, contacts, langXP). NPC trust always comes from the action def. Omitting `rewards` means the action's default reward applies. `"rewards": {}` means no reward at all (dry outcome). This is how `pray`, `study_scripture`, and `open_air_preach` produce variable outcomes.
 
 **Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `langMin`, `langMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`
 
 **Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
 
-**To add story text:** edit `data/stories.json` only — no JS changes needed.
+**To add story text:** edit `data/stories.json` only — no JS changes needed. To add variable rewards to a beat, add `"rewards": { ... }` alongside the text.
 
-**Popup behaviour:** slides up from bottom, sits above tab bar. Shows NPC portrait for `visit_*/deep_*` actions. Skipped when NPC first-meet modal is pending. Auto-dismisses 6s or tap.
+**Popup behaviour:** slides up from bottom, sits above tab bar. Shows NPC portrait for NPC visit/deep actions (determined by `NPC_ACTION_MAP` in `actions.js`, not by naming convention). Skipped when NPC first-meet modal is pending. Auto-dismisses 6s or tap.
 
 ---
 
@@ -471,7 +473,7 @@ At level 2+: 100% base + existing lang bonus.
 
 ### Story branches (3 language tiers)
 
-Every `visit_*` and `deep_*` story entry in `stories.json` must have 3 language-tiered versions:
+Every NPC visit and deep-conversation story entry in `stories.json` must have 3 language-tiered versions:
 - `"langMax": 0` — phone translator, gestures, long silences, presence
 - `"langMin": 1, "langMax": 1` — basics flow, simple questions, cautious exchange
 - `"langMin": 2` — real conversation, things are learned and shared
@@ -483,11 +485,11 @@ Combine `langMin`/`langMax` with `stageMin`/`stageMax` as needed.
 | Action | Location | Reason |
 |--------|----------|--------|
 | visit_kenji | station | He's a commuter; station kiosk coffee. Station always available (avoids café-gate blocking). |
-| deep_kenji | cafe | Deeper relationship → proper sit-down café meetup |
+| evening_kenji | cafe | Deeper relationship → proper sit-down café meetup after work |
 | visit_yuki | cafe | Where she is; café unlocks same time as host_english (when you meet her) |
-| deep_yuki | cafe | Same venue, deeper depth |
+| questions_yuki | cafe | Same venue, deeper depth — she brings her notebook of hard questions |
 | visit_hiro | park | He's always on the bench |
-| deep_hiro | park | Deepest moments happen on the same bench |
+| pray_hiro | park | The deep moment IS prayer — he asks you to pray out loud on the bench |
 
 ### Contact-info rule
 
@@ -500,7 +502,12 @@ NPCs need a plausible reason you can reach them after first meeting:
 
 NPC interaction cards use narrative names, not generic ones:
 - `visit_*` → describes what you're actually doing ("Coffee with Kenji", "Sit with Hiro")
-- `deep_*` → "Heart-to-Heart with [Name]"
+- Deep actions use **character-specific IDs and names** — no generic "deep_*" or "Heart-to-Heart" pattern:
+  - `evening_kenji` → "Evening with Kenji" (late café, long conversation)
+  - `questions_yuki` → "Questions with Yuki" (she brings her notebook)
+  - `pray_hiro` → "Pray with Hiro" (the deep moment IS prayer)
+- Future NPC deep actions should follow the same pattern: an ID and name grounded in that character's specific arc
+- All NPC action IDs must be registered in `NPC_ACTION_MAP` in `actions.js` — this is how portraits and `lastSeenDay` are looked up (not by naming convention)
 - JP labels: action-specific, not just "visit"
 
 ---
@@ -511,8 +518,8 @@ When adding a new NPC, do ALL of these:
 1. Add bio to `CHARACTERS.md` — personality, language notes, arc, church role, `langWeight`
 2. Add state entry in `js/state.js`: `{ met: false, trust: 0, stage: 0 }`
 3. Add `NPC_DEFS` entry in `js/npcs.js` — include `langWeight` + `introByLang[]` with 3 tiers (level 0 / 1 / 2+). Intro text at level 0 must include how the player can reach the NPC again (business card, LINE, or "they're always here").
-4. Add `visit_{npc}` + `deep_{npc}` to `data/actions.json` with correct `"location"` (not null)
-5. Add unlock/visible rules in `js/actions.js` (ACTION_UNLOCK, ACTION_VISIBLE, REQUIREMENT_BUILDERS, NPC_VISIT_ACTIONS set)
+4. Add `visit_{npc}` + a character-specific deep action ID to `data/actions.json` with correct `"location"` (not null). Name the deep action after what the relationship actually IS for that character.
+5. Add unlock/visible rules in `js/actions.js` (ACTION_UNLOCK, ACTION_VISIBLE, REQUIREMENT_BUILDERS). Add both IDs to `NPC_VISIT_ACTIONS` set; add only the deep ID to `NPC_DEEP_ACTIONS` set. Add both to `NPC_ACTION_MAP`. Also add the deep action to `NPC_DEEP_ACTION` const in `ui.js`.
 6. Add narrative labels to `js/language.js` ACTION_TEXT
 7. Add `npcChance` to the relevant outreach action in `data/actions.json`
 8. Write story beats in `data/stories.json` — 3 lang tiers × ~3 stage tiers ≈ ~9 beats per action

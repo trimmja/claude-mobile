@@ -21,6 +21,9 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Portrait system | infrastructure only | ❌ no real images | n/a |
 | Immersive scene UI — floating button + panel (v20–v28) | ✅ | n/a | ✅ |
 | NPC mood/stress/burden system (Step 2, v29) | ✅ | ⚠️ first draft | ❌ not yet |
+| Character-specific deep action names (v30) | ✅ | n/a | ❌ not yet |
+| Variable outcome rewards — pray/preach/study (v30) | ✅ | ⚠️ first draft | ❌ not yet |
+| Conversion popup — Stage 5 gold modal (v30) | ✅ | ✅ | ❌ not yet |
 
 ---
 
