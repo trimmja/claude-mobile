@@ -1477,7 +1477,7 @@ input { user-select: text; }
   to   { transform: translateY(0); }
 }
 
-.sheet-handle {
+.settings-sheet .sheet-handle {
   width: 36px;
   height: 4px;
   background: var(--surface-3);
