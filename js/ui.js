@@ -168,9 +168,7 @@ export function renderPhaseStrip() {
   if (sFill) sFill.style.width  = tpct + '%';
   if (sCnt)  sCnt.textContent   = `${t.remaining}/${t.max}`;
 
-  // ── Keep the scene open-button phase label in sync ──
-  const openPhase = $('scene-open-phase');
-  if (openPhase) openPhase.textContent = `${d.icon} ${d.en}`;
+  // (scene-open-btn shows static "↑ Activities" — no dynamic phase text needed)
 
   // End-phase button labelling + nudge state
   const btn = $('end-phase-btn');

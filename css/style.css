@@ -610,38 +610,35 @@ input { user-select: text; }
   transform: translateY(0);
 }
 
-/* Sheet drag handle */
+/* Sheet drag handle — acts as the close button row when open */
 .sheet-handle {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 0 6px;
+  padding: 12px 0 8px;
   cursor: pointer;
   border-radius: 20px 20px 0 0;
 }
 
-.sheet-pill {
-  width: 40px;
-  height: 4px;
-  background: var(--surface-3);
-  border-radius: 2px;
-}
+/* No more .sheet-pill — was the "weird square" */
 
 .sheet-handle-hint {
-  font-size: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  opacity: 0;          /* hidden when sheet is closed (off-screen anyway) */
+  letter-spacing: 0.5px;
   white-space: nowrap;
-  transition: opacity 0.2s;
+  opacity: 0;          /* hidden when sheet is closed (off-screen anyway) */
+  transition: opacity 0.25s;
 }
 
 .bottom-sheet.sheet-open .sheet-handle-hint {
-  opacity: 0.7;        /* visible when sheet is open */
+  opacity: 1;          /* visible pill when sheet is open */
 }
 
 /* Content Area — inside the sheet */

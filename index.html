@@ -122,11 +122,7 @@
     </video>
     <div id="location-bg" class="location-bg bg-apartment"></div>
     <!-- Open-panel floating button — visible when sheet is closed -->
-    <button id="scene-open-btn" class="scene-open-btn">
-      <span id="scene-open-phase">☀️ Morning</span>
-      <span class="scene-open-divider">·</span>
-      <span>↑ Activities</span>
-    </button>
+    <button id="scene-open-btn" class="scene-open-btn">↑ Activities</button>
 
     <div class="location-info">
       <div id="location-name-jp" class="location-name-jp">アパート</div>
@@ -140,9 +136,8 @@
   <!-- ── Bottom sheet: handle + tabs + content (slides up over scene) ── -->
   <div id="bottom-sheet" class="bottom-sheet">
 
-    <!-- Drag handle — tap to open/close -->
+    <!-- Drag handle — tap to close when open -->
     <div id="sheet-handle" class="sheet-handle">
-      <div class="sheet-pill"></div>
       <div class="sheet-handle-hint" id="sheet-handle-hint">↓ tap to close</div>
     </div>
 
@@ -262,6 +257,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=25"></script>
+<script type="module" src="js/main.js?v=26"></script>
 </body>
 </html>
