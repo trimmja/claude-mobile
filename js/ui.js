@@ -6,7 +6,7 @@ import {
 import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo, currentLocation } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
 import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
-import { playTap } from './audio.js';
+import { playTap, startStationAmbience, stopStationAmbience } from './audio.js';
 import { APP_VERSION, hardRefreshApp } from './version.js';
 import { pickReflection } from './reflections.js';
 import { getJournalEntries, markJournalRead, unreadJournalCount } from './journal.js';
@@ -93,20 +93,35 @@ export function renderLocation() {
 
   bg.className = 'location-bg ' + def.bgClass;
 
-  // Load scene image; fall back silently to gradient if image missing
   const img = $('location-img');
-  if (img) {
-    const newSrc = `assets/images/locations/${def.id}.png`;
-    const sameSrc = img.getAttribute('src') === newSrc;
-    if (sameSrc) {
-      // Same source — just make sure it's visible if it loaded successfully
-      img.style.opacity = (img.complete && img.naturalWidth > 0) ? '1' : '0';
-    } else {
-      // New location — cross-fade to new scene
-      img.style.opacity = '0';
-      img.src = newSrc;
-      img.onerror = () => { img.style.opacity = '0'; };
-      img.onload  = () => { img.style.opacity = '1'; };
+  const vid = $('location-vid');
+
+  if (state.location === 'station' && vid) {
+    // ── Station: show looping video, hide still image ──
+    if (img) img.style.opacity = '0';
+    vid.style.opacity = '1';
+    if (vid.paused) vid.play().catch(() => {});
+    startStationAmbience();
+  } else {
+    // ── Other locations: hide video, show still image ──
+    if (vid) {
+      vid.style.opacity = '0';
+      // Delay pause until fade-out completes (matches 0.6s CSS transition)
+      setTimeout(() => { if (!vid.paused) vid.pause(); }, 650);
+    }
+    stopStationAmbience();
+
+    if (img) {
+      const newSrc = `assets/images/locations/${def.id}.png`;
+      const sameSrc = img.getAttribute('src') === newSrc;
+      if (sameSrc) {
+        img.style.opacity = (img.complete && img.naturalWidth > 0) ? '1' : '0';
+      } else {
+        img.style.opacity = '0';
+        img.src = newSrc;
+        img.onerror = () => { img.style.opacity = '0'; };
+        img.onload  = () => { img.style.opacity = '1'; };
+      }
     }
   }
 

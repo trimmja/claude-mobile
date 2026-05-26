@@ -63,5 +63,46 @@ export function playPayday() {
 
 export function toggleMute() {
   state.flags.muted = !state.flags.muted;
+  // Sync ambient audio with mute state
+  const amb = document.getElementById('station-ambience');
+  if (amb) amb.muted = state.flags.muted;
   return state.flags.muted;
+}
+
+// ── Station ambient audio ─────────────────────────────────────────────────
+let _ambienceFadeTimer = null;
+
+export function startStationAmbience() {
+  const amb = document.getElementById('station-ambience');
+  if (!amb) return;
+  amb.muted = state.flags.muted;
+  amb.volume = 0;
+  amb.play().catch(() => {}); // silently ignore autoplay block
+  // Fade in over 1.5s
+  clearInterval(_ambienceFadeTimer);
+  _ambienceFadeTimer = setInterval(() => {
+    const target = 0.35;
+    if (amb.volume < target - 0.01) {
+      amb.volume = Math.min(target, amb.volume + 0.02);
+    } else {
+      amb.volume = target;
+      clearInterval(_ambienceFadeTimer);
+    }
+  }, 40);
+}
+
+export function stopStationAmbience() {
+  const amb = document.getElementById('station-ambience');
+  if (!amb) return;
+  // Fade out over 1s, then pause
+  clearInterval(_ambienceFadeTimer);
+  _ambienceFadeTimer = setInterval(() => {
+    if (amb.volume > 0.02) {
+      amb.volume = Math.max(0, amb.volume - 0.02);
+    } else {
+      amb.volume = 0;
+      amb.pause();
+      clearInterval(_ambienceFadeTimer);
+    }
+  }, 30);
 }

@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v23';
+const CACHE = 'jeb-v24';
 const ASSETS = [
   './',
   './index.html',
@@ -60,6 +60,10 @@ function isAppAsset(url) {
 // Balance JSON: always network. App assets: network-first.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  // Large media files: bypass SW entirely so the browser can handle Range requests
+  // (video seeks/streaming require Range support that caches.match doesn't provide)
+  if (/\.(mp4|MP4|webm|ogg|m4a)$/.test(new URL(e.request.url).pathname)) return;
 
   const url = new URL(e.request.url);
 
