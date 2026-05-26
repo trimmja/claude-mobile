@@ -77,11 +77,17 @@ export function togglePanel(forceOpen) {
   // Show the floating open-button only when the panel is closed
   const openBtn = $('scene-open-btn');
   if (openBtn) openBtn.classList.toggle('hidden', _panelOpen);
+  // Scrim: visible when sheet is open, gone when closed
+  const scrim = $('sheet-scrim');
+  if (scrim) scrim.classList.toggle('active', _panelOpen);
 }
 
 export function bindSheetHandle() {
   const handle = $('sheet-handle');
   if (handle) handle.addEventListener('click', () => togglePanel());
+  // Tapping the scrim closes the sheet
+  const scrim = $('sheet-scrim');
+  if (scrim) scrim.addEventListener('click', () => togglePanel(false));
 }
 
 // Scene floating "open panel" button

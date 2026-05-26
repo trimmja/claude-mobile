@@ -233,6 +233,8 @@ input { user-select: text; }
   gap: 8px;
   flex-shrink: 0;
   height: 50px;
+  position: relative;
+  z-index: 25;            /* stays above the sheet scrim */
 }
 
 .header-name {
@@ -267,6 +269,8 @@ input { user-select: text; }
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 25;            /* stays above the sheet scrim */
 }
 
 .res {
@@ -585,6 +589,21 @@ input { user-select: text; }
   font-size: 11px;
   color: var(--text-muted);
   z-index: 1;
+}
+
+/* Sheet scrim — dark overlay behind the sheet when open */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 19;            /* above scene/top-bar, below sheet (20) */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.sheet-scrim.active {
+  pointer-events: auto;   /* tappable to close sheet */
+  opacity: 1;
 }
 
 /* Bottom sheet — slides up over the scene */
