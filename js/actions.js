@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { spend, gain, spendEnergy, gainEnergy, spendTime, gainTime } from './resources.js';
 import { addLangXP } from './language.js';
 import { addNPCTrust, NPC_DEFS, adjustNPC, calcVisitMoodDelta } from './npcs.js';
+import { getStoryBeat } from './stories.js';
 
 const DEEP_TALK_MIN_STAGE = 2; // Friend
 
@@ -21,9 +22,9 @@ const ACTION_UNLOCK = {
   visit_kenji: () => state.npcs.kenji.met,
   visit_yuki: () => state.npcs.yuki.met,
   visit_hiro: () => state.npcs.hiro.met,
-  deep_kenji: () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2,
-  deep_yuki: () => state.npcs.yuki.met && state.npcs.yuki.stage >= 2,
-  deep_hiro: () => state.npcs.hiro.met && state.npcs.hiro.stage >= 2,
+  evening_kenji:   () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2,
+  questions_yuki:  () => state.npcs.yuki.met  && state.npcs.yuki.stage  >= 2,
+  pray_hiro:       () => state.npcs.hiro.met  && state.npcs.hiro.stage  >= 2,
 };
 
 const ACTION_HOOKS = {
@@ -32,12 +33,12 @@ const ACTION_HOOKS = {
 
 // Actions completely hidden (not just locked) when conditions aren't met.
 const ACTION_VISIBLE = {
-  visit_kenji: () => state.npcs.kenji.met,
-  visit_yuki:  () => state.npcs.yuki.met,
-  visit_hiro:  () => state.npcs.hiro.met,
-  deep_kenji:  () => state.npcs.kenji.met,
-  deep_yuki:   () => state.npcs.yuki.met,
-  deep_hiro:   () => state.npcs.hiro.met,
+  visit_kenji:    () => state.npcs.kenji.met,
+  visit_yuki:     () => state.npcs.yuki.met,
+  visit_hiro:     () => state.npcs.hiro.met,
+  evening_kenji:  () => state.npcs.kenji.met,
+  questions_yuki: () => state.npcs.yuki.met,
+  pray_hiro:      () => state.npcs.hiro.met,
 };
 
 export const ACTION_DEFS = {};
@@ -135,12 +136,12 @@ const REQUIREMENT_BUILDERS = {
   onsen_visit: () => [
     reqMin('30 contacts', state.resources.contacts, 30),
   ],
-  visit_kenji: () => [reqMet('kenji')],
-  visit_yuki: () => [reqMet('yuki')],
-  visit_hiro: () => [reqMet('hiro')],
-  deep_kenji: () => [reqMet('kenji'), reqFriendStage('kenji')],
-  deep_yuki: () => [reqMet('yuki'), reqFriendStage('yuki')],
-  deep_hiro: () => [reqMet('hiro'), reqFriendStage('hiro')],
+  visit_kenji:    () => [reqMet('kenji')],
+  visit_yuki:     () => [reqMet('yuki')],
+  visit_hiro:     () => [reqMet('hiro')],
+  evening_kenji:  () => [reqMet('kenji'), reqFriendStage('kenji')],
+  questions_yuki: () => [reqMet('yuki'), reqFriendStage('yuki')],
+  pray_hiro:      () => [reqMet('hiro'), reqFriendStage('hiro')],
 };
 
 // All visible activity IDs, in stable order.
@@ -157,7 +158,19 @@ export function allVisibleActions() {
 // Communication actions that benefit from language level
 const COMM_ACTIONS    = new Set(['hand_tracts', 'commuter_convo', 'casual_convo', 'host_english']);
 const SPIRIT_ACTIONS  = new Set(['pray', 'study_scripture', 'observe_shrine']);
-const NPC_VISIT_ACTIONS = new Set(['visit_kenji', 'visit_yuki', 'visit_hiro', 'deep_kenji', 'deep_yuki', 'deep_hiro']);
+const NPC_VISIT_ACTIONS = new Set([
+  'visit_kenji', 'visit_yuki', 'visit_hiro',
+  'evening_kenji', 'questions_yuki', 'pray_hiro',
+]);
+// Deep-conversation actions (affect stress/burden scaling differently from quick visits)
+const NPC_DEEP_ACTIONS = new Set(['evening_kenji', 'questions_yuki', 'pray_hiro']);
+
+// Maps any NPC action ID → npcId (used by UI to show portrait in story popups).
+export const NPC_ACTION_MAP = {
+  visit_kenji:    'kenji', evening_kenji:   'kenji',
+  visit_yuki:     'yuki',  questions_yuki:  'yuki',
+  visit_hiro:     'hiro',  pray_hiro:       'hiro',
+};
 
 // Instant action. Returns { ok, id, bonuses, timeSpent, energySpent, reason }.
 // ok=false reasons: 'locked' | 'time' | 'energy' | 'cost' | 'unknown'
@@ -182,7 +195,20 @@ export function doAction(actionId) {
     return { ok: false, reason: 'cost' };
   }
 
-  const bonuses = applyRewards(actionId, def.reward);
+  // Select story beat BEFORE applying rewards — the beat may specify its own rewards.
+  // This is the outcome-based reward system: some beats give more faith, some give none.
+  const beat = getStoryBeat(actionId, state);
+
+  // If the beat has a `rewards` field, use it for non-trust rewards (faith, wisdom, contacts, langXP).
+  // NPC trust (npcTrust) always comes from the action def — beats don't override relationship progress.
+  let effectiveReward;
+  if (beat && beat.rewards !== undefined) {
+    effectiveReward = { ...beat.rewards, npcTrust: def.reward.npcTrust };
+  } else {
+    effectiveReward = def.reward;
+  }
+
+  const bonuses = applyRewards(actionId, effectiveReward);
   if (def.energyReward) gainEnergy(def.energyReward);
   if (def.onComplete) def.onComplete();
 
@@ -200,10 +226,9 @@ export function doAction(actionId) {
     }
   }
 
-  const visitMatch = actionId.match(/^(?:visit|deep)_(\w+)$/);
-  if (visitMatch) {
-    const npcId = visitMatch[1];
-    if (state.npcs[npcId]) state.npcs[npcId].lastSeenDay = state.time.day;
+  const visitNpcId = NPC_ACTION_MAP[actionId];
+  if (visitNpcId && state.npcs[visitNpcId]) {
+    state.npcs[visitNpcId].lastSeenDay = state.time.day;
   }
 
   const phase = state.time.phase;
@@ -215,6 +240,7 @@ export function doAction(actionId) {
     ok: true,
     id: actionId,
     bonuses,
+    beat,
     timeSpent: def.timeCost,
     energySpent: def.energyCost,
   };
@@ -308,7 +334,7 @@ function applyRewards(id, reward) {
 
     // Step 2: stress/burden/mood affect trust + update NPC emotional state
     if (npc) {
-      const actionType = id.startsWith('deep_') ? 'deep' : 'visit';
+      const actionType = NPC_DEEP_ACTIONS.has(id) ? 'deep' : 'visit';
       const stress = npc.stress ?? 0;
       const burden = npc.burden ?? 0;
       const mood   = npc.mood   ?? 0;

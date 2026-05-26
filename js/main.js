@@ -9,15 +9,16 @@ import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { doAction, doTravel, endPhase, endDay, hooks } from './engine.js';
 import * as audio from './audio.js';
-import { ACTION_DEFS } from './actions.js';
-import { getStoryText } from './stories.js';
+import { ACTION_DEFS, NPC_ACTION_MAP } from './actions.js';
+import { getStoryText, getStoryBeat } from './stories.js';
 import { NPC_DEFS, getStageAdvanceText, getIntroText, adjustNPC, getNPCEvents, initNPCMoodStats } from './npcs.js';
 import { addJournalEntry } from './journal.js';
 import { refillTime, refillEnergyDaily } from './resources.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
   renderActions, renderPeople, renderJournal, invalidateTravelRow,
-  showToast, showNPCMeetModal, showStoryPopup, bindStoryPopup, bindJournalList,
+  showToast, showNPCMeetModal, showStoryPopup, showConversionModal,
+  bindStoryPopup, bindJournalList,
   bindContentTabs, bindSettings, bindActionList, bindEndPhase, bindTravelRow,
   bindPeopleList, flashActionCard, showEndOfDayScreen, bindSheetHandle, bindSceneOpenBtn,
 } from './ui.js';
@@ -138,12 +139,15 @@ function startGame() {
   registerNotificationRenderer('npcMeet', (e, done) => {
     showNPCMeetModal(e.npcId, done);
   });
+  registerNotificationRenderer('conversion', (e, done) => {
+    showConversionModal(e.npcId, e.text, done);
+  });
   registerNotificationRenderer('endOfDay', (e, done) => {
     showEndOfDayScreen(() => { handleEndDay(); done(); });
   });
 
   // ─── Engine hooks → enqueue notifications ──────────────────────────────────
-  hooks.onActionComplete = ({ id, bonuses }) => {
+  hooks.onActionComplete = ({ id, bonuses, beat }) => {
     audio.playActionComplete();
     flashActionCard(id);
 
@@ -153,11 +157,11 @@ function startGame() {
     const willAdvanceStage = state.flags.pendingStageAdvances.length > 0;
     if (willMeetNPC || willAdvanceStage) return;
 
-    const text = getStoryText(id, state);
+    // Use text from pre-selected beat (avoids re-selecting a different beat), or fall back.
+    const text = beat?.text ?? getStoryText(id, state);
     if (text) {
       const def = ACTION_DEFS[id];
-      const visitMatch = id.match(/^(?:visit|deep)_(\w+)$/);
-      const npcId = visitMatch ? visitMatch[1] : null;
+      const npcId = NPC_ACTION_MAP[id] ?? null;
       enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses });
     }
   };
@@ -168,18 +172,26 @@ function startGame() {
     const stageName = def.stages[newStage] || `Stage ${newStage}`;
     const moment    = getStageAdvanceText(npcId, newStage);
     const headline  = `✨ ${def.name} is now ${stageName}.`;
-    const text      = moment ? `${headline} ${moment}` : headline;
+
     audio.playMilestone();
     addJournalEntry({
       id: `stage_${npcId}_${newStage}`,
-      icon: '✨',
+      icon: newStage === 5 ? '✝️' : '✨',
       title: `${def.name} — ${stageName}`,
       body: moment || headline,
       type: 'stageAdvance',
       npcId,
     });
     renderJournal();
-    enqueueNotification({ type: 'story', text, icon: '✨', npcId, bonuses: null });
+
+    if (newStage === 5) {
+      // Conversion — show dedicated full-screen modal instead of story popup.
+      // state.stats.converts is already incremented by addNPCTrust in npcs.js.
+      enqueueNotification({ type: 'conversion', npcId, text: moment });
+    } else {
+      const text = moment ? `${headline} ${moment}` : headline;
+      enqueueNotification({ type: 'story', text, icon: '✨', npcId, bonuses: null });
+    }
   };
 
   hooks.onLangLevelUp = (newLevel) => {

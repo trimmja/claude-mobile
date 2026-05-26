@@ -27,9 +27,9 @@ export const ACTION_TEXT = {
   visit_kenji:      { jp: '健二とコーヒー',   en: 'Coffee with Kenji' },
   visit_yuki:       { jp: '由紀と話す',       en: 'Chat with Yuki' },
   visit_hiro:       { jp: '浩と座る',         en: 'Sit with Hiro' },
-  deep_kenji:       { jp: '健二と深く話す',   en: 'Heart-to-Heart with Kenji' },
-  deep_yuki:        { jp: '由紀と深く話す',   en: 'Heart-to-Heart with Yuki' },
-  deep_hiro:        { jp: '浩と深く話す',     en: 'Heart-to-Heart with Hiro' },
+  evening_kenji:    { jp: '健二との夜',           en: 'Evening with Kenji' },
+  questions_yuki:   { jp: '由紀の問いに向き合う', en: 'Questions with Yuki' },
+  pray_hiro:        { jp: '浩と祈る',             en: 'Pray with Hiro' },
 };
 
 // UI labels that shift to Japanese at language level 0

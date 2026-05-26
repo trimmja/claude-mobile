@@ -2,7 +2,7 @@
 // Called by the engine after every action and after every new day.
 //
 // Only announces a curated list of "real" unlocks (gated by stats/day/contacts).
-// NPC actions (visit_/deep_) have their own notification surfaces — meet modal,
+// NPC actions (visit_/evening_/questions_/pray_hiro) have their own notification surfaces — meet modal,
 // stage-advance popup — and are intentionally excluded here to avoid double-noise.
 
 import { state } from './state.js';

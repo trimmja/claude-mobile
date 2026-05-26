@@ -7,7 +7,7 @@
       "timeCost": 1,
       "energyCost": 0,
       "cost": {},
-      "reward": { "faith": 12, "wisdom": 1 }
+      "reward": {}
     },
     "rest": {
       "location": "apartment",
@@ -24,7 +24,7 @@
       "timeCost": 2,
       "energyCost": 1,
       "cost": {},
-      "reward": { "wisdom": 8, "faith": 5 }
+      "reward": {}
     },
     "study_japanese": {
       "location": "apartment",
@@ -58,7 +58,7 @@
       "timeCost": 2,
       "energyCost": 3,
       "cost": { "faith": 20 },
-      "reward": { "contacts": 5, "faith": 5 },
+      "reward": {},
       "npcChance": { "id": "hiro", "chance": 0.35 }
     },
     "casual_convo": {
@@ -123,25 +123,25 @@
       "cost": { "faith": 10 },
       "reward": { "npcTrust": { "id": "hiro", "amount": 12 } }
     },
-    "deep_kenji": {
+    "evening_kenji": {
       "location": "cafe",
-      "icon": "💛",
+      "icon": "🌙",
       "timeCost": 3,
       "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "kenji", "amount": 22 }, "wisdom": 3 }
     },
-    "deep_yuki": {
+    "questions_yuki": {
       "location": "cafe",
-      "icon": "💛",
+      "icon": "🕯️",
       "timeCost": 3,
       "energyCost": 3,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "yuki", "amount": 22 }, "wisdom": 3 }
     },
-    "deep_hiro": {
+    "pray_hiro": {
       "location": "park",
-      "icon": "💛",
+      "icon": "🌸",
       "timeCost": 4,
       "energyCost": 2,
       "cost": { "faith": 20 },

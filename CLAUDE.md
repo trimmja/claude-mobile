@@ -67,6 +67,7 @@ data/timing.json      — timePerPhase, energyPerDay, faithPerDay, payday config
 data/stories.json     — story beat text keyed by action + conditions (editable content)
 data/reflections.json — short reflection lines for the end-of-day screen
 data/stageAdvances.json — text shown when an NPC advances to a new relationship stage (per NPC, per stage)
+data/npcEvents.json   — scripted arc events + random texture pools per NPC (loaded by gameData.js)
 data/README.md        — how to edit the JSON files
 index.html            — full game shell (all DOM structure, all IDs)
 css/style.css         — all styles (dark theme, cherry blossom + gold palette)
@@ -143,9 +144,11 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
   language: { xp: 0, level: 0 },             // 0–5
   location: 'apartment',                     // auto-updates to last-action's location (flavor)
   npcs: {
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [] },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [] },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [] },
+    // mood: -5 to +5 (warmth); stress: 0–10 (busyness, blocks visits); burden: 0–10 (weariness, opens gospel)
+    // firedEvents: scripted event IDs already fired (prevents re-firing)
   },
   world: {},                                 // empty — placeholder for future weather/events (Step 4)
   milestones: { completed: [] },
@@ -309,6 +312,10 @@ Adding a new action: entry in `data/actions.json` (with `timeCost` + `energyCost
 - `getIntroText(npcId)` — returns correct intro for current language level
 - `getStageAdvanceHint(npcId)` — returns "X trust to next stage" or "Needs: Wisdom 15" or null
 - `addNPCTrust(npcId, amount)` — applies trust + checks stage advance
+- `adjustNPC(npcId, {mood, stress, burden})` — applies deltas with clamping (mood -5/+5, stress 0–10, burden 0–10)
+- `calcVisitMoodDelta(npcId, actionType)` — returns mood delta for a visit, factoring in stress + lang level
+- `initNPCMoodStats(npcId)` — migration helper; idempotent; sets defaults if fields missing
+- `getNPCEvents(npcId)` — returns `{ scripted[], random[] }` from loaded `npcEvents.json`
 
 **Stage thresholds (shared):**
 ```
@@ -337,7 +344,7 @@ Story beats are shown after every action completion (bottom-sheet popup).
 }
 ```
 
-**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `langMin`, `langMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`
+**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `langMin`, `langMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`
 
 **Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
 

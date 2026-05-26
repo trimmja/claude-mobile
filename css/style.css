@@ -1451,6 +1451,47 @@ input { user-select: text; }
   color: var(--danger);
 }
 
+/* Gold "Bear Witness" button for conversion modal */
+.modal-btn-gold {
+  background: linear-gradient(135deg, var(--gold), #D4960A);
+  color: #0F0F1A;
+  box-shadow: 0 4px 20px rgba(240,192,64,0.35);
+  font-weight: 900;
+}
+
+/* ─── CONVERSION MODAL ─── */
+/* Applied to the #modal overlay element when a conversion is shown */
+#modal.conversion-modal .modal-card {
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 40px rgba(240,192,64,0.25), var(--shadow-lg);
+}
+
+.conversion-icon {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 8px;
+  animation: conversion-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes conversion-drop {
+  from { opacity: 0; transform: translateY(-16px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.conversion-portrait {
+  box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(240,192,64,0.3);
+}
+
+.conversion-title {
+  color: var(--gold);
+}
+
+.conversion-body {
+  border-left-color: var(--gold);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
 /* ─── SETTINGS PANEL ─── */
 .settings-overlay {
   position: fixed;

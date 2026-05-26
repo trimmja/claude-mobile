@@ -4,26 +4,42 @@
   "pray": [
     {
       "conditions": { "dayMax": 7 },
+      "rewards": { "faith": 14, "wisdom": 1 },
       "text": "You kneel on the tatami mat. The city bleeds through the thin walls — bicycle bells, a distant train announcement in Japanese you can't parse. Your prayer comes in English, instinctively. '神様...' you start, then trail off into your own language. You figure God can translate."
     },
     {
       "conditions": { "dayMin": 8, "dayMax": 29 },
+      "rewards": { "faith": 14, "wisdom": 1 },
       "text": "You're finding a rhythm. Morning prayer feels like something you're earning — not just reciting. You pray by name for the people you've met, for the ones who took a tract and kept walking, for the old man on the bench."
     },
     {
       "conditions": { "dayMin": 30 },
+      "rewards": { "faith": 18, "wisdom": 2 },
       "text": "After a month, prayer feels less like a discipline and more like breathing. You've started to understand why Japanese Christians talk about prayer as 静まること — stillness. Not performance. Just presence."
     },
     {
       "conditions": { "npcMet": "kenji" },
+      "rewards": { "faith": 16, "wisdom": 2 },
       "text": "You pray for Kenji today — for whatever he's carrying that he won't name. You don't know enough yet to pray specifically. You just hold him before God and trust that's enough."
     },
     {
       "conditions": { "npcMet": "hiro" },
+      "rewards": { "faith": 16, "wisdom": 2 },
       "text": "You pray for Hiro. For Emiko. For whatever it means that he comes to that bench every morning, facing the same direction, watching the same pigeons. That kind of faithfulness deserves a name."
     },
     {
       "conditions": {},
+      "rewards": { "faith": 4 },
+      "text": "Your mind goes everywhere but where you want it. You drag it back, again and again. A half-hour later you're not sure much happened. But you stayed. Maybe that's the whole thing."
+    },
+    {
+      "conditions": {},
+      "rewards": {},
+      "text": "The words come, but feel like they're landing on the ceiling. You finish anyway. Sometimes prayer is just showing up when you don't feel like it."
+    },
+    {
+      "conditions": {},
+      "rewards": { "faith": 10 },
       "text": "You pray. The words feel unfamiliar in this place, but the intention isn't."
     }
   ],
@@ -31,18 +47,32 @@
   "study_scripture": [
     {
       "conditions": { "wisdomMin": 0, "dayMax": 14 },
+      "rewards": { "wisdom": 8, "faith": 6 },
       "text": "You read slowly. Verses that felt clear back home carry new weight here. 'Go into all the world.' You're in it now — this particular corner of it, with its particular silences. You underline more than usual."
     },
     {
       "conditions": { "wisdomMin": 15 },
+      "rewards": { "wisdom": 10, "faith": 7 },
       "text": "You find yourself reading through the lens of everything you've seen. The parable of the sower. The soil here isn't harder than anywhere else — just different. You're starting to understand the difference. That feels like progress."
     },
     {
+      "conditions": { "wisdomMin": 15, "dayMin": 20 },
+      "rewards": { "wisdom": 14, "faith": 10 },
+      "text": "Something in Paul's letter to the Romans catches in a way it never has before. You read it three times, slowly. Write it out by hand. The city outside makes different sense through this lens."
+    },
+    {
       "conditions": { "dayMin": 30 },
+      "rewards": { "wisdom": 9, "faith": 7 },
       "text": "The Word is becoming your anchor. You've started marking verses that specifically apply to what you see in Tokyo — in the salary-worker exhaustion, in the crowds that flow past without eye contact. The Gospel was written for exactly this."
     },
     {
       "conditions": {},
+      "rewards": { "wisdom": 3 },
+      "text": "Your eyes keep sliding off the page. You read the same verse four times. Closed the Bible. Sat. Opened it again. You're not sure you absorbed much. But you didn't stop."
+    },
+    {
+      "conditions": {},
+      "rewards": { "wisdom": 6, "faith": 4 },
       "text": "You open the Bible and read until something lands. Today, something does."
     }
   ],
@@ -111,22 +141,37 @@
   "open_air_preach": [
     {
       "conditions": { "langMax": 0 },
+      "rewards": { "contacts": 4, "faith": 5 },
       "text": "You speak in English. A small cluster forms — mostly younger people curious about the foreigner. You watch their faces more than you hear your own words. Most move on after a minute. One stays the whole time and then applauds. You bow, not sure what else to do."
     },
     {
       "conditions": { "langMin": 1, "langMax": 2 },
+      "rewards": { "contacts": 5, "faith": 5 },
       "text": "You mix languages now — English foundation, Japanese phrases where you know them. The crowd is small but steadier. A father stops with his daughter. She tugs his sleeve and asks him something. He shrugs — then stays."
     },
     {
       "conditions": { "langMin": 3 },
+      "rewards": { "contacts": 7, "faith": 8 },
       "text": "Preaching in Japanese is still imperfect, but it's real. An elderly woman listens the whole time. Afterward she says something you don't fully catch — but you hear the word 祈り. Prayer. You bow back and thank her."
     },
     {
       "conditions": { "npcMet": "hiro" },
+      "rewards": { "contacts": 3, "faith": 8 },
       "text": "You think of Hiro watching from his bench as you preach. You wonder if anyone preached here twenty years ago, when his wife was still alive. Whether she ever stopped to listen."
     },
     {
       "conditions": {},
+      "rewards": { "contacts": 1 },
+      "text": "Three people took a tract. Two dropped it immediately. One man stopped briefly, then hurried on. Some days are like this. You pack up and head home."
+    },
+    {
+      "conditions": {},
+      "rewards": {},
+      "text": "A group of salarymen walks past, one muttering something dismissive. You finish the message to the empty plaza. It takes more out of you than a successful day ever does. You go home tired."
+    },
+    {
+      "conditions": {},
+      "rewards": { "contacts": 4, "faith": 4 },
       "text": "The park echoes differently each time. Today a few people stopped. That's enough."
     }
   ],
@@ -404,7 +449,7 @@
     }
   ],
 
-  "deep_kenji": [
+  "evening_kenji": [
     {
       "conditions": { "stageMin_kenji": 3, "langMax": 0 },
       "text": "Two hours at the café. Most of it is through phone translation — slow and imperfect. But something still happens. He types about his father: 父は... disappeared. He looks up from the screen. You type back: 'Mine too, in a different way.' He reads it carefully. You sit in that for a while. Some things translate."
@@ -443,7 +488,7 @@
     }
   ],
 
-  "deep_yuki": [
+  "questions_yuki": [
     {
       "conditions": { "stageMin_yuki": 3, "langMax": 0 },
       "text": "Yuki types and talks and shows you things in her notebook for almost two hours. At one point she cries a little — you catch the word 家族, family — and keeps going like it didn't happen. You don't know all of what she said. But you know something came out that had been held in for a long time."
@@ -470,7 +515,7 @@
     }
   ],
 
-  "deep_hiro": [
+  "pray_hiro": [
     {
       "conditions": { "stageMin_hiro": 3, "langMax": 0 },
       "text": "Hiro gestures at you — pray. He folds his hands loosely, the way he's seen you do it. You pray out loud, in English, slowly. He closes his eyes. The park is quiet. When you finish he sits for a long time. Then one sentence, soft: something about Emiko. You catch her name. That's enough."

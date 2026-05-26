@@ -7,9 +7,10 @@ export function initStoriesFromData(data) {
   STORIES = data;
 }
 
-// Returns a story text string for the given action and current state,
+// Returns the full matching story beat object { text, rewards? } for the given action,
 // or null if no stories are defined for that action.
-export function getStoryText(actionId, state) {
+// When a beat has `rewards`, those override the action's blanket reward in actions.js.
+export function getStoryBeat(actionId, state) {
   const entries = STORIES[actionId];
   if (!entries) return null;
 
@@ -18,16 +19,21 @@ export function getStoryText(actionId, state) {
     e => Object.keys(e.conditions).length > 0 && conditionsMet(e.conditions, state)
   );
   if (specific.length > 0) {
-    return specific[Math.floor(Math.random() * specific.length)].text;
+    return specific[Math.floor(Math.random() * specific.length)];
   }
 
   // Fall back to catch-all entries (empty conditions object)
   const catchAll = entries.filter(e => Object.keys(e.conditions).length === 0);
   if (catchAll.length > 0) {
-    return catchAll[Math.floor(Math.random() * catchAll.length)].text;
+    return catchAll[Math.floor(Math.random() * catchAll.length)];
   }
 
   return null;
+}
+
+// Convenience wrapper — returns just the text string (used as fallback in hooks).
+export function getStoryText(actionId, state) {
+  return getStoryBeat(actionId, state)?.text ?? null;
 }
 
 function conditionsMet(conditions, state) {

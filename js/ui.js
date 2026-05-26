@@ -1,8 +1,11 @@
 import { state } from './state.js';
 import {
   ACTION_DEFS, allVisibleActions, getActionRequirements, actionUnlockCacheKey,
-  hasFittingAction,
+  hasFittingAction, NPC_ACTION_MAP,
 } from './actions.js';
+
+// Maps npcId → their character-specific deep action ID
+const NPC_DEEP_ACTION = { kenji: 'evening_kenji', yuki: 'questions_yuki', hiro: 'pray_hiro' };
 import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo, currentLocation } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
 import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
@@ -404,14 +407,14 @@ export function renderPeople() {
       // Interact buttons — auto-travel + run the action
       const actions = el('div', 'npc-actions');
       const visitId = `visit_${id}`;
-      const deepId  = `deep_${id}`;
+      const deepId  = NPC_DEEP_ACTION[id];
       const visitDef = ACTION_DEFS[visitId];
-      const deepDef  = ACTION_DEFS[deepId];
+      const deepDef  = deepId ? ACTION_DEFS[deepId] : null;
       if (visitDef) {
         actions.appendChild(buildNpcActionBtn(visitId, visitDef, 'Visit'));
       }
       if (deepDef && deepDef.unlocked()) {
-        actions.appendChild(buildNpcActionBtn(deepId, deepDef, 'Heart-to-Heart'));
+        actions.appendChild(buildNpcActionBtn(deepId, deepDef, actionText(deepId).en));
       }
       info.appendChild(actions);
 
@@ -753,6 +756,40 @@ export function showNPCMeetModal(npcId, onDismiss = null) {
     <div class="modal-body">${introText}</div>
     <button class="modal-btn modal-btn-primary" data-close>Nice to meet you</button>
   `, () => {
+    renderPeople();
+    renderActions(true);
+    if (onDismiss) onDismiss();
+  });
+}
+
+export function showConversionModal(npcId, text, onDismiss = null) {
+  const def = NPC_DEFS[npcId];
+  if (!def) return;
+
+  const portraitHtml = `
+    <div class="modal-portrait ${def.portraitClass} conversion-portrait">
+      <img src="assets/images/npcs/${npcId}.png"
+           alt="${def.name}"
+           class="npc-portrait-img modal-portrait-img"
+           onerror="this.style.display='none'">
+      <span class="npc-portrait-fallback modal-portrait-fallback">${def.nameJP[0]}</span>
+    </div>
+  `;
+
+  const bodyText = text || `${def.name} has put their trust in Christ.`;
+
+  const modal = $('modal');
+  modal.classList.add('conversion-modal');
+
+  showModal(`
+    <div class="conversion-icon">✝️</div>
+    ${portraitHtml}
+    <div class="modal-title conversion-title">${def.name} <span class="modal-title-jp">${def.nameJP}</span></div>
+    <div class="modal-subtitle">Believer</div>
+    <div class="modal-body conversion-body">${bodyText}</div>
+    <button class="modal-btn modal-btn-gold" data-close>Bear Witness</button>
+  `, () => {
+    modal.classList.remove('conversion-modal');
     renderPeople();
     renderActions(true);
     if (onDismiss) onDismiss();
