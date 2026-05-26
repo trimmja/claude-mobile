@@ -93,7 +93,7 @@ js/parseDuration.js   — (legacy, unused — kept for possible future "real min
 manifest.json         — PWA config (display: standalone)
 sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION; MP4/video files are bypassed (browser needs Range requests for video)
 assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
-assets/shinjuku.MP4   — looping 10s video of Shinjuku Station; used as animated background (muted <video>) + ambient audio source (<audio>) when player is at station
+assets/video/shinjuku.MP4 — looping 10s video of Shinjuku Station; used as animated background (muted <video>) + ambient audio source (<audio>) when player is at station
 ```
 
 ---
