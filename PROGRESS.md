@@ -20,12 +20,12 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Stat multipliers (lang→contacts, wisdom→faith) | ✅ | n/a | ⚠️ balance untested |
 | Portrait system | infrastructure only | ❌ no real images | n/a |
 | Immersive bottom-sheet UI (v20–v23) | ✅ | n/a | ✅ |
-| Shinjuku station video background + ambient audio (v24) | ✅ | n/a | ⚠️ untested on iPhone |
 
 ---
 
 ## Polish backlog (small open fixes)
 
+- **Station video asset** — code for video background + ambient audio is wired (v24) but current shinjuku.MP4 doesn't loop well. Need a better video clip, or decide on a different approach (still image? looping GIF? different scene?). Infrastructure stays; just swap the asset.
 - **Touch targets** — ⚙ settings + ✕ cancel buttons are ~20px; need 44px+ for iPhone
 - **Faith balance** — faith regen feels fast enough that costs are trivial; consider raising costs or slowing regen
 - **Payday countdown** — no way to know when support arrives; add "Support in X days" somewhere
