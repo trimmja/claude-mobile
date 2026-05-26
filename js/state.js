@@ -1,6 +1,9 @@
 export const state = {
   meta: { version: 2, saveDate: null },
-  character: { name: '' },
+  // spiritDry (0–10): missionary's own spiritual dryness. Ticks up from hard outcomes
+  // and zero-contact days; comes down with pray/rest/onsen. At ≥6 the story-beat picker
+  // biases preaching/tract actions toward hostile/hollow outcomes — the words feel hollow.
+  character: { name: '', spiritDry: 0 },
 
   time: {
     day: 1,

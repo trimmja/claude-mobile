@@ -126,7 +126,7 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 ```js
 {
   meta: { version: 2, saveDate: null },
-  character: { name: '' },
+  character: { name: '', spiritDry: 0 },     // spiritDry 0–10: player's own dryness — ticks up from penalty beats + dry days; down from pray/rest/onsen
   time: {
     day: 1,
     phase: 'morning',          // 'morning' | 'afternoon' | 'evening' | 'reflecting'
@@ -344,9 +344,17 @@ Story beats are shown after every action completion (bottom-sheet popup).
 }
 ```
 
-**`rewards` field (optional):** When present on a beat, its values replace the action's `reward` in `actions.json` for non-trust stats (faith, wisdom, contacts, langXP). NPC trust always comes from the action def. Omitting `rewards` means the action's default reward applies. `"rewards": {}` means no reward at all (dry outcome). This is how `pray`, `study_scripture`, and `open_air_preach` produce variable outcomes.
+**`rewards` field (optional):** When present on a beat, its values replace the action's `reward` in `actions.json` for non-trust stats (faith, wisdom, contacts, langXP). NPC trust always comes from the action def. Omitting `rewards` means the action's default reward applies. `"rewards": {}` means no reward at all (dry outcome). This is how `pray`, `study_scripture`, and `open_air_preach` produce variable outcomes. **`rewards.energyReward`** (number, optional) overrides the action's `energyReward` from `actions.json` — used for the dry-rest beat (energy +1 instead of +3).
 
-**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `langMin`, `langMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`
+**`penalty` field (optional):** When present, stat losses apply AFTER rewards. Use this for hostile/hollow outcomes that should actually hurt the player. Schema:
+- `faith`, `wisdom`, `contacts` — positive magnitudes (deducted; floor at 0)
+- `spiritDry` — signed delta (positive = drier, negative = recovers)
+- `trust` — `{ id, amount }` (positive magnitude; trust never drops past the current stage's threshold — they don't forget you)
+- `npcMood`, `npcStress`, `npcBurden` — signed `{ id, amount }` deltas (mood −5..+5, stress 0..10, burden 0..10)
+
+Penalty beats render a red chip-row under the story popup, play `playSetback()` (descending minor third), and log a journal entry with `type: 'setback'` and icon `⛅`.
+
+**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `wisdomMax`, `langMin`, `langMax`, `contactsMin`, `contactsMax`, `spiritDryMin`, `spiritDryMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`. Picker bias: when `spiritDry >= 6` on preaching/tract/study actions, penalty beats are weighted 2× — bad outcomes more likely, not guaranteed.
 
 **Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
 

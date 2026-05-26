@@ -68,6 +68,20 @@ function updateLanguageLabels(lv) {
 export function renderHeader() {
   $('header-name').textContent = state.character.name || '—';
   $('header-day').textContent  = 'Day ' + state.time.day;
+
+  // Spiritual dryness indicator — only surfaces at ≥5 so it doesn't clutter the header.
+  // The icon intensifies (more opacity) as dryness climbs.
+  const sd = state.character?.spiritDry ?? 0;
+  const indicator = $('header-spiritdry');
+  if (indicator) {
+    if (sd >= 5) {
+      indicator.classList.remove('hidden');
+      indicator.style.opacity = Math.min(1, 0.6 + (sd - 5) * 0.08).toFixed(2);
+      indicator.setAttribute('title', `Spiritual dryness (${sd}/10) — pray, rest, or visit the onsen`);
+    } else {
+      indicator.classList.add('hidden');
+    }
+  }
 }
 
 // ─── BOTTOM SHEET PANEL ─────────────────────────────────────────────────────
@@ -602,7 +616,7 @@ export function showToast(icon, title, desc = '', onDismiss = null) {
 let storyPopupTimer = null;
 let storyPopupOnDismiss = null;
 
-export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = null) {
+export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = null, setback = null) {
   if (!text) { if (onDismiss) onDismiss(); return; }
   storyPopupOnDismiss = onDismiss;
 
@@ -610,6 +624,7 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
   const textEl    = $('story-popup-text');
   const npcEl     = $('story-popup-npc');
   const bonusEl   = $('story-popup-bonus');
+  const setbackEl = $('story-popup-setback');
 
   textEl.textContent = text;
 
@@ -647,9 +662,38 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
     bonusEl.classList.add('hidden');
   }
 
+  // Setback row — red chips showing what was lost. Mirrors the bonus row above it.
+  if (setbackEl) {
+    const losses = formatSetbackChips(setback);
+    if (losses) {
+      setbackEl.textContent = losses;
+      setbackEl.classList.remove('hidden');
+    } else {
+      setbackEl.classList.add('hidden');
+    }
+  }
+
   popup.classList.remove('hidden');
   if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
 }
+
+// Returns a chip-row string for a setback deltas object, or null if nothing to show.
+function formatSetbackChips(setback) {
+  if (!setback) return null;
+  const parts = [];
+  if (setback.faith)    parts.push(`−${setback.faith} ✦ Faith`);
+  if (setback.wisdom)   parts.push(`−${setback.wisdom} ◆ Wisdom`);
+  if (setback.contacts) parts.push(`−${setback.contacts} contacts`);
+  if (setback.trust)    parts.push(`−${setback.trust.amount} trust`);
+  if (setback.spiritDry && setback.spiritDry > 0) parts.push(`⛅ +${setback.spiritDry}`);
+  // NPC mood/stress/burden deltas — show the signed value with descriptive label
+  if (setback.npcMood)   parts.push(`mood ${signed(setback.npcMood.amount)}`);
+  if (setback.npcStress) parts.push(`stress ${signed(setback.npcStress.amount)}`);
+  if (setback.npcBurden) parts.push(`burden ${signed(setback.npcBurden.amount)}`);
+  return parts.length > 0 ? parts.join('  ·  ') : null;
+}
+
+function signed(n) { return n > 0 ? `+${n}` : `${n}`; }
 
 function dismissStoryPopup() {
   $('story-popup').classList.add('hidden');

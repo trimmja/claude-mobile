@@ -24,6 +24,7 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Character-specific deep action names (v30) | ✅ | n/a | ❌ not yet |
 | Variable outcome rewards — pray/preach/study (v30) | ✅ | ⚠️ first draft | ❌ not yet |
 | Conversion popup — Stage 5 gold modal (v30) | ✅ | ✅ | ❌ not yet |
+| Negative outcomes + spiritDry + setback popup (Phase A, v32) | ✅ | ⚠️ ~18 beats — needs play-tuning | ❌ not yet |
 
 ---
 

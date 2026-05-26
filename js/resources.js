@@ -101,19 +101,34 @@ export function spend(resource, amount) {
   return false;
 }
 
+// Add amount to a resource. Negative amounts are allowed (subtract) and floor at 0.
+// Faith additionally clamps to max.
 export function gain(resource, amount) {
   if (resource === 'faith') {
-    state.resources.faith.current = Math.min(
-      state.resources.faith.max,
-      state.resources.faith.current + amount
-    );
+    const f = state.resources.faith;
+    f.current = Math.max(0, Math.min(f.max, f.current + amount));
   } else if (resource === 'contacts') {
-    state.resources.contacts += amount;
+    state.resources.contacts = Math.max(0, state.resources.contacts + amount);
   } else if (resource === 'money') {
-    state.resources.money.current += amount;
+    state.resources.money.current = Math.max(0, state.resources.money.current + amount);
   } else if (resource === 'wisdom') {
-    state.resources.wisdom += amount;
+    state.resources.wisdom = Math.max(0, state.resources.wisdom + amount);
   }
+}
+
+// Clarity mirror of gain() — call lose(stat, n) when intent is a deliberate loss.
+// Equivalent to gain(stat, -n). Always uses positive `amount` at the call site.
+export function lose(resource, amount) {
+  gain(resource, -Math.abs(amount));
+}
+
+// Player-side spiritual dryness (0–10). Ticks up on hostile/hollow outcomes,
+// down on pray/rest/onsen. Above threshold, biases preaching/tract beats toward
+// hostile/hollow options. Migration-safe — defaults to 0 if missing.
+export function adjustSpiritDry(delta) {
+  const c = state.character;
+  const curr = typeof c.spiritDry === 'number' ? c.spiritDry : 0;
+  c.spiritDry = Math.max(0, Math.min(10, curr + delta));
 }
 
 export function faithPercent() {

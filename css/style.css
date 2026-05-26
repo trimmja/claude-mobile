@@ -250,6 +250,15 @@ input { user-select: text; }
   font-weight: 700;
 }
 
+.header-spiritdry {
+  font-size: 18px;
+  line-height: 1;
+  margin-right: 4px;
+  opacity: 0.6;
+  transition: opacity 0.4s;
+  filter: drop-shadow(0 0 6px rgba(167,139,250,0.4));
+}
+
 .header-settings {
   background: none;
   border: none;
@@ -1802,6 +1811,18 @@ input { user-select: text; }
   color: var(--trust);
   background: rgba(52, 211, 153, 0.08);
   border-radius: 6px;
+  padding: 5px 8px;
+}
+
+/* Setback line — red counterpart to the bonus row */
+.story-popup-setback {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.08);
+  border-left: 2px solid var(--danger);
+  border-radius: 4px;
   padding: 5px 8px;
 }
 

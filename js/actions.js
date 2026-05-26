@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { spend, gain, spendEnergy, gainEnergy, spendTime, gainTime } from './resources.js';
+import { spend, gain, lose, spendEnergy, gainEnergy, spendTime, gainTime, adjustSpiritDry } from './resources.js';
 import { addLangXP } from './language.js';
 import { addNPCTrust, NPC_DEFS, adjustNPC, calcVisitMoodDelta } from './npcs.js';
 import { getStoryBeat } from './stories.js';
@@ -209,7 +209,21 @@ export function doAction(actionId) {
   }
 
   const bonuses = applyRewards(actionId, effectiveReward);
-  if (def.energyReward) gainEnergy(def.energyReward);
+
+  // Energy reward — beat.rewards.energyReward overrides the action def when present.
+  const beatHasEnergyOverride = beat?.rewards && typeof beat.rewards.energyReward === 'number';
+  const energyReward = beatHasEnergyOverride ? beat.rewards.energyReward : def.energyReward;
+  if (energyReward) gainEnergy(energyReward);
+
+  // Apply any penalty declared on the beat. Mutates state; returns deltas for the popup.
+  const setback = applyPenalty(beat?.penalty);
+
+  // SpiritDry recovery from spiritual/rest actions — always fires on success.
+  // These are the missionary's defenses against burnout: prayer, sleep, the onsen.
+  if (actionId === 'pray')              adjustSpiritDry(-1);
+  else if (actionId === 'rest')         adjustSpiritDry(-1);
+  else if (actionId === 'onsen_visit')  adjustSpiritDry(-2);
+
   if (def.onComplete) def.onComplete();
 
   state.stats.actionsCompleted++;
@@ -237,10 +251,9 @@ export function doAction(actionId) {
   }
 
   // Build a display-friendly reward object for the story popup.
-  // Includes the effective reward plus energyReward (if any) so the popup can show
-  // exactly what the player received without confusing multiplier breakdown.
+  // Includes the effective reward plus the actual energyReward applied (if any).
   const displayReward = { ...effectiveReward };
-  if (def.energyReward) displayReward.energyReward = def.energyReward;
+  if (energyReward) displayReward.energyReward = energyReward;
 
   return {
     ok: true,
@@ -248,6 +261,7 @@ export function doAction(actionId) {
     bonuses,
     beat,
     reward: displayReward,
+    setback,                      // null if beat had no penalty
     timeSpent: def.timeCost,
     energySpent: def.energyCost,
   };
@@ -298,23 +312,25 @@ function spendCosts(costs) {
 function applyRewards(id, reward) {
   if (!reward) return {};
 
-  if (reward.faith)    gain('faith',    reward.faith);
-  if (reward.contacts) gain('contacts', reward.contacts);
-  if (reward.money)    gain('money',    reward.money);
-  if (reward.wisdom)   gain('wisdom',   reward.wisdom);
-  if (reward.langXP)   addLangXP(reward.langXP);
+  // Numeric checks (not truthy) so negative values flow through.
+  if (typeof reward.faith    === 'number') gain('faith',    reward.faith);
+  if (typeof reward.contacts === 'number') gain('contacts', reward.contacts);
+  if (typeof reward.money    === 'number') gain('money',    reward.money);
+  if (typeof reward.wisdom   === 'number') gain('wisdom',   reward.wisdom);
+  if (typeof reward.langXP   === 'number' && reward.langXP > 0) addLangXP(reward.langXP);
   if (reward.npcTrust) addNPCTrust(reward.npcTrust.id, reward.npcTrust.amount);
 
   const bonuses = {};
   const lang    = state.language.level;
   const wisdom  = state.resources.wisdom;
 
-  if (COMM_ACTIONS.has(id) && reward.contacts && lang > 0) {
+  // Multiplier bonuses only apply to *positive* base rewards — never amplify a loss.
+  if (COMM_ACTIONS.has(id) && reward.contacts > 0 && lang > 0) {
     const bonus = Math.floor(lang * 0.25 * reward.contacts);
     if (bonus > 0) { gain('contacts', bonus); bonuses.contacts = bonus; }
   }
 
-  if (SPIRIT_ACTIONS.has(id) && reward.faith && wisdom > 0) {
+  if (SPIRIT_ACTIONS.has(id) && reward.faith > 0 && wisdom > 0) {
     const bonus = Math.floor((wisdom / 100) * reward.faith);
     if (bonus > 0) { gain('faith', bonus); bonuses.faith = bonus; }
   }
@@ -379,4 +395,35 @@ function applyRewards(id, reward) {
   }
 
   return bonuses;
+}
+
+// Apply a beat's `penalty` block. Mutates state and returns the actual deltas applied
+// so the UI can show them as red "down" chips in the setback popup.
+//
+// Stat magnitudes (faith / wisdom / contacts) are written as POSITIVE numbers in JSON
+// (the magnitude lost). NPC mood/stress/burden are signed deltas — author writes them
+// as they should change. trust loss is a positive magnitude.
+function applyPenalty(penalty) {
+  if (!penalty) return null;
+  const deltas = {};
+
+  if (typeof penalty.faith    === 'number' && penalty.faith    > 0) { lose('faith',    penalty.faith);    deltas.faith    = penalty.faith; }
+  if (typeof penalty.wisdom   === 'number' && penalty.wisdom   > 0) { lose('wisdom',   penalty.wisdom);   deltas.wisdom   = penalty.wisdom; }
+  if (typeof penalty.contacts === 'number' && penalty.contacts > 0) { lose('contacts', penalty.contacts); deltas.contacts = penalty.contacts; }
+
+  if (typeof penalty.spiritDry === 'number' && penalty.spiritDry !== 0) {
+    adjustSpiritDry(penalty.spiritDry);
+    deltas.spiritDry = penalty.spiritDry;
+  }
+
+  if (penalty.trust && typeof penalty.trust.amount === 'number' && penalty.trust.amount > 0) {
+    addNPCTrust(penalty.trust.id, -Math.abs(penalty.trust.amount));
+    deltas.trust = { id: penalty.trust.id, amount: penalty.trust.amount };
+  }
+
+  if (penalty.npcMood)   { adjustNPC(penalty.npcMood.id,   { mood:   penalty.npcMood.amount });   deltas.npcMood   = penalty.npcMood; }
+  if (penalty.npcStress) { adjustNPC(penalty.npcStress.id, { stress: penalty.npcStress.amount }); deltas.npcStress = penalty.npcStress; }
+  if (penalty.npcBurden) { adjustNPC(penalty.npcBurden.id, { burden: penalty.npcBurden.amount }); deltas.npcBurden = penalty.npcBurden; }
+
+  return Object.keys(deltas).length > 0 ? deltas : null;
 }

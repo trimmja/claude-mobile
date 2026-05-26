@@ -162,11 +162,15 @@ export function getStageAdvanceHint(npcId) {
   return null;
 }
 
+// Adjust an NPC's trust. Accepts negative amounts (a cool-off after a bad visit).
+// Trust never regresses past the floor of the current stage — they don't *forget*
+// you, just lose warmth. No stage-down events fire.
 export function addNPCTrust(npcId, amount) {
   const npc = state.npcs[npcId];
   const def = NPC_DEFS[npcId];
-  npc.trust = Math.min(100, npc.trust + amount);
-  // check stage advance
+  const stageFloor = def.trustNeeded[npc.stage] ?? 0;
+  npc.trust = Math.max(stageFloor, Math.min(100, npc.trust + amount));
+  // check stage advance (only on positive deltas naturally — negative can't push you up)
   if (npc.stage < 5) {
     const needed = def.trustNeeded[npc.stage + 1];
     const cond   = def.stageCondition[npc.stage + 1];

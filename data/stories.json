@@ -1,5 +1,5 @@
 {
-  "_comment": "Story beats shown after action completion. Conditions (all optional): dayMin, dayMax, wisdomMin, langMin, langMax, npcMet (string), stageMin_{npcId} (int). Empty conditions = catch-all fallback.",
+  "_comment": "Story beats shown after action completion. Conditions (all optional): dayMin, dayMax, wisdomMin, wisdomMax, langMin, langMax, contactsMin, contactsMax, spiritDryMin, spiritDryMax, npcMet (string), stageMin_{npcId}, stageMax_{npcId}, moodMin/Max_{npcId}, stressMin/Max_{npcId}, burdenMin/Max_{npcId}, daysNotSeenMin_{npcId}. Empty conditions = catch-all fallback. Optional `rewards` object overrides the action's blanket non-trust rewards (NPC trust always comes from action def). Optional `penalty` object deducts stats AFTER rewards: penalty.faith/wisdom/contacts use positive magnitudes (subtract); penalty.trust is { id, amount } (subtract trust, never past current stage floor); penalty.spiritDry is a signed delta; penalty.npcMood/npcStress/npcBurden are signed deltas as { id, amount }.",
 
   "pray": [
     {
@@ -41,6 +41,23 @@
       "conditions": {},
       "rewards": { "faith": 10 },
       "text": "You pray. The words feel unfamiliar in this place, but the intention isn't."
+    },
+    {
+      "conditions": { "spiritDryMin": 8 },
+      "rewards": {},
+      "text": "You sit. Nothing comes. You stay anyway. The room is very quiet and you are not sure what you are doing here. You stay until the timer goes off."
+    }
+  ],
+
+  "rest": [
+    {
+      "conditions": { "spiritDryMin": 6 },
+      "rewards": { "faith": 2, "energyReward": 1 },
+      "text": "You sleep without dreaming. Wake up still tired. The clock ticks on regardless."
+    },
+    {
+      "conditions": {},
+      "text": "You rest. The neighbors are quiet for once. You wake up feeling like a person again."
     }
   ],
 
@@ -74,6 +91,12 @@
       "conditions": {},
       "rewards": { "wisdom": 6, "faith": 4 },
       "text": "You open the Bible and read until something lands. Today, something does."
+    },
+    {
+      "conditions": { "spiritDryMin": 7 },
+      "rewards": {},
+      "penalty": { "spiritDry": 1 },
+      "text": "The words slide off. You read the same paragraph four times before giving up. You wonder if you forgot how to do this."
     }
   ],
 
@@ -93,6 +116,10 @@
     {
       "conditions": {},
       "text": "One more hour. One more page. The language is coming, slowly."
+    },
+    {
+      "conditions": { "spiritDryMin": 6, "langMax": 1 },
+      "text": "You drag through flashcards. Your brain feels like wet cardboard. You're not absorbing anything. You finish the set anyway because you said you would."
     }
   ],
 
@@ -116,6 +143,16 @@
     {
       "conditions": {},
       "text": "Another handful distributed. You don't know what happens to them after. That's okay. You didn't plant the trees you're sitting under."
+    },
+    {
+      "conditions": { "dayMax": 7, "langMax": 0 },
+      "penalty": { "faith": 1, "spiritDry": 1 },
+      "text": "Someone tears the tract in your face and drops it at your feet. They keep walking. You stand there a moment before bending to pick it up."
+    },
+    {
+      "conditions": { "npcMet": "kenji", "stressMin_kenji": 7 },
+      "penalty": { "npcMood": { "id": "kenji", "amount": -1 } },
+      "text": "Kenji passes you in the rush. You're sure he saw — you're sure he didn't. He keeps walking. You hand the next tract to a stranger."
     }
   ],
 
@@ -135,6 +172,11 @@
     {
       "conditions": {},
       "text": "Brief connection made in transit. Sometimes a seed is a sentence."
+    },
+    {
+      "conditions": { "langMax": 0 },
+      "penalty": { "faith": 1 },
+      "text": "You try a phrase. The man stares at you, then turns away. The carriage feels louder for a moment, then exactly the same as before."
     }
   ],
 
@@ -173,6 +215,18 @@
       "conditions": {},
       "rewards": { "contacts": 4, "faith": 4 },
       "text": "The park echoes differently each time. Today a few people stopped. That's enough."
+    },
+    {
+      "conditions": { "dayMax": 5, "langMax": 1 },
+      "rewards": {},
+      "penalty": { "faith": 2, "spiritDry": 1 },
+      "text": "A passerby films you on his phone, laughing. Two teenagers walk by mocking your accent. You finish anyway. You're not sure who that was for."
+    },
+    {
+      "conditions": { "spiritDryMin": 6 },
+      "rewards": {},
+      "penalty": { "faith": 1, "spiritDry": 1 },
+      "text": "The words come out, but feel hollow even to you. No one stops. You don't blame them."
     }
   ],
 
@@ -192,6 +246,11 @@
     {
       "conditions": {},
       "text": "Small talk in a foreign language is its own kind of courage."
+    },
+    {
+      "conditions": { "langMax": 0 },
+      "penalty": { "spiritDry": 1 },
+      "text": "You try to start a conversation with an older man on the bench. He smiles politely, says something in Japanese, then opens his newspaper. You sit a while longer just so leaving isn't embarrassing."
     }
   ],
 
@@ -211,6 +270,12 @@
     {
       "conditions": {},
       "text": "Language is just the door. You're always hoping they'll come inside."
+    },
+    {
+      "conditions": { "contactsMax": 3 },
+      "rewards": {},
+      "penalty": { "spiritDry": 1 },
+      "text": "Only one person shows up. He's polite but quiet. You drink coffee with him for an hour and he leaves early. You take the chairs down by yourself."
     }
   ],
 
@@ -230,6 +295,11 @@
     {
       "conditions": {},
       "text": "You sit and observe. You're starting to see."
+    },
+    {
+      "conditions": { "wisdomMax": 5 },
+      "penalty": { "wisdom": 1 },
+      "text": "You bow the wrong number of times. A priest gently corrects you in front of the gathered visitors. Your face burns. You finish the visit but leave faster than you planned."
     }
   ],
 
@@ -249,6 +319,10 @@
     {
       "conditions": {},
       "text": "The onsen strips away pretense. Something about that always opens doors."
+    },
+    {
+      "conditions": { "spiritDryMin": 6 },
+      "text": "You stay longer than usual. The steam hides your face. You leave feeling lighter — not whole, but reachable again."
     }
   ],
 
@@ -320,6 +394,16 @@
     {
       "conditions": {},
       "text": "You and Kenji meet. It matters more each time."
+    },
+    {
+      "conditions": { "stressMin_kenji": 7, "langMax": 1 },
+      "penalty": { "trust": { "id": "kenji", "amount": 2 }, "spiritDry": 1 },
+      "text": "He's polite but he checks his watch four times. The conversation never lands. You leave feeling like you took up his time more than you spent it with him."
+    },
+    {
+      "conditions": { "moodMax_kenji": -3, "langMax": 0 },
+      "penalty": { "trust": { "id": "kenji", "amount": 1 } },
+      "text": "Something is wrong and you can't ask. The silence sits heavy. He finishes his coffee. He bows. He goes."
     }
   ],
 
@@ -383,6 +467,11 @@
     {
       "conditions": {},
       "text": "Yuki asks good questions. You're both figuring something out."
+    },
+    {
+      "conditions": { "moodMax_yuki": -2, "stressMin_yuki": 6 },
+      "penalty": { "trust": { "id": "yuki", "amount": 1 } },
+      "text": "She closes her notebook early. 'I have to study,' she says. You're not sure that's true. You don't ask."
     }
   ],
 
@@ -446,6 +535,11 @@
     {
       "conditions": {},
       "text": "You sit with Hiro. Some visits don't need many words."
+    },
+    {
+      "conditions": { "daysNotSeenMin_hiro": 10 },
+      "penalty": { "spiritDry": 1, "npcMood": { "id": "hiro", "amount": -1 } },
+      "text": "He's there. He looks up when you sit down — slowly. He doesn't say anything for a long time. You feel the distance you let grow. You'll have to start showing up again."
     }
   ],
 
@@ -512,6 +606,11 @@
     {
       "conditions": {},
       "text": "A long conversation with Yuki. She's closer than she knows."
+    },
+    {
+      "conditions": { "langMax": 1 },
+      "penalty": { "trust": { "id": "yuki", "amount": 2 }, "wisdom": 1 },
+      "text": "She asks a careful question. You hear the word for soul — 魂 — but the rest gets away from you. Your answer comes out wrong. She nods politely. She doesn't write it down."
     }
   ],
 

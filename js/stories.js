@@ -7,9 +7,14 @@ export function initStoriesFromData(data) {
   STORIES = data;
 }
 
-// Returns the full matching story beat object { text, rewards? } for the given action,
-// or null if no stories are defined for that action.
+// Actions whose outcomes lean on the missionary's inner state — when spiritDry is high,
+// the picker biases these toward penalty-bearing beats (hostile crowds, hollow words).
+const DRY_BIAS_ACTIONS = new Set(['open_air_preach', 'hand_tracts', 'commuter_convo', 'pray', 'study_scripture']);
+
+// Returns the full matching story beat object { text, rewards?, penalty? } for the given
+// action, or null if no stories are defined.
 // When a beat has `rewards`, those override the action's blanket reward in actions.js.
+// When a beat has `penalty`, applyPenalty() in actions.js deducts those stats after rewards.
 export function getStoryBeat(actionId, state) {
   const entries = STORIES[actionId];
   if (!entries) return null;
@@ -24,9 +29,18 @@ export function getStoryBeat(actionId, state) {
   const catchAll = entries.filter(e => Object.keys(e.conditions).length === 0);
 
   // Build weighted pool: each specific entry counts 3×, each catch-all counts 1×
-  const pool = specific.length > 0
+  let pool = specific.length > 0
     ? [...specific, ...specific, ...specific, ...catchAll]
     : catchAll;
+
+  // Spiritual dryness bias: at spiritDry ≥ 6, double the weight of beats with penalties
+  // on dry-sensitive actions. The picker still draws from the same pool — bad outcomes
+  // just become more likely, not guaranteed.
+  const dry = state.character?.spiritDry ?? 0;
+  if (dry >= 6 && DRY_BIAS_ACTIONS.has(actionId)) {
+    const extra = pool.filter(e => e.penalty);
+    pool = [...pool, ...extra];
+  }
 
   if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
   return null;
@@ -38,14 +52,20 @@ export function getStoryText(actionId, state) {
 }
 
 function conditionsMet(conditions, state) {
-  const { dayMin, dayMax, wisdomMin, langMin, langMax, npcMet } = conditions;
+  const { dayMin, dayMax, wisdomMin, wisdomMax, langMin, langMax, npcMet,
+          contactsMin, contactsMax, spiritDryMin, spiritDryMax } = conditions;
 
   if (dayMin    !== undefined && state.time.day              < dayMin) return false;
   if (dayMax    !== undefined && state.time.day              > dayMax) return false;
   if (wisdomMin !== undefined && state.resources.wisdom      < wisdomMin) return false;
+  if (wisdomMax !== undefined && state.resources.wisdom      > wisdomMax) return false;
   if (langMin   !== undefined && state.language.level        < langMin) return false;
   if (langMax   !== undefined && state.language.level        > langMax) return false;
   if (npcMet    !== undefined && !state.npcs[npcMet]?.met)              return false;
+  if (contactsMin  !== undefined && state.resources.contacts < contactsMin) return false;
+  if (contactsMax  !== undefined && state.resources.contacts > contactsMax) return false;
+  if (spiritDryMin !== undefined && (state.character?.spiritDry ?? 0) < spiritDryMin) return false;
+  if (spiritDryMax !== undefined && (state.character?.spiritDry ?? 0) > spiritDryMax) return false;
 
   // Dynamic conditions (stage, mood, stress, burden, daysNotSeen)
   for (const [key, val] of Object.entries(conditions)) {

@@ -61,6 +61,13 @@ export function playPayday() {
   tone(550, 0.3, 'triangle', 0.16, 0.24);
 }
 
+// Descending minor third — the "something was lost" cue.
+// Quieter and shorter than playActionComplete so it lands as a sigh, not an alarm.
+export function playSetback() {
+  tone(330, 0.22, 'sine', 0.16);
+  tone(262, 0.30, 'sine', 0.14, 0.10);
+}
+
 export function toggleMute() {
   state.flags.muted = !state.flags.muted;
   // Sync ambient audio with mute state

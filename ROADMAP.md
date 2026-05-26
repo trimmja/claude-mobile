@@ -113,6 +113,35 @@ Duplicate the location + NPC pattern to a new area (e.g., Akihabara or Shibuya).
 
 Fired from `onEndOfDay`. Visa anxiety, opposition from a shrine priest, a contact's family pulling them away, your own spiritual dryness. Force tough choices and surface real missionary stress. This is where the "losing is fun" DF feel finally arrives — setbacks become as memorable as wins.
 
+### Outcome/notification depth — Phase A (SHIPPED v32) + Phases B–C (planned)
+
+Independent of Steps 3–7, this track expands the **complexity of outcomes, notifications, and story beats** — adding real downside, player-side inner state, and richer feedback. Phase A shipped 2026-05-26. Phases B–C are designed and queued.
+
+**Phase A — SHIPPED v32 (2026-05-26):**
+
+- **Negative rewards.** `applyRewards()` in `actions.js` and `gain()` in `resources.js` now accept signed deltas (stats floor at 0). New `lose(stat, amount)` clarity mirror.
+- **`penalty` field on story beats.** New beat-level field, distinct from `rewards`. Apply via `applyPenalty()`. Schema: `{ faith?, wisdom?, contacts?, spiritDry?, trust?: {id, amount}, npcMood?: {id, amount}, npcStress?: {id, amount}, npcBurden?: {id, amount} }`. Stat magnitudes are positive numbers (deducted); NPC mood/stress/burden are signed.
+- **NPC trust loss with stage floor.** `addNPCTrust()` accepts negatives but never drops below the current stage's threshold — NPCs cool off, they don't forget you.
+- **`state.character.spiritDry` (0–10).** Player-side inner state. Ticks up from penalty beats and zero-contact days; comes down with `pray` (−1), `rest` (−1), `onsen_visit` (−2). When `spiritDry >= 6`, the story picker doubles the weight of penalty beats on preaching/tract/study actions ("the words feel hollow"). Subtle ⛅ HUD indicator shows at ≥5.
+- **New story condition keys.** `wisdomMax`, `contactsMin`, `contactsMax`, `spiritDryMin`, `spiritDryMax`.
+- **~18 new authored beats** across 12 actions, covering hostile crowds, low-language stumbles, stressed-NPC visits, shrine etiquette mistakes, empty English events, and dry-spell hollowness.
+- **Setback feedback.** Story popup now renders a red chip-row under the green reward row showing what was lost. `playSetback()` plays a descending minor third when a beat has a penalty. Journal logs every setback (`type: 'setback'`, icon ⛅).
+- **Save migration.** `v32` adds `character.spiritDry` defaulting to 0 on load; no save wipe.
+
+**Phase B — Richer notifications (NEXT):**
+
+- `stageAdvance` notification type — promote stage advances out of the generic story popup. Gold-ringed portrait, dedicated render, NPC-themed sound.
+- `npcStateShift` notification type — quiet end-of-day card when an NPC crosses a meaningful threshold (e.g. Kenji's stress crossed 7). Currently handled inline by toasts in `checkNPCEndOfDay`; consolidate into a single richer notification.
+- `letter` notification type — full-screen letter-from-home card. Paves the way for Step 7 persecution / hardship arcs (a letter that says your supporter base shrank, or a friend at home has fallen away).
+- Story popup richness — animated up/down chip transitions; inline NPC mood delta display (e.g. "Kenji: 😟→😐 (stress −2)") for NPC visit actions where mood actually shifted.
+- Audio: `playStageAdvance()` (softer than milestone, NPC-themed chord).
+
+**Phase C — Carryover + reflections (AFTER B):**
+
+- **Tiny flag system.** A beat can `setsFlag: "kenji_left_early"` on `state.npcs.<id>.flags = {}`. Future beats require `flagSet: "..."` and consume them with `flagClearAfter: true`. Lets authors write callback beats ("Today he apologizes for last time") with minimal authoring tax. Carryover is per-NPC and scoped — flags are short-lived, not permanent.
+- **`lastBeatByAction`.** New state field `state.flags.lastBeatByAction = { actionId: beatId }` written by `engine.doAction` after each action. Enables `prevBeatId_{action}` story condition. Bounded — only the most recent beat per action ID.
+- **Conditional reflections.** Promote `data/reflections.json` from a flat array to the same conditional shape as `stories.json`. Add 10–15 new reflections keyed on the day's events: `contactsMin`, `hadDeepVisit_kenji`, `hadSetback`, `langLevelUpToday`, `paydayToday`, `nothingHappened`.
+
 ### Beyond Step 7 (long-term ideas, no commitments)
 
 - Co-worker / spouse NPC who interacts WITH you across phases (not just on visits)
@@ -146,4 +175,5 @@ Append new entries here as roadmap-level decisions are made. Date format YYYY-MM
 - **2026-05-24 (later same day)** — Step 1 refinement after first playtest: introduced **Time** as a per-phase resource alongside **Energy** as a daily resource. Fixed two issues — (1) `rest` could loop infinitely because it had no real cost, (2) per-phase energy refill made conservation pointless. New model: actions cost both time and energy; rest costs time (half a phase) but recovers energy; pray is the 1-time / 0-energy "filler" action. Phase auto-advances when time runs out (with a toast). Bumped APP_VERSION to 16. Save format still v2 — gracefully migrates by initializing missing fields.
 - **2026-05-26** — Shipped Step 2: NPC moods + life events (v29). Added `mood`, `stress`, `burden` per NPC; scripted arc events + random texture in `data/npcEvents.json`; visit quality formula (stressed NPC + low language = mood can drop); trust scaling from stress/burden; 7 new story condition types; ~20 new story beats across all NPC visit/deep actions. Design decision: stress and burden are spiritually opposite (stress blocks, burden opens — "come to me, all who are weary"). Event-driven only — no blanket timers. Scales cleanly to many NPCs.
 - **2026-05-26 (v30)** — Three improvements from TODO triage: (1) Renamed generic `deep_*` actions to character-specific IDs (`evening_kenji`, `questions_yuki`, `pray_hiro`) with narrative names and icons matching each character's arc. `NPC_ACTION_MAP` in `actions.js` replaces fragile ID-prefix regex for portrait/lastSeenDay lookups. (2) Variable outcome rewards: `getStoryBeat()` in `stories.js` returns the full beat object; if a beat has `rewards`, those override the action's blanket reward. `pray`, `study_scripture`, and `open_air_preach` now have outcome ranges from nothing (dry prayer, hostile crowd) to significant bonuses. NPC trust is unchanged — only non-trust rewards vary. (3) Conversion popup: when an NPC reaches Stage 5, a dedicated gold-bordered full-screen modal fires instead of a regular story popup — `✝️` icon, gold portrait ring, NPC name in gold, "Bear Witness" button. Partially shipped Step 3 (procedural story layer via variable rewards).
+- **2026-05-26 (v32)** — Shipped **Phase A** of the outcome-depth track: real player-stat penalties (faith/wisdom/contacts can now drop), NPC trust loss (with stage floor), `state.character.spiritDry` (0–10) as player-side inner state, ~18 new authored beats with `penalty` fields covering hostile preaching, low-language stumbles, stressed-NPC visits, shrine etiquette mistakes, and dry-spell hollowness. Setbacks land as red chip-rows under the story popup with a descending-third sound and a journal entry. Phases B (richer notifications) and C (carryover + conditional reflections) are designed and documented in Section 4 for the next session. Decision: integrate setback chips into the existing story popup rather than a second dedicated popup — keeps UX clean while preserving the sound + visual + journal signal.
 - **2026-05-24 (third update same day)** — Reversed the earlier "locations are flavor" call. **Travel is now real navigation.** `state.location` is where you ARE; actions filter by it. Travel costs time only (destination-based: home/station/shrine = 1, café/park = 2, onsen = 3). Each morning resets you to apartment. People-tab cards have Visit / Heart-to-Heart buttons that auto-travel before running the action. Same session also shipped: notification queue (fixes end-of-day-vs-popup race), Journal tab (replaces Goals, populated by milestones + meets + stage advances + lang level-ups), stage-advance notifications + per-stage moment text, and a "no conflicting cost+reward on same stat" rule. APP_VERSION bumped to 17.

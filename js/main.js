@@ -13,7 +13,7 @@ import { ACTION_DEFS, NPC_ACTION_MAP } from './actions.js';
 import { getStoryText, getStoryBeat } from './stories.js';
 import { NPC_DEFS, getStageAdvanceText, getIntroText, adjustNPC, getNPCEvents, initNPCMoodStats } from './npcs.js';
 import { addJournalEntry } from './journal.js';
-import { refillTime, refillEnergyDaily } from './resources.js';
+import { refillTime, refillEnergyDaily, adjustSpiritDry } from './resources.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
   renderActions, renderPeople, renderJournal, invalidateTravelRow,
@@ -131,7 +131,7 @@ function startGame() {
   // ─── Notification renderers ────────────────────────────────────────────────
   // Every renderer must call `done()` when its UI is dismissed so the queue advances.
   registerNotificationRenderer('story', (e, done) => {
-    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, e.reward, done);
+    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, e.reward, done, e.setback);
   });
   registerNotificationRenderer('toast', (e, done) => {
     showToast(e.icon, e.title, e.desc, done);
@@ -147,9 +147,23 @@ function startGame() {
   });
 
   // ─── Engine hooks → enqueue notifications ──────────────────────────────────
-  hooks.onActionComplete = ({ id, bonuses, beat, reward }) => {
+  hooks.onActionComplete = ({ id, bonuses, beat, reward, setback }) => {
     audio.playActionComplete();
+    if (setback) audio.playSetback();
     flashActionCard(id);
+
+    // Setback → journal entry so the moment is remembered. icon/title scoped to the beat.
+    if (setback && beat?.text) {
+      const def = ACTION_DEFS[id];
+      addJournalEntry({
+        id: `setback_${id}_${state.time.day}_${state.time.phase}_${state.stats.actionsCompleted}`,
+        icon: '⛅',
+        title: `Setback — ${actionLabel(id)}`,
+        body: beat.text,
+        type: 'setback',
+      });
+      renderJournal();
+    }
 
     // Skip the routine story popup if a bigger moment is about to land:
     // NPC first-meet modal, or NPC stage advance. Those will take the stage.
@@ -162,9 +176,15 @@ function startGame() {
     if (text) {
       const def = ACTION_DEFS[id];
       const npcId = NPC_ACTION_MAP[id] ?? null;
-      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses, reward });
+      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses, reward, setback });
     }
   };
+
+  function actionLabel(id) {
+    // Try ACTION_DEFS first for the rich icon+name, fall back to id.
+    const def = ACTION_DEFS[id];
+    return def?.icon ? `${def.icon} ${id.replace(/_/g, ' ')}` : id;
+  }
 
   hooks.onNPCStageAdvance = ({ npcId, newStage }) => {
     const def = NPC_DEFS[npcId];
@@ -222,6 +242,7 @@ function startGame() {
 
   hooks.onEndOfDay = () => {
     checkNPCEndOfDay();
+    checkDryDay();
   };
 
   hooks.onNewDay = () => {
@@ -383,6 +404,23 @@ function checkNPCEndOfDay() {
       });
     }
   }
+}
+
+// A day with zero people-facing actions ticks spiritDry up by 1.
+// People-facing = any tract/preach/convo/host action OR any NPC visit/deep action.
+// This is the "you didn't engage with anyone all day" feedback — comes through
+// in next-day story beats rather than its own notification.
+const PEOPLE_FACING_ACTIONS = new Set([
+  'hand_tracts', 'open_air_preach', 'commuter_convo', 'casual_convo', 'host_english',
+  'visit_kenji', 'visit_yuki', 'visit_hiro',
+  'evening_kenji', 'questions_yuki', 'pray_hiro',
+]);
+
+function checkDryDay() {
+  const phases = state.dayLog?.phases || {};
+  const allActs = [...(phases.morning || []), ...(phases.afternoon || []), ...(phases.evening || [])];
+  const hadContact = allActs.some(a => PEOPLE_FACING_ACTIONS.has(a.id));
+  if (!hadContact) adjustSpiritDry(1);
 }
 
 /**

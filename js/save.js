@@ -34,6 +34,8 @@ export function loadGame() {
 
     Object.assign(state.meta,      saved.meta      || {});
     Object.assign(state.character, saved.character || {});
+    // v32 migration: spiritDry defaults to 0 if save predates the field.
+    if (typeof state.character.spiritDry !== 'number') state.character.spiritDry = 0;
 
     // Time: ensure phase exists and is valid
     Object.assign(state.time, saved.time || {});
