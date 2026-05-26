@@ -85,14 +85,15 @@ js/reflections.js     — pickReflection() — random line for end-of-day screen
 js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
 js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
 js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
-js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute()
-js/ui.js              — all DOM rendering + phase strip + end-of-day screen; renderFrame() on rAF
+js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute(); startStationAmbience()/stopStationAmbience() fade station ambient in/out; toggleMute() also syncs ambient muted state
+js/ui.js              — all DOM rendering + phase strip + top-bar + bottom-sheet + end-of-day screen; renderFrame() on rAF; togglePanel()/bindSheetHandle() control the slide-up sheet
 js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
 js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
 js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
 manifest.json         — PWA config (display: standalone)
-sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION
+sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION; MP4/video files are bypassed (browser needs Range requests for video)
 assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
+assets/shinjuku.MP4   — looping 10s video of Shinjuku Station; used as animated background (muted <video>) + ambient audio source (<audio>) when player is at station
 ```
 
 ---
@@ -248,7 +249,7 @@ Travel is how `state.location` changes. It costs **time only** (never energy). C
 
 **Where you wake up:** `engine.endDay()` resets `state.location = 'apartment'` — each new morning starts at home.
 
-**Travel UI:** Top of the Activities tab shows a `📍 You are at: …` header and a row of `Travel to …` buttons (one per other location, with ⏳cost). Disabled when you can't afford the cost. Tapping a button calls `engine.doTravel(locId)`.
+**Travel UI:** Always-visible row inside `.top-bar` (between the HUD and the scene, above `.location-view`). Shows one Travel button per other location with ⏳cost; disabled when you can't afford it. Tapping calls `engine.doTravel(locId)`. The `📍 You are at: …` header is gone — current location is shown in the `.location-info` overlay on the scene itself.
 
 **People-tab tap-to-visit:** Each met NPC card has "Visit" and (if unlocked) "Heart-to-Heart" buttons. Tapping handles travel automatically: if the relevant action's location differs from `state.location`, travel runs first, then the action runs. Button shows `→ ☕ ⏳2` chip when travel is needed.
 
@@ -391,22 +392,32 @@ Entries don't trigger their own notifications — the engine event that produced
 ## UI layout (index.html)
 
 ```
-[#story-popup]      — bottom-sheet; slides up after action; tap to dismiss
+[#story-popup]      — bottom-sheet popup; slides up after action; tap to dismiss
 [#end-of-day]       — full-overlay reflection screen; appears when evening ends
 [game-header]       — character name | "Day N" | ⚙ settings button
 [.hud]              — 6 resource widgets: Faith ✦ | Energy ⚡ N/M | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
-[.location-view]    — 160px tall; CSS gradient bg of last-action location + JP/EN name
-[.content-area]
-  [#tab-actions]    — phase strip (icon + ⏳ time bar + End Phase button) + nudge + action list
-  [#tab-people]     — .people-list (only met NPCs; empty state if none) + contacts-summary
-  [#tab-journal]    — .journal-list (empty on day 1; entries added on milestones, NPC meets, stage advances, lang level-ups; tap to expand body)
-[.content-tabs]     — bottom nav: Activities | People | Journal (📖 — shows "(N)" badge when there are unread entries)
+[.top-bar]          — always-visible bar between HUD and scene; two columns:
+  [.top-bar-phase]  — phase icon + phase name (EN) + pink scene-time bar fill + "N/M" count
+  [#travel-row]     — one Travel button per other location with ⏳cost; disabled when time too low
+[.location-view]    — fills remaining vertical space; immersive scene background
+  [#location-img]   — still PNG for non-station locations; cross-fades on location change
+  [#location-vid]   — looping MP4 for Shinjuku Station only; muted for iOS autoplay; opacity-fades in/out
+  [#location-bg]    — CSS-gradient fallback layer (class swapped per location)
+  [.location-info]  — JP/EN location name overlaid at bottom of scene
+[#station-ambience] — hidden <audio> element; plays ambient station sound at volume 0.35 when at station
+[#bottom-sheet]     — slides up over the scene; drag handle at top
+  [.sheet-handle]   — tap to toggle open/closed; sheet-handle-hint text updates state
+  [.content-area]   — scrollable panel area
+    [#tab-actions]  — phase strip (icon + time bar + End Phase button) + nudge + action list
+    [#tab-people]   — .people-list (only met NPCs; empty state if none) + contacts-summary
+    [#tab-journal]  — .journal-list (empty on day 1; entries added on milestones, NPC meets, stage advances, lang level-ups; tap to expand body)
+  [.content-tabs]   — bottom nav inside the sheet: Activities | People | Journal (📖 — shows "(N)" badge when unread entries)
 [#toast]            — fixed, bottom-center; slides up on milestone/payday/phase-auto-advance
 [#modal]            — full-screen overlay; NPC first meetings + reset confirm
 [#settings-overlay] — bottom sheet; mute + reset buttons
 ```
 
-**Phase strip** (top of Activities tab) shows: phase icon (☀️ Morning / 🌤 Afternoon / 🌙 Evening + JP), ⏳ time bar (pink, draining as actions are taken), End Phase button (glows when no action fits).
+**Phase strip** appears in **two places**: (1) `.top-bar` — always visible above the scene, shows phase icon + EN name + pink time bar + `N/M` count. (2) Inside the Activities tab (bottom sheet) — same data plus JP phase name and the End Phase button (glows when no action fits).
 
 **End-of-day screen** (`#end-of-day`) shows: "Day N" header, per-phase summary of actions taken, totals (actions / contacts / lang level / goals), one random reflection line from `data/reflections.json`, Continue button.
 
