@@ -14,20 +14,21 @@ export function getStoryBeat(actionId, state) {
   const entries = STORIES[actionId];
   if (!entries) return null;
 
-  // Try specific (non-catch-all) entries first
+  // Separate specific (non-catch-all) beats from catch-alls.
+  // When specific beats match, weight them 3× so they appear more often than catch-alls,
+  // but catch-alls are still included for variety (prevents seeing the exact same beat
+  // every time only one specific condition matches — e.g. praying on days 8-29).
   const specific = entries.filter(
     e => Object.keys(e.conditions).length > 0 && conditionsMet(e.conditions, state)
   );
-  if (specific.length > 0) {
-    return specific[Math.floor(Math.random() * specific.length)];
-  }
-
-  // Fall back to catch-all entries (empty conditions object)
   const catchAll = entries.filter(e => Object.keys(e.conditions).length === 0);
-  if (catchAll.length > 0) {
-    return catchAll[Math.floor(Math.random() * catchAll.length)];
-  }
 
+  // Build weighted pool: each specific entry counts 3×, each catch-all counts 1×
+  const pool = specific.length > 0
+    ? [...specific, ...specific, ...specific, ...catchAll]
+    : catchAll;
+
+  if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
   return null;
 }
 

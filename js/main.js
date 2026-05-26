@@ -131,7 +131,7 @@ function startGame() {
   // ─── Notification renderers ────────────────────────────────────────────────
   // Every renderer must call `done()` when its UI is dismissed so the queue advances.
   registerNotificationRenderer('story', (e, done) => {
-    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, done);
+    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, e.reward, done);
   });
   registerNotificationRenderer('toast', (e, done) => {
     showToast(e.icon, e.title, e.desc, done);
@@ -147,7 +147,7 @@ function startGame() {
   });
 
   // ─── Engine hooks → enqueue notifications ──────────────────────────────────
-  hooks.onActionComplete = ({ id, bonuses, beat }) => {
+  hooks.onActionComplete = ({ id, bonuses, beat, reward }) => {
     audio.playActionComplete();
     flashActionCard(id);
 
@@ -162,7 +162,7 @@ function startGame() {
     if (text) {
       const def = ACTION_DEFS[id];
       const npcId = NPC_ACTION_MAP[id] ?? null;
-      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses });
+      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses, reward });
     }
   };
 

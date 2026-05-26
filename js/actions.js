@@ -236,11 +236,18 @@ export function doAction(actionId) {
     state.dayLog.phases[phase].push({ id: actionId, location: def.location });
   }
 
+  // Build a display-friendly reward object for the story popup.
+  // Includes the effective reward plus energyReward (if any) so the popup can show
+  // exactly what the player received without confusing multiplier breakdown.
+  const displayReward = { ...effectiveReward };
+  if (def.energyReward) displayReward.energyReward = def.energyReward;
+
   return {
     ok: true,
     id: actionId,
     bonuses,
     beat,
+    reward: displayReward,
     timeSpent: def.timeCost,
     energySpent: def.energyCost,
   };

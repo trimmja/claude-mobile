@@ -602,7 +602,7 @@ export function showToast(icon, title, desc = '', onDismiss = null) {
 let storyPopupTimer = null;
 let storyPopupOnDismiss = null;
 
-export function showStoryPopup(text, icon, npcId, bonuses, onDismiss = null) {
+export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = null) {
   if (!text) { if (onDismiss) onDismiss(); return; }
   storyPopupOnDismiss = onDismiss;
 
@@ -630,13 +630,18 @@ export function showStoryPopup(text, icon, npcId, bonuses, onDismiss = null) {
     npcEl.classList.add('hidden');
   }
 
-  const bonusParts = [];
-  if (bonuses?.contacts) bonusParts.push(`+${bonuses.contacts} contacts (language)`);
-  if (bonuses?.faith)    bonusParts.push(`+${bonuses.faith} faith (wisdom)`);
-  if (bonuses?.npcTrust) bonusParts.push(`+${bonuses.npcTrust} trust (language)`);
+  // Show exactly what was rewarded — use the beat/action's actual reward, not the
+  // tiny multiplier bonuses. Clear labels, no "(wisdom)" or "(language)" confusion.
+  const parts = [];
+  if (reward?.faith)        parts.push(`+${reward.faith} ✦ Faith`);
+  if (reward?.wisdom)       parts.push(`+${reward.wisdom} ◆ Wisdom`);
+  if (reward?.contacts)     parts.push(`+${reward.contacts} contacts`);
+  if (reward?.langXP)       parts.push(`+lang XP`);
+  if (reward?.npcTrust)     parts.push(`+trust`);
+  if (reward?.energyReward) parts.push(`+${reward.energyReward} ⚡`);
 
-  if (bonusParts.length > 0) {
-    bonusEl.textContent = bonusParts.join(' · ');
+  if (parts.length > 0) {
+    bonusEl.textContent = parts.join('  ·  ');
     bonusEl.classList.remove('hidden');
   } else {
     bonusEl.classList.add('hidden');

@@ -37,7 +37,7 @@ export function doAction(actionId) {
     return result;
   }
 
-  hooks.onActionComplete?.({ id: result.id, bonuses: result.bonuses, beat: result.beat, timeSpent: result.timeSpent, energySpent: result.energySpent });
+  hooks.onActionComplete?.({ id: result.id, bonuses: result.bonuses, beat: result.beat, reward: result.reward, timeSpent: result.timeSpent, energySpent: result.energySpent });
 
   if (state.flags.pendingNPCMeet) {
     hooks.onNPCMeet?.(state.flags.pendingNPCMeet);
