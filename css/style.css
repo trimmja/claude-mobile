@@ -448,6 +448,48 @@ input { user-select: text; }
   z-index: 3;
 }
 
+/* Scene open-panel floating button — replaces the old peek strip */
+.scene-open-btn {
+  position: absolute;
+  bottom: 80px;          /* above the location-info overlay */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 15, 26, 0.82);
+  border: 1.5px solid var(--sakura);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 5;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+  min-height: 44px;      /* iOS touch target */
+  box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.scene-open-btn:active {
+  opacity: 0.75;
+}
+
+/* Hidden state — when panel is open */
+.scene-open-btn.hidden {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.scene-open-divider {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
 /* ── Top bar: phase + time + travel (sits under HUD in page flow) ── */
 .top-bar {
   flex-shrink: 0;
@@ -559,7 +601,7 @@ input { user-select: text; }
   display: flex;
   flex-direction: column;
   overflow: hidden;         /* clip children to sheet bounds */
-  transform: translateY(calc(100% - 80px));
+  transform: translateY(100%);
   transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: transform;
 }
@@ -593,12 +635,13 @@ input { user-select: text; }
   color: var(--text-muted);
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0;          /* hidden when sheet is closed (off-screen anyway) */
   white-space: nowrap;
+  transition: opacity 0.2s;
 }
 
 .bottom-sheet.sheet-open .sheet-handle-hint {
-  opacity: 0;
+  opacity: 0.7;        /* visible when sheet is open */
 }
 
 /* Content Area — inside the sheet */

@@ -121,6 +121,13 @@
       <source src="assets/video/shinjuku.MP4" type="video/mp4">
     </video>
     <div id="location-bg" class="location-bg bg-apartment"></div>
+    <!-- Open-panel floating button — visible when sheet is closed -->
+    <button id="scene-open-btn" class="scene-open-btn">
+      <span id="scene-open-phase">☀️ Morning</span>
+      <span class="scene-open-divider">·</span>
+      <span>↑ Activities</span>
+    </button>
+
     <div class="location-info">
       <div id="location-name-jp" class="location-name-jp">アパート</div>
       <div id="location-name-en" class="location-name-en">Your Apartment</div>
@@ -136,7 +143,7 @@
     <!-- Drag handle — tap to open/close -->
     <div id="sheet-handle" class="sheet-handle">
       <div class="sheet-pill"></div>
-      <div class="sheet-handle-hint" id="sheet-handle-hint">↑ tap to open</div>
+      <div class="sheet-handle-hint" id="sheet-handle-hint">↓ tap to close</div>
     </div>
 
     <!-- Content area -->
@@ -255,6 +262,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=24"></script>
+<script type="module" src="js/main.js?v=25"></script>
 </body>
 </html>

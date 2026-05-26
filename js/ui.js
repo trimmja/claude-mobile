@@ -74,11 +74,20 @@ export function togglePanel(forceOpen) {
   _panelOpen = (forceOpen !== undefined) ? forceOpen : !_panelOpen;
   const sheet = $('bottom-sheet');
   if (sheet) sheet.classList.toggle('sheet-open', _panelOpen);
+  // Show the floating open-button only when the panel is closed
+  const openBtn = $('scene-open-btn');
+  if (openBtn) openBtn.classList.toggle('hidden', _panelOpen);
 }
 
 export function bindSheetHandle() {
   const handle = $('sheet-handle');
   if (handle) handle.addEventListener('click', () => togglePanel());
+}
+
+// Scene floating "open panel" button
+export function bindSceneOpenBtn() {
+  const btn = $('scene-open-btn');
+  if (btn) btn.addEventListener('click', () => togglePanel(true));
 }
 
 // ─── LOCATION VIEW ──────────────────────────────────────────────────────────
@@ -158,6 +167,10 @@ export function renderPhaseStrip() {
   if (sName) sName.textContent  = d.en;
   if (sFill) sFill.style.width  = tpct + '%';
   if (sCnt)  sCnt.textContent   = `${t.remaining}/${t.max}`;
+
+  // ── Keep the scene open-button phase label in sync ──
+  const openPhase = $('scene-open-phase');
+  if (openPhase) openPhase.textContent = `${d.icon} ${d.en}`;
 
   // End-phase button labelling + nudge state
   const btn = $('end-phase-btn');
