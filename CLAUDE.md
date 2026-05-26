@@ -86,7 +86,7 @@ js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each a
 js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
 js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
 js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute(); startStationAmbience()/stopStationAmbience() fade station ambient in/out; toggleMute() also syncs ambient muted state
-js/ui.js              — all DOM rendering + phase strip + top-bar + bottom-sheet + end-of-day screen; renderFrame() on rAF; togglePanel()/bindSheetHandle() control the slide-up sheet
+js/ui.js              — all DOM rendering + phase strip + top-bar + bottom-sheet + end-of-day screen; renderFrame() on rAF; togglePanel()/bindSheetHandle()/bindSceneOpenBtn() control the panel
 js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
 js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
 js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
@@ -403,10 +403,12 @@ Entries don't trigger their own notifications — the engine event that produced
   [#location-img]   — still PNG for non-station locations; cross-fades on location change
   [#location-vid]   — looping MP4 for Shinjuku Station only; muted for iOS autoplay; opacity-fades in/out
   [#location-bg]    — CSS-gradient fallback layer (class swapped per location)
+  [#scene-open-btn] — floating pill button "↑ Activities" near bottom of scene; tap to open panel; hidden when panel is open
   [.location-info]  — JP/EN location name overlaid at bottom of scene
 [#station-ambience] — hidden <audio> element; plays ambient station sound at volume 0.35 when at station
-[#bottom-sheet]     — slides up over the scene; drag handle at top
-  [.sheet-handle]   — tap to toggle open/closed; sheet-handle-hint text updates state
+[#sheet-scrim]      — dark overlay (z-index 19) behind the sheet when open; dims scene + top-bar; tap to close panel
+[#bottom-sheet]     — slides up over the scene; fully hidden (translateY 100%) when closed — no peek strip
+  [.sheet-handle]   — close-only row at top of sheet; tap to close; shows "↓ tap to close" pill when sheet is open
   [.content-area]   — scrollable panel area
     [#tab-actions]  — phase strip (icon + time bar + End Phase button) + nudge + action list
     [#tab-people]   — .people-list (only met NPCs; empty state if none) + contacts-summary
