@@ -1,0 +1,93 @@
+{
+  "_comment": "Life events per NPC. scripted = fire once when conditions align; random = sparse background texture.",
+
+  "kenji": {
+    "scripted": [
+      {
+        "id": "restructuring",
+        "conditions": { "dayMin": 10, "stageMin_kenji": 2 },
+        "mood": -2, "stress": 3, "burden": 3,
+        "notification": "A message from Kenji: 再編が来る。 Restructuring is coming."
+      },
+      {
+        "id": "father_memory",
+        "conditions": { "dayMin": 20, "stageMin_kenji": 3 },
+        "mood": 0, "stress": 0, "burden": 4,
+        "notification": null
+      },
+      {
+        "id": "late_night",
+        "conditions": { "dayMin": 35, "stageMin_kenji": 4 },
+        "mood": -1, "stress": 2, "burden": 3,
+        "notification": "A late message from Kenji: まだ会社にいる。 Still at the office."
+      }
+    ],
+    "random": [
+      { "id": "brutal_meeting",  "probability": 0.12, "mood": -1, "stress":  2, "burden": 1 },
+      { "id": "skipped_lunch",   "probability": 0.10, "mood": -1, "stress":  1, "burden": 0 },
+      { "id": "saw_sunset",      "probability": 0.08, "mood":  1, "stress": -1, "burden": 1 },
+      { "id": "train_delayed",   "probability": 0.10, "mood": -1, "stress":  1, "burden": 0 },
+      { "id": "good_meeting",    "probability": 0.08, "mood":  1, "stress": -1, "burden": 0 }
+    ]
+  },
+
+  "yuki": {
+    "scripted": [
+      {
+        "id": "grandmother_altar",
+        "conditions": { "dayMin": 7, "stageMin_yuki": 2 },
+        "mood": -1, "stress": 0, "burden": 3,
+        "notification": "Yuki's LINE: お婆ちゃんの命日でした。 My grandmother's memorial day."
+      },
+      {
+        "id": "doubt_week",
+        "conditions": { "dayMin": 18, "stageMin_yuki": 3 },
+        "mood": -2, "stress": 1, "burden": 4,
+        "notification": null
+      },
+      {
+        "id": "thesis_deadline",
+        "conditions": { "dayMin": 30, "stageMin_yuki": 2 },
+        "mood": -1, "stress": 3, "burden": 2,
+        "notification": "Yuki's LINE: 論文が... ちょっと大変です。 The thesis... it's a lot right now."
+      }
+    ],
+    "random": [
+      { "id": "hard_lecture",    "probability": 0.10, "mood": -1, "stress":  1, "burden": 0 },
+      { "id": "good_research",   "probability": 0.10, "mood":  1, "stress":  0, "burden": 1 },
+      { "id": "family_call",     "probability": 0.08, "mood":  1, "stress": -1, "burden": 1 },
+      { "id": "exam_result",     "probability": 0.08, "mood":  1, "stress": -2, "burden": 0 },
+      { "id": "long_study_day",  "probability": 0.10, "mood": -1, "stress":  2, "burden": 1 }
+    ]
+  },
+
+  "hiro": {
+    "scripted": [
+      {
+        "id": "found_her_bible",
+        "conditions": { "dayMin": 12, "stageMin_hiro": 3 },
+        "mood": 0, "stress": 0, "burden": 3,
+        "notification": null
+      },
+      {
+        "id": "emiko_anniversary",
+        "conditions": { "dayMin": 28 },
+        "mood": -3, "stress": 0, "burden": 4,
+        "notification": null
+      },
+      {
+        "id": "cemetery_visit",
+        "conditions": { "dayMin": 40, "stageMin_hiro": 4 },
+        "mood": -1, "stress": 0, "burden": 2,
+        "notification": null
+      }
+    ],
+    "random": [
+      { "id": "rainy_morning",        "probability": 0.12, "mood": -1, "stress":  0, "burden":  1 },
+      { "id": "pigeons_recognized",   "probability": 0.10, "mood":  1, "stress":  0, "burden": -1 },
+      { "id": "neighborhood_changed", "probability": 0.08, "mood": -1, "stress":  0, "burden":  2 },
+      { "id": "emiko_song_on_radio",  "probability": 0.07, "mood": -2, "stress":  0, "burden":  2 },
+      { "id": "clear_autumn_day",     "probability": 0.10, "mood":  1, "stress":  0, "burden": -1 }
+    ]
+  }
+}

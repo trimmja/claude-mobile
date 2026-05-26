@@ -79,11 +79,19 @@ Replace the real-time tick engine with a turn-based phase engine. Introduce Ener
 
 **Out of scope for Step 1:** NPC moods, procedural stories, weather, base-building, multi-district, persecution.
 
-### Step 2: NPC moods + decay
+### Step 2: NPC moods + life events ← **SHIPPED v29 (first pass)**
 
-Add hidden internal state per NPC: `mood`, `stress`, `openness`, plus drift logic that runs in `onBetweenPhases`. Mood gently scales trust gain — a stressed Kenji is more open to honest conversation but less likely to commit; a lonely Hiro takes any presence as meaningful.
+Add hidden emotional state per NPC: `mood`, `stress`, `burden`. Stats change only from real events — never from blanket timers.
 
-Each NPC's mood profile is rooted in `CHARACTERS.md` (Kenji's overwork, Yuki's intellectual restlessness, Hiro's grief). No new UI required — moods show up in story text via new condition keys.
+- **stress** (busyness): blocks visits, reduces trust. HIGH stress = they're too distracted.
+- **burden** (weariness/need): opens gospel. HIGH burden = more receptive. "Come to me, all who are weary."
+- **mood** (-5 to +5): warmth in the relationship. Changed by visit quality and life events (both positive and negative).
+- **Visit quality**: visits aren't automatically good. A stressed NPC with low player language = mood can drop.
+- **Life events**: scripted arc events (2-3/NPC, fire once on conditions) + random texture (sparse, silent).
+- **Story conditions**: `moodMin/Max_*`, `stressMin/Max_*`, `burdenMin/Max_*`, `daysNotSeenMin_*` — all extend the existing condition system in `stories.js`.
+- **Trust scaling**: stress reduces from all visits (×0.6 at max stress); burden boosts deep visits only (×1.5 at max burden).
+
+State: `state.npcs[id].{ mood, stress, burden, firedEvents[] }`. Data: `data/npcEvents.json`. No UI changes — system is invisible, expressed through story beats and end-of-day toasts.
 
 ### Step 3: Procedural story layer
 
@@ -136,4 +144,5 @@ Append new entries here as roadmap-level decisions are made. Date format YYYY-MM
 
 - **2026-05-24** — Pivoted from real-time timer/idle to phase + energy simulation (this document). Locked decisions in Section 3. Step 1 plan written.
 - **2026-05-24 (later same day)** — Step 1 refinement after first playtest: introduced **Time** as a per-phase resource alongside **Energy** as a daily resource. Fixed two issues — (1) `rest` could loop infinitely because it had no real cost, (2) per-phase energy refill made conservation pointless. New model: actions cost both time and energy; rest costs time (half a phase) but recovers energy; pray is the 1-time / 0-energy "filler" action. Phase auto-advances when time runs out (with a toast). Bumped APP_VERSION to 16. Save format still v2 — gracefully migrates by initializing missing fields.
+- **2026-05-26** — Shipped Step 2: NPC moods + life events (v29). Added `mood`, `stress`, `burden` per NPC; scripted arc events + random texture in `data/npcEvents.json`; visit quality formula (stressed NPC + low language = mood can drop); trust scaling from stress/burden; 7 new story condition types; ~20 new story beats across all NPC visit/deep actions. Design decision: stress and burden are spiritually opposite (stress blocks, burden opens — "come to me, all who are weary"). Event-driven only — no blanket timers. Scales cleanly to many NPCs.
 - **2026-05-24 (third update same day)** — Reversed the earlier "locations are flavor" call. **Travel is now real navigation.** `state.location` is where you ARE; actions filter by it. Travel costs time only (destination-based: home/station/shrine = 1, café/park = 2, onsen = 3). Each morning resets you to apartment. People-tab cards have Visit / Heart-to-Heart buttons that auto-travel before running the action. Same session also shipped: notification queue (fixes end-of-day-vs-popup race), Journal tab (replaces Goals, populated by milestones + meets + stage advances + lang level-ups), stage-advance notifications + per-stage moment text, and a "no conflicting cost+reward on same stat" rule. APP_VERSION bumped to 17.

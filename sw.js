@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v28';
+const CACHE = 'jeb-v29';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './data/stories.json',
   './data/reflections.json',
   './data/stageAdvances.json',
+  './data/npcEvents.json',
   './js/main.js',
   './js/version.js',
   './js/state.js',

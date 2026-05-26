@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { spend, gain, spendEnergy, gainEnergy, spendTime, gainTime } from './resources.js';
 import { addLangXP } from './language.js';
-import { addNPCTrust, NPC_DEFS } from './npcs.js';
+import { addNPCTrust, NPC_DEFS, adjustNPC, calcVisitMoodDelta } from './npcs.js';
 
 const DEEP_TALK_MIN_STAGE = 2; // Friend
 
@@ -288,16 +288,60 @@ function applyRewards(id, reward) {
 
   if (NPC_VISIT_ACTIONS.has(id) && reward.npcTrust) {
     const LANG_SCALE = [0.4, 0.7, 1.0, 1.0, 1.0, 1.0];
-    const npcDef = NPC_DEFS[reward.npcTrust.id];
+    const npcId  = reward.npcTrust.id;
+    const npc    = state.npcs[npcId];
+    const npcDef = NPC_DEFS[npcId];
     const lw = npcDef?.langWeight ?? 1.0;
     const scale = LANG_SCALE[Math.min(lang, 5)];
     const langFactor = 1 - (lw * (1 - scale));
     const baseTrust = reward.npcTrust.amount;
-    const delta = Math.round((langFactor - 1) * baseTrust);
-    if (delta !== 0) addNPCTrust(reward.npcTrust.id, delta);
+
+    // Lang delta (existing)
+    const langDelta = Math.round((langFactor - 1) * baseTrust);
+    if (langDelta !== 0) addNPCTrust(npcId, langDelta);
+
+    // Lang 3+ bonus (existing)
     if (lang >= 3) {
       const bonus = Math.floor((lang - 2) * 0.2 * baseTrust);
-      if (bonus > 0) { addNPCTrust(reward.npcTrust.id, bonus); bonuses.npcTrust = bonus; }
+      if (bonus > 0) { addNPCTrust(npcId, bonus); bonuses.npcTrust = bonus; }
+    }
+
+    // Step 2: stress/burden/mood affect trust + update NPC emotional state
+    if (npc) {
+      const actionType = id.startsWith('deep_') ? 'deep' : 'visit';
+      const stress = npc.stress ?? 0;
+      const burden = npc.burden ?? 0;
+      const mood   = npc.mood   ?? 0;
+
+      // Stress reduces trust from all visits (stressFactor: stress 0 → ×1.0, stress 10 → ×0.6)
+      const stressDelta = Math.round((1 - stress * 0.04 - 1) * baseTrust);
+      if (stressDelta !== 0) addNPCTrust(npcId, stressDelta);
+
+      // Burden boosts trust from DEEP visits only (burdenFactor: burden 0 → ×1.0, burden 10 → ×1.5)
+      if (actionType === 'deep') {
+        const burdenBonus = Math.round(burden * 0.05 * baseTrust);
+        if (burdenBonus > 0) addNPCTrust(npcId, burdenBonus);
+      }
+
+      // High mood gives a small extra trust bonus (warmth in the relationship)
+      if (mood > 3) {
+        const moodBonus = Math.round(baseTrust * 0.15);
+        if (moodBonus > 0) addNPCTrust(npcId, moodBonus);
+      }
+
+      // Hiro special: showing up when he's most withdrawn matters most
+      if (npcId === 'hiro' && mood < -3) {
+        const presenceBonus = Math.round(baseTrust * 0.20);
+        if (presenceBonus > 0) addNPCTrust(npcId, presenceBonus);
+      }
+
+      // Apply mood/stress/burden changes from the visit itself
+      const moodDelta = calcVisitMoodDelta(npcId, actionType);
+      adjustNPC(npcId, {
+        mood:   moodDelta,
+        stress: actionType === 'deep' ? -3 : -2,
+        burden: actionType === 'deep' ? -2 : -1,
+      });
     }
   }
 

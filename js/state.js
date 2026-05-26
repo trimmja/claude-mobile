@@ -22,9 +22,13 @@ export const state = {
   location: 'apartment',
 
   npcs: {
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null },
+    // mood: -5 to +5 (warmth in the relationship right now; changes from events + visit quality)
+    // stress: 0–10 (busyness/overwhelm — HIGH blocks visits, reduces trust)
+    // burden: 0–10 (deep weariness/need — HIGH opens gospel, boosts deep-visit trust)
+    // firedEvents: IDs of scripted life events that have already fired (dedup)
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [] },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [] },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [] },
   },
 
   world: {},

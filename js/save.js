@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { MILESTONE_DEFS } from './milestones.js';
+import { initNPCMoodStats } from './npcs.js';
 
 const KEY = 'tokyo_called_v2';
 const LEGACY_KEYS = ['tokyo_called_v1'];
@@ -63,10 +64,12 @@ export function loadGame() {
 
     Object.assign(state.language, saved.language || {});
 
-    // NPCs — preserve lastSeenDay if saved
+    // NPCs — preserve lastSeenDay + mood/stress/burden if saved
     ['kenji', 'yuki', 'hiro'].forEach(id => {
       Object.assign(state.npcs[id], saved.npcs?.[id] || {});
       if (state.npcs[id].lastSeenDay === undefined) state.npcs[id].lastSeenDay = null;
+      // Step 2 migration: init mood/stress/burden/firedEvents if save predates this feature
+      initNPCMoodStats(id);
     });
 
     state.world = saved.world || {};

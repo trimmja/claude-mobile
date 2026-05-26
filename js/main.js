@@ -11,7 +11,7 @@ import { doAction, doTravel, endPhase, endDay, hooks } from './engine.js';
 import * as audio from './audio.js';
 import { ACTION_DEFS } from './actions.js';
 import { getStoryText } from './stories.js';
-import { NPC_DEFS, getStageAdvanceText, getIntroText } from './npcs.js';
+import { NPC_DEFS, getStageAdvanceText, getIntroText, adjustNPC, getNPCEvents, initNPCMoodStats } from './npcs.js';
 import { addJournalEntry } from './journal.js';
 import { refillTime, refillEnergyDaily } from './resources.js';
 import {
@@ -203,6 +203,15 @@ function startGame() {
     enqueueNotification({ type: 'endOfDay' });
   };
 
+  // Step 2: NPC mood / life-events system
+  hooks.onBetweenPhases = () => {
+    // No per-phase changes needed — all NPC stat changes are event-driven
+  };
+
+  hooks.onEndOfDay = () => {
+    checkNPCEndOfDay();
+  };
+
   hooks.onNewDay = () => {
     renderHeader();
     renderPhaseStrip();
@@ -277,6 +286,109 @@ function startGame() {
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
+}
+
+// ─── NPC end-of-day processing ───────────────────────────────────────────────
+// Runs once per day when the evening phase ends.
+// 1. Check scripted arc events (fire first matching one per NPC per day).
+// 2. Roll a random texture event (only if no scripted event fired AND NPC not visited today).
+// 3. Fire threshold notification toasts for low mood / high burden / high stress.
+function checkNPCEndOfDay() {
+  const today = state.time.day;
+
+  for (const npcId of Object.keys(state.npcs)) {
+    const npc = state.npcs[npcId];
+    if (!npc.met) continue;
+
+    const events = getNPCEvents(npcId);
+    const visitedToday = npc.lastSeenDay === today;
+    let scriptedFired = false;
+
+    // 1. Scripted events — fire first matching unfired one
+    for (const ev of (events.scripted || [])) {
+      if (npc.firedEvents.includes(ev.id)) continue;
+      if (!npcEventConditionsMet(ev.conditions)) continue;
+
+      // Apply deltas
+      adjustNPC(npcId, { mood: ev.mood, stress: ev.stress, burden: ev.burden });
+      npc.firedEvents.push(ev.id);
+      scriptedFired = true;
+
+      // Show LINE-style notification if provided
+      if (ev.notification) {
+        const def = NPC_DEFS[npcId];
+        enqueueNotification({
+          type: 'toast',
+          icon: def?.emoji || '💬',
+          title: def?.name || npcId,
+          desc: ev.notification,
+        });
+      }
+      break; // max one scripted event per NPC per day
+    }
+
+    // 2. Random texture event — silent, discovered at next visit through story beats
+    if (!scriptedFired && !visitedToday && events.random?.length) {
+      const roll = Math.random();
+      let cumulative = 0;
+      for (const ev of events.random) {
+        cumulative += (ev.probability || 0);
+        if (roll < cumulative) {
+          adjustNPC(npcId, { mood: ev.mood, stress: ev.stress, burden: ev.burden });
+          break;
+        }
+      }
+    }
+
+    // 3. Threshold notifications (re-read stats after events may have changed them)
+    const updatedNpc = state.npcs[npcId];
+    const def = NPC_DEFS[npcId];
+
+    if (updatedNpc.mood < -4) {
+      enqueueNotification({
+        type: 'toast',
+        icon: def?.emoji || '👤',
+        title: `${def?.name || npcId} is pulling back`,
+        desc: `You haven't connected with ${def?.name || npcId} in a while.`,
+      });
+    }
+
+    if (updatedNpc.burden > 8) {
+      enqueueNotification({
+        type: 'toast',
+        icon: '✨',
+        title: `Something in ${def?.name || npcId} seems ready`,
+        desc: 'A deeper conversation might matter right now.',
+      });
+    }
+
+    if (npcId === 'kenji' && updatedNpc.stress > 7) {
+      enqueueNotification({
+        type: 'toast',
+        icon: '👔',
+        title: `Kenji's messages have been short`,
+        desc: 'Work must be crushing him right now.',
+      });
+    }
+  }
+}
+
+/**
+ * Check whether a scripted event's conditions are met against current state.
+ * Supports: dayMin, dayMax, stageMin_{npcId}, stageMax_{npcId}
+ */
+function npcEventConditionsMet(conditions) {
+  if (!conditions) return true;
+  const { dayMin, dayMax } = conditions;
+  if (dayMin !== undefined && state.time.day < dayMin) return false;
+  if (dayMax !== undefined && state.time.day > dayMax) return false;
+  for (const [key, val] of Object.entries(conditions)) {
+    const minM = key.match(/^stageMin_(\w+)$/);
+    const maxM = key.match(/^stageMax_(\w+)$/);
+    if (minM && (state.npcs[minM[1]]?.stage ?? -1) < val) return false;
+    if (maxM && (state.npcs[maxM[1]]?.stage ?? 99) > val) return false;
+  }
+  return true;
 }
 
 function handleAction(actionId) {

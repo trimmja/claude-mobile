@@ -245,6 +245,34 @@
       "text": "The questions are different now. Kenji wants to know about doubt — whether real faith allows for it. You tell him that doubt and faith are not opposites. He looks like you said something slightly illegal. Then he almost smiles."
     },
     {
+      "conditions": { "stressMin_kenji": 7 },
+      "text": "Kenji arrives looking hollow. His coffee goes cold. At some point he says: 'I don't know how people do this for twenty years.' He means the job. Maybe more. You stay until he has to leave. He thanks you before he goes — more carefully than usual."
+    },
+    {
+      "conditions": { "stressMin_kenji": 7, "langMin": 2 },
+      "text": "Kenji is running on nothing. He's been at the office until midnight three days this week — he mentions it like it's weather. You ask what he does to rest. He thinks for a long time. 'Sleep,' he says. 'Sometimes.' You don't push. You make sure he finishes the coffee."
+    },
+    {
+      "conditions": { "stressMin_kenji": 6, "burdenMin_kenji": 6 },
+      "text": "He mentions the restructuring as fact, not complaint. Department cut by a third. Not him — not this time. But the way he says it means he knows he's on borrowed time. He's been through this before. His father never came home from the 1998 restructuring either."
+    },
+    {
+      "conditions": { "burdenMin_kenji": 7, "langMin": 2 },
+      "text": "He asks out of nowhere: 'Do you ever feel like the life you're living is the wrong one?' He doesn't mean the job. You both know that. You take your time answering. He doesn't check his phone once."
+    },
+    {
+      "conditions": { "moodMax_kenji": -3 },
+      "text": "He's there, but he's somewhere else. He apologizes twice for things that don't need an apology. At some point he says: '最近ちょっと...' — Lately a little... — and trails off. You nod. You stay."
+    },
+    {
+      "conditions": { "daysNotSeenMin_kenji": 5 },
+      "text": "It's been a while. He says so before you sit down, almost like an apology. 'I thought maybe you had given up on me.' You tell him you haven't. He nods once and picks up his coffee."
+    },
+    {
+      "conditions": { "moodMin_kenji": 4 },
+      "text": "Something is lighter in him today. He's the one who suggests the coffee place, which almost never happens. He asks about your week and actually listens. He laughs once — briefly, genuinely — at something you say. You notice it because it's rare."
+    },
+    {
       "conditions": {},
       "text": "You and Kenji meet. It matters more each time."
     }
@@ -286,6 +314,26 @@
     {
       "conditions": { "stageMin_yuki": 3, "langMin": 2 },
       "text": "Yuki has been reading the Gospel of John in Japanese and English side by side. She has questions about the prologue — 'In the beginning was the Word.' She thinks she understands now why the Word had to become flesh. Why God couldn't just send a message. You sit with that. 'I've never heard it put that way,' you tell her. 'It's exactly right.'"
+    },
+    {
+      "conditions": { "stressMin_yuki": 6 },
+      "text": "Yuki comes with too many books and too little sleep. She's been studying for something — she mentions it and moves on quickly. Her questions today are faster, more fragmented. She's working something out under the surface. When you ask if she's okay she says 'I'm fine' and immediately asks something she clearly wrote out last night."
+    },
+    {
+      "conditions": { "burdenMin_yuki": 5 },
+      "text": "She's unusually still when you arrive — not the usual cascade of notes and questions. She tells you she tried praying last week. 'I didn't know if I was doing it right.' You tell her you still don't fully know. She seems relieved by that."
+    },
+    {
+      "conditions": { "burdenMin_yuki": 5, "stressMax_yuki": 3 },
+      "text": "She says she went to her grandmother's grave last Saturday. She brought incense — she doesn't believe in it the way her grandmother did, but she brought it anyway. 'I didn't know how else to show up.' You tell her that showing up counts. She thinks about that for a moment, then writes something in her notebook."
+    },
+    {
+      "conditions": { "moodMax_yuki": -3 },
+      "text": "She's there when you arrive but her notebook stays closed. She lets you talk more than usual. Whatever is pressing on her, she's not ready to name it yet — and you don't push. Sometimes just showing up is the answer to a question that hasn't been asked yet."
+    },
+    {
+      "conditions": { "daysNotSeenMin_yuki": 5 },
+      "text": "Yuki had sent one short LINE message — 忙しいです, I'm busy — and then nothing. When you finally meet, she seems both glad and slightly guilty. She doesn't say it, but you can tell she wondered if you'd stop making the effort. You stayed. That matters to her."
     },
     {
       "conditions": {},
@@ -331,6 +379,26 @@
       "text": "Hiro tells you he started reading the Bible Emiko kept in the bedside drawer. He found her bookmarks inside — she had underlined things. He reads you one of them aloud, slowly. His voice doesn't shake. He's past the stage where it does."
     },
     {
+      "conditions": { "moodMax_hiro": -3 },
+      "text": "He doesn't look up right away. You buy two coffees anyway and sit. When you stand to leave he says quietly: ありがとう. He means it fully."
+    },
+    {
+      "conditions": { "moodMax_hiro": -3, "langMin": 2 },
+      "text": "Today he doesn't want to talk. You can feel it immediately. You buy two coffees and sit. He accepts his without comment. At some point he says: 'Emiko used to sit with me like this. Not talking. Just there.' He doesn't say anything after that. You stay anyway."
+    },
+    {
+      "conditions": { "burdenMin_hiro": 8 },
+      "text": "Hiro is waiting when you arrive — he's been watching the path. He wants to talk. You can tell. He just needs you to be the one who starts. You sit. You ask. He begins."
+    },
+    {
+      "conditions": { "burdenMax_hiro": 4 },
+      "text": "A quiet morning. The grief is still there — it doesn't leave — but today it seems to sit lighter. He tells you about the neighborhood where he and Emiko used to live before the kids were born. He doesn't usually talk about before. Today he does."
+    },
+    {
+      "conditions": { "daysNotSeenMin_hiro": 7 },
+      "text": "He doesn't say he noticed your absence — he wouldn't — but when you sit down he turns toward you more fully than usual. The pigeons gather close. Some things don't need to be said."
+    },
+    {
       "conditions": {},
       "text": "You sit with Hiro. Some visits don't need many words."
     }
@@ -356,6 +424,18 @@
     {
       "conditions": { "stageMin_kenji": 0, "langMin": 1 },
       "text": "A long conversation with Kenji. Not everything landed perfectly — but enough did. The kind of conversation you come away from changed, even if you can't say exactly how."
+    },
+    {
+      "conditions": { "stressMin_kenji": 7, "langMin": 1 },
+      "text": "Kenji says less than usual but what he says lands harder. 'I think I'm disappearing,' he says at one point — slowly, like he's testing the words. 'Into the job. Into the schedule.' He asks if you've ever felt like that. You tell him yes — that faith helps you locate where you actually are. He's quiet for a long time. He writes something in his phone."
+    },
+    {
+      "conditions": { "burdenMin_kenji": 7, "langMin": 2 },
+      "text": "He asks you something he's been sitting with: whether a person can believe something they can't prove. Not as a debate. As a genuine question about his own life. You talk for a long time. When he finally looks up, it's gotten dark outside."
+    },
+    {
+      "conditions": { "burdenMin_kenji": 8, "langMin": 2 },
+      "text": "This conversation is the most unguarded he's ever been. He asks about conversion — what it actually means, whether it's a decision or something that happens to you. He's not asking abstractly. You take your time. He doesn't check his phone once. That's the measure of how present he is."
     },
     {
       "conditions": {},
@@ -410,6 +490,30 @@
     {
       "conditions": { "stageMin_hiro": 0, "langMin": 1 },
       "text": "Time with Hiro. Something between you that doesn't fully need words. Something is growing."
+    },
+    {
+      "conditions": { "moodMax_hiro": -3 },
+      "text": "He doesn't look up right away. You buy two coffees anyway and sit. The pigeons come and go. When you stand to leave he says quietly: ありがとう. He means it fully."
+    },
+    {
+      "conditions": { "moodMax_hiro": -3, "langMin": 2 },
+      "text": "Today he doesn't want to talk. You can feel it immediately. You buy two coffees and sit. He accepts his without comment. At some point he says: 'Emiko used to sit with me like this. Not talking. Just there.' He doesn't say anything after that. You stay anyway."
+    },
+    {
+      "conditions": { "burdenMin_hiro": 8 },
+      "text": "Hiro is waiting when you arrive, which is new — he's usually there first but today he's been watching the path, waiting for you. He wants to talk. You can tell. He just needs you to be the one who starts. You sit. You ask. He begins."
+    },
+    {
+      "conditions": { "burdenMin_hiro": 9, "moodMax_hiro": -2 },
+      "text": "He's on the bench when you arrive but not feeding the pigeons. Just sitting. You buy coffee and put one in his hand. He says 'The thirty-first' — nothing else. You don't ask what happened on the thirty-first. You stay the whole time."
+    },
+    {
+      "conditions": { "burdenMax_hiro": 4 },
+      "text": "A quiet morning. The grief is still there — it doesn't leave — but today it seems to sit lighter. He tells you about the neighborhood where he and Emiko used to live before the kids were born. He doesn't usually talk about before. Today he does."
+    },
+    {
+      "conditions": { "daysNotSeenMin_hiro": 7 },
+      "text": "He's on his usual bench. He doesn't say he noticed your absence — he wouldn't — but when you sit down he turns toward you more fully than usual. The pigeons gather close. Some things don't need to be said."
     },
     {
       "conditions": {},

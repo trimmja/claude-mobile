@@ -204,3 +204,75 @@ export function metNPCCount() {
 export function believerCount() {
   return Object.values(state.npcs).filter(n => n.stage === 5).length;
 }
+
+// ─── NPC mood / stress / burden system ────────────────────────────────────────
+
+// NPC events data loaded from data/npcEvents.json
+let NPC_EVENTS = {};
+
+export function initNPCEventsFromData(data) {
+  NPC_EVENTS = data || {};
+}
+
+export function getNPCEvents(npcId) {
+  return NPC_EVENTS[npcId] || { scripted: [], random: [] };
+}
+
+/**
+ * Clamp a value to [min, max].
+ */
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+/**
+ * Apply deltas to an NPC's mood, stress, and burden.
+ * All writes go through here so clamping is always applied.
+ * Passing undefined for a field leaves it unchanged.
+ */
+export function adjustNPC(npcId, { mood, stress, burden }) {
+  const npc = state.npcs[npcId];
+  if (!npc) return;
+  if (mood    !== undefined) npc.mood    = clamp((npc.mood    ?? 0) + mood,    -5, 5);
+  if (stress  !== undefined) npc.stress  = clamp((npc.stress  ?? 0) + stress,   0, 10);
+  if (burden  !== undefined) npc.burden  = clamp((npc.burden  ?? 0) + burden,   0, 10);
+}
+
+/**
+ * Compute the mood delta from a visit, based on NPC's current stress and player's language level.
+ * Deep visits start more positive but are hurt more by high stress.
+ * Returns a value in [-2, +4].
+ */
+export function calcVisitMoodDelta(npcId, actionType) {
+  const npc  = state.npcs[npcId];
+  const lang = state.language.level;
+  if (!npc) return 0;
+
+  let delta = actionType === 'deep' ? 2 : 1;
+
+  // High stress makes the interaction harder — they're too distracted
+  if (npc.stress >= 6) delta -= 2;
+  else if (npc.stress >= 4) delta -= 1;
+
+  // Language helps break through stress
+  if (lang >= 2) delta += 1;
+  else if (lang === 0 && npc.stress >= 4) delta -= 1; // no words + distracted = painful
+
+  return clamp(delta, -2, 4);
+}
+
+/**
+ * Migration helper: initialize mood/stress/burden/firedEvents on an NPC entry
+ * if the fields are missing (saves made before Step 2).
+ * Starting values match the defaults in state.js.
+ */
+export function initNPCMoodStats(npcId) {
+  const npc = state.npcs[npcId];
+  if (!npc) return;
+  const defaults = { kenji: { stress: 3, burden: 5 }, yuki: { stress: 2, burden: 3 }, hiro: { stress: 1, burden: 7 } };
+  const d = defaults[npcId] || { stress: 2, burden: 3 };
+  if (typeof npc.mood    !== 'number') npc.mood    = 0;
+  if (typeof npc.stress  !== 'number') npc.stress  = d.stress;
+  if (typeof npc.burden  !== 'number') npc.burden  = d.burden;
+  if (!Array.isArray(npc.firedEvents)) npc.firedEvents = [];
+}
