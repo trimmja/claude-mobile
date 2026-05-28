@@ -28,6 +28,8 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Stage-advance sakura modal + warm chord (Phase B, v33) | ✅ | n/a | ❌ not yet |
 | npcStateShift card with portrait (Phase B, v33) | ✅ | n/a | ❌ not yet |
 | Story popup mood/stress/burden shift row (Phase B, v33) | ✅ | n/a | ❌ not yet |
+| NPC flag system + lastBeatByAction (Phase C, v34) | ✅ | ⚠️ 1 demo callback (Yuki) | ❌ not yet |
+| Conditional reflections — keyed on day events (Phase C, v34) | ✅ | ✅ 15 new lines | ❌ not yet |
 
 ---
 

@@ -29,9 +29,12 @@ export const state = {
     // stress: 0–10 (busyness/overwhelm — HIGH blocks visits, reduces trust)
     // burden: 0–10 (deep weariness/need — HIGH opens gospel, boosts deep-visit trust)
     // firedEvents: IDs of scripted life events that have already fired (dedup)
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [] },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [] },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [] },
+    // flags: { name: dayItWasSet } — short-lived per-NPC carryover (e.g. "left_early": 12).
+    //   Beats set with setsFlag_<npcId>: "name" and require flagSet_<npcId>: "name".
+    //   Beats can clear consumed flags with clearsFlag_<npcId>: "name".
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [], flags: {} },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [], flags: {} },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [], flags: {} },
   },
 
   world: {},
@@ -58,7 +61,17 @@ export const state = {
     pendingLangLevelUp: 0,      // 0 if none; otherwise the new level — drained by engine
     unreadJournalCount: 0,      // resets when player taps the Journal tab
     notifiedUnlocks: [],        // action IDs already announced as unlocked (dedupe)
+    // Most recent beat ID per action. Written by doAction after a beat with an `id` field
+    // fires. Enables story conditions like `prevBeatId_pray: "dry_silence"`.
+    // Bounded: one entry per action ID, overwritten each time that action runs.
+    lastBeatByAction: {},
   },
 
-  dayLog: { phases: { morning: [], afternoon: [], evening: [] } },
+  dayLog: {
+    phases: { morning: [], afternoon: [], evening: [] },
+    startContacts: 0,           // contacts at start of day — used to compute contactsToday for reflections
+    paydayToday: false,         // set true when payday fires during this day
+    setbackToday: false,        // set true when any beat with a `penalty` fired today
+    langLevelUpToday: false,    // set true when language level rose during this day
+  },
 };

@@ -222,6 +222,8 @@ function startGame() {
   };
 
   hooks.onLangLevelUp = (newLevel) => {
+    // Phase C: mark the day so the reflection picker can choose a level-up line.
+    if (state.dayLog) state.dayLog.langLevelUpToday = true;
     addJournalEntry({
       id: `lang_${newLevel}`,
       icon: '語',

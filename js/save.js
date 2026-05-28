@@ -72,6 +72,10 @@ export function loadGame() {
       if (state.npcs[id].lastSeenDay === undefined) state.npcs[id].lastSeenDay = null;
       // Step 2 migration: init mood/stress/burden/firedEvents if save predates this feature
       initNPCMoodStats(id);
+      // Phase C migration: per-NPC flags object (carryover for callback beats)
+      if (!state.npcs[id].flags || typeof state.npcs[id].flags !== 'object') {
+        state.npcs[id].flags = {};
+      }
     });
 
     state.world = saved.world || {};
@@ -105,9 +109,21 @@ export function loadGame() {
       pendingLangLevelUp: 0,
       unreadJournalCount: saved.flags?.unreadJournalCount ?? 0,
       notifiedUnlocks: Array.isArray(saved.flags?.notifiedUnlocks) ? saved.flags.notifiedUnlocks : [],
+      // Phase C migration: lastBeatByAction starts empty for pre-v34 saves
+      lastBeatByAction: (saved.flags?.lastBeatByAction && typeof saved.flags.lastBeatByAction === 'object')
+        ? saved.flags.lastBeatByAction
+        : {},
     });
     state.location = saved.location || 'apartment';
-    state.dayLog = saved.dayLog || { phases: { morning: [], afternoon: [], evening: [] } };
+    // Phase C migration: dayLog gains startContacts + per-day event flags
+    const savedDayLog = saved.dayLog || {};
+    state.dayLog = {
+      phases: savedDayLog.phases || { morning: [], afternoon: [], evening: [] },
+      startContacts:     typeof savedDayLog.startContacts     === 'number'  ? savedDayLog.startContacts     : state.resources.contacts,
+      paydayToday:       savedDayLog.paydayToday       === true,
+      setbackToday:      savedDayLog.setbackToday      === true,
+      langLevelUpToday:  savedDayLog.langLevelUpToday  === true,
+    };
 
     return true;
   } catch (e) {

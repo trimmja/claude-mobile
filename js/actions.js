@@ -226,6 +226,29 @@ export function doAction(actionId) {
   // Compute the npc inner-state delta. Includes effects from applyRewards AND any penalty.
   const npcShift = npcShiftId ? diffNpcInner(npcShiftId, npcBefore) : null;
 
+  // Phase C: record this beat's ID so future beats can reference it with prevBeatId_<actionId>.
+  // Only beats with an explicit `id` participate — anonymous beats don't get written.
+  if (beat?.id) {
+    state.flags.lastBeatByAction = state.flags.lastBeatByAction || {};
+    state.flags.lastBeatByAction[actionId] = beat.id;
+  }
+
+  // Phase C: per-NPC flag system. setsFlag/clearsFlag live on the beat and target the
+  // action's own NPC (implicit). Cross-NPC reads happen via flagSet_<npcId> in conditions.
+  // Flags store the day they were set (number) — supports future "stale flag" rules.
+  if (npcShiftId && state.npcs[npcShiftId]) {
+    const npcFlags = state.npcs[npcShiftId].flags = state.npcs[npcShiftId].flags || {};
+    if (typeof beat?.setsFlag === 'string') {
+      npcFlags[beat.setsFlag] = state.time.day;
+    }
+    if (typeof beat?.clearsFlag === 'string') {
+      delete npcFlags[beat.clearsFlag];
+    }
+  }
+
+  // Phase C: track day-level events for the reflection picker.
+  if (setback) state.dayLog.setbackToday = true;
+
   // SpiritDry recovery from spiritual/rest actions — always fires on success.
   // These are the missionary's defenses against burnout: prayer, sleep, the onsen.
   if (actionId === 'pray')              adjustSpiritDry(-1);

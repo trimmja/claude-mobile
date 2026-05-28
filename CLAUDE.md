@@ -65,7 +65,7 @@ CHARACTERS.md         — NPC bios (read before any NPC change)
 data/actions.json     — action defs: timeCost, energyCost, energyReward, cost, reward, npcChance
 data/timing.json      — timePerPhase, energyPerDay, faithPerDay, payday config
 data/stories.json     — story beat text keyed by action + conditions (editable content)
-data/reflections.json — short reflection lines for the end-of-day screen
+data/reflections.json — end-of-day reflections; conditional shape (specific matches weight 3× catch-alls) — see Phase C condition keys
 data/stageAdvances.json — text shown when an NPC advances to a new relationship stage (per NPC, per stage)
 data/npcEvents.json   — scripted arc events + random texture pools per NPC (loaded by gameData.js)
 data/README.md        — how to edit the JSON files
@@ -82,7 +82,7 @@ js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, 
 js/locations.js       — LOCATION_DEFS, LOCATION_ORDER, TRAVEL_COSTS, travelTo() — real navigation, see "Travel" section
 js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
 js/stories.js         — getStoryBeat(actionId, state) → { text, rewards? } — picks story beat from stories.json; getStoryText() is a thin wrapper for backward compat
-js/reflections.js     — pickReflection() — random line for end-of-day screen
+js/reflections.js     — pickReflection() — picks an end-of-day line, matching state against conditions in data/reflections.json
 js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
 js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
 js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
@@ -144,11 +144,12 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
   language: { xp: 0, level: 0 },             // 0–5
   location: 'apartment',                     // auto-updates to last-action's location (flavor)
   npcs: {
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [] },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [] },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [] },
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [], flags: {} },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [], flags: {} },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [], flags: {} },
     // mood: -5 to +5 (warmth); stress: 0–10 (busyness, blocks visits); burden: 0–10 (weariness, opens gospel)
     // firedEvents: scripted event IDs already fired (prevents re-firing)
+    // flags: { name: dayItWasSet } — Phase C carryover for callback beats; set by setsFlag, consumed by clearsFlag
   },
   world: {},                                 // empty — placeholder for future weather/events (Step 4)
   milestones: { completed: [] },
@@ -162,8 +163,15 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
     pendingStageAdvances: [],                // [{ npcId, newStage }] — drained by engine after each action
     pendingLangLevelUp: 0,                   // 0 if none; otherwise new level — drained by engine
     unreadJournalCount: 0,                   // badge on Journal tab; resets when player taps it
+    lastBeatByAction: {},                    // { actionId: beatId } — last beat with explicit id per action; powers prevBeatId_X
   },
-  dayLog: { phases: { morning: [], afternoon: [], evening: [] } },  // rebuilt each day
+  dayLog: {
+    phases: { morning: [], afternoon: [], evening: [] },  // rebuilt each day
+    startContacts: 0,                        // snapshot at start of day — used to compute contactsToday for reflections
+    paydayToday: false,                      // set true by engine.endDay when payday fires
+    setbackToday: false,                     // set true by actions.doAction when a beat with a penalty fired
+    langLevelUpToday: false,                 // set true by main.onLangLevelUp when level rose today
+  },
 }
 ```
 
@@ -354,7 +362,14 @@ Story beats are shown after every action completion (bottom-sheet popup).
 
 Penalty beats render a red chip-row under the story popup, play `playSetback()` (descending minor third), and log a journal entry with `type: 'setback'` and icon `⛅`.
 
-**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `wisdomMax`, `langMin`, `langMax`, `contactsMin`, `contactsMax`, `spiritDryMin`, `spiritDryMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`. Picker bias: when `spiritDry >= 6` on preaching/tract/study actions, penalty beats are weighted 2× — bad outcomes more likely, not guaranteed.
+**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `wisdomMax`, `langMin`, `langMax`, `contactsMin`, `contactsMax`, `spiritDryMin`, `spiritDryMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`, **`flagSet_{npcId}`** (string — beat only matches when `state.npcs[npcId].flags[<value>]` is present; see "Beat flags" below), **`prevBeatId_{actionId}`** (string — matches when the last beat to fire for that action had this `id`). Picker bias: when `spiritDry >= 6` on preaching/tract/study actions, penalty beats are weighted 2× — bad outcomes more likely, not guaranteed.
+
+**Beat-level fields beyond `conditions`, `rewards`, `penalty`:**
+- `id` (string, optional) — when present, fires `state.flags.lastBeatByAction[actionId] = id` after the beat resolves. Enables `prevBeatId_{actionId}` chaining on subsequent runs of the same action.
+- `setsFlag` (string, optional) — writes `state.npcs[<actionNPC>].flags[<value>] = state.time.day`. Only takes effect on NPC actions (those in `NPC_ACTION_MAP`); silently ignored elsewhere.
+- `clearsFlag` (string, optional) — deletes the named flag on the action's NPC. Use on callback beats so they fire once and step aside.
+
+Flags are short-lived per-NPC carryover for callback beats ("today she apologizes for last time"). Author the original beat with `setsFlag`, then write one or more responder beats that require `flagSet_<sameNpc>` and use `clearsFlag` to consume it. Flag value is the day it was set — useful for future staleness rules.
 
 **Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
 

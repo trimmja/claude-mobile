@@ -469,9 +469,16 @@
       "text": "Yuki asks good questions. You're both figuring something out."
     },
     {
+      "id": "yuki_closed_notebook",
       "conditions": { "moodMax_yuki": -2, "stressMin_yuki": 6 },
+      "setsFlag": "left_early",
       "penalty": { "trust": { "id": "yuki", "amount": 1 } },
       "text": "She closes her notebook early. 'I have to study,' she says. You're not sure that's true. You don't ask."
+    },
+    {
+      "conditions": { "flagSet_yuki": "left_early", "moodMin_yuki": -1 },
+      "clearsFlag": "left_early",
+      "text": "When you arrive she opens with: 'Last time — sorry. I really did have to study, but...' She trails off. She means it. You tell her it's fine and mean it. She opens her notebook."
     }
   ],
 

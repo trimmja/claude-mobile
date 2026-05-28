@@ -67,7 +67,7 @@ function conditionsMet(conditions, state) {
   if (spiritDryMin !== undefined && (state.character?.spiritDry ?? 0) < spiritDryMin) return false;
   if (spiritDryMax !== undefined && (state.character?.spiritDry ?? 0) > spiritDryMax) return false;
 
-  // Dynamic conditions (stage, mood, stress, burden, daysNotSeen)
+  // Dynamic conditions (stage, mood, stress, burden, daysNotSeen, flagSet, prevBeatId)
   for (const [key, val] of Object.entries(conditions)) {
     const stageMin = key.match(/^stageMin_(\w+)$/);
     const stageMax = key.match(/^stageMax_(\w+)$/);
@@ -96,6 +96,23 @@ function conditionsMet(conditions, state) {
       const lastSeen = state.npcs[npcId]?.lastSeenDay;
       const days = lastSeen === null ? 999 : (state.time.day - lastSeen);
       if (days < val) return false;
+    }
+
+    // Phase C: per-NPC flag presence check. `flagSet_kenji: "left_early"` matches when
+    // that flag exists on that NPC. (Presence-only — value is the day it was set.)
+    const flagSet = key.match(/^flagSet_(\w+)$/);
+    if (flagSet) {
+      const npcId = flagSet[1];
+      const flags = state.npcs[npcId]?.flags;
+      if (!flags || !(val in flags)) return false;
+    }
+
+    // Phase C: matches when the last beat for that action had the given ID.
+    // `prevBeatId_pray: "dry_silence"` → only matches if last pray-beat ID was "dry_silence".
+    const prevBeat = key.match(/^prevBeatId_(\w+)$/);
+    if (prevBeat) {
+      const lastId = state.flags?.lastBeatByAction?.[prevBeat[1]];
+      if (lastId !== val) return false;
     }
   }
 

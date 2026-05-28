@@ -1,15 +1,53 @@
 {
-  "_readme": "Short atmospheric reflection lines for the end-of-day screen. Pick is random. Keep them quiet — this is a contemplative beat, not a sermon.",
-  "lines": [
-    "Tokyo settles. Somewhere a vending machine hums in an empty alley.",
-    "A train passes far below. The window glass cools against your forehead.",
-    "You think of one face from today. Just one. You pray for them by name.",
-    "The kanji on the sign across the street is one you didn't know last month.",
-    "Someone you don't know is laughing two floors up. The wall carries it down.",
-    "You wonder, briefly, what your supporters back home are doing right now.",
-    "The kettle clicks off. Steam in the small kitchen. Nothing else.",
-    "A neon sign blinks. Tokyo doesn't sleep — but tonight, you do.",
-    "You write one line in your journal. You close it before you read it back.",
-    "Tomorrow, you tell yourself, will be its own day."
+  "_readme": "End-of-day reflection lines. Picker matches conditions like stories.json — specific matches weight 3× over catch-alls. Supported condition keys: dayMin, dayMax, spiritDryMin, spiritDryMax, contactsTodayMin, contactsTodayMax, paydayToday (bool), setbackToday (bool), langLevelUpToday (bool), noActionsToday (bool), hadDeepVisitToday_<npcId> (bool).",
+  "reflections": [
+    { "conditions": {}, "text": "Tokyo settles. Somewhere a vending machine hums in an empty alley." },
+    { "conditions": {}, "text": "A train passes far below. The window glass cools against your forehead." },
+    { "conditions": {}, "text": "You think of one face from today. Just one. You pray for them by name." },
+    { "conditions": {}, "text": "The kanji on the sign across the street is one you didn't know last month." },
+    { "conditions": {}, "text": "Someone you don't know is laughing two floors up. The wall carries it down." },
+    { "conditions": {}, "text": "You wonder, briefly, what your supporters back home are doing right now." },
+    { "conditions": {}, "text": "The kettle clicks off. Steam in the small kitchen. Nothing else." },
+    { "conditions": {}, "text": "A neon sign blinks. Tokyo doesn't sleep — but tonight, you do." },
+    { "conditions": {}, "text": "You write one line in your journal. You close it before you read it back." },
+    { "conditions": {}, "text": "Tomorrow, you tell yourself, will be its own day." },
+
+    { "conditions": { "setbackToday": true },
+      "text": "Some days don't open. You don't know why. You set the day down anyway, gently, and trust it to keep without you." },
+    { "conditions": { "setbackToday": true, "spiritDryMin": 5 },
+      "text": "You sit with the quiet you've been avoiding. There's nothing here to fight. Maybe that's the point." },
+
+    { "conditions": { "paydayToday": true },
+      "text": "The wire came in around three. Names you don't know in a town you remember. People keeping you here, paycheck by paycheck." },
+    { "conditions": { "paydayToday": true, "contactsTodayMin": 4 },
+      "text": "Money came in. Faces came by. Some days the resources align for no reason you can name." },
+
+    { "conditions": { "langLevelUpToday": true },
+      "text": "You realize tonight that you understood the train announcement without translating it first. Small thing. Doesn't feel small." },
+
+    { "conditions": { "contactsTodayMin": 5 },
+      "text": "Your face hurts from smiling at strangers. Good day. Tomorrow your throat will remember it." },
+    { "conditions": { "contactsTodayMin": 1, "contactsTodayMax": 2 },
+      "text": "Two faces today. You replay both conversations in your head. One went well. The other you wish you had said differently." },
+    { "conditions": { "contactsTodayMax": 0 },
+      "text": "No new faces today. The city is loud and you walked through most of it unheard. Tomorrow." },
+
+    { "conditions": { "hadDeepVisitToday_kenji": true },
+      "text": "Kenji said more than usual tonight. You'll be careful with what you do with that." },
+    { "conditions": { "hadDeepVisitToday_yuki": true },
+      "text": "Yuki's questions don't have easy answers. You think about hers more than you think about your own." },
+    { "conditions": { "hadDeepVisitToday_hiro": true },
+      "text": "You think of Hiro's bench. Of the pigeons. Of how some grief doesn't need anyone to fix it — just sit with it." },
+
+    { "conditions": { "noActionsToday": true },
+      "text": "You did almost nothing today. That happens. Even Jesus slept." },
+
+    { "conditions": { "spiritDryMin": 7 },
+      "text": "The well feels dry tonight. You pray anyway — not because it lifts the dryness, but because it's what missionaries do when nothing else makes sense." },
+
+    { "conditions": { "dayMin": 30 },
+      "text": "A month in. The city is starting to feel less like a foreign country and more like a place you walk through." },
+    { "conditions": { "dayMin": 60 },
+      "text": "You've been here long enough that the convenience store clerk near your building greets you by name. Small thing. Means something." }
   ]
 }

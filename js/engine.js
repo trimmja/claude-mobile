@@ -135,15 +135,24 @@ export function endDay() {
   state.time.phase = 'morning';
   state.time.actionsThisPhase = 0;
   state.flags.pendingEndOfDay = false;
-  state.dayLog = { phases: { morning: [], afternoon: [], evening: [] } };
-  state.location = 'apartment';                  // wake up at home each new day
+  state.dayLog = {
+    phases: { morning: [], afternoon: [], evening: [] },
+    startContacts:    state.resources.contacts,   // snapshot at start of new day for reflection picker
+    paydayToday:      false,
+    setbackToday:     false,
+    langLevelUpToday: false,
+  };
+  state.location = 'apartment';                   // wake up at home each new day
 
   applyStartOfDayFaith();
   refillTime();
-  refillEnergyDaily();                           // energy refills at start of new day only
+  refillEnergyDaily();                            // energy refills at start of new day only
 
   hooks.onNewDay?.(state.time.day);
-  if (checkPayday()) hooks.onPayday?.();
+  if (checkPayday()) {
+    state.dayLog.paydayToday = true;
+    hooks.onPayday?.();
+  }
 
   // Day-based unlocks (e.g., observe_shrine on day 3) and stat-based unlocks tied
   // to day start (faith refill, etc.) may have flipped.
