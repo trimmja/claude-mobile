@@ -3,3 +3,7 @@ Thumbs.db
 
 # Obsidian vault config (local editor only)
 .obsidian/
+
+# Local scratch/exploration files (not part of the game)
+kenji-beat-map.html
+system-viz.html

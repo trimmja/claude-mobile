@@ -210,6 +210,18 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════ NPC STATE SHIFT CARD -->
+<!-- Bottom-anchored card with NPC portrait + headline + body. -->
+<!-- Used at end-of-day when an NPC crosses a meaningful threshold (mood/stress/burden). -->
+<div id="npc-state-card" class="npc-state-card hidden">
+  <div id="npc-state-portrait" class="npc-state-portrait"></div>
+  <div class="npc-state-body">
+    <div id="npc-state-name"     class="npc-state-name"></div>
+    <div id="npc-state-headline" class="npc-state-headline"></div>
+    <div id="npc-state-desc"     class="npc-state-desc"></div>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════════════════════ MODAL -->
 <div id="modal" class="modal-overlay hidden">
   <div id="modal-card" class="modal-card"></div>
@@ -258,10 +270,11 @@
     <p id="story-popup-text" class="story-popup-text"></p>
     <div id="story-popup-bonus" class="story-popup-bonus hidden"></div>
     <div id="story-popup-setback" class="story-popup-setback hidden"></div>
+    <div id="story-popup-shift"   class="story-popup-shift hidden"></div>
     <div class="story-popup-dismiss">— tap to continue —</div>
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=32"></script>
+<script type="module" src="js/main.js?v=33"></script>
 </body>
 </html>

@@ -110,7 +110,7 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 - **Renderers** are registered in `main.js` (`registerNotificationRenderer(type, fn)`) — each renderer takes the event payload and a `done()` callback it must invoke when its UI is dismissed.
 - **Enqueue** with `enqueueNotification({ type, ...payload })` — engine hooks in `main.js` do this instead of calling `showToast/showStoryPopup/showModal` directly.
 - **Why this exists:** Without the queue, end-of-day overlay would cover a story popup and the popup would only surface again after the day had already advanced. The queue enforces strict FIFO order.
-- **Registered types:** `story`, `toast`, `npcMeet`, `endOfDay`. Future: `journalEntry` (Step D), `unlockNotice` (Step F).
+- **Registered types:** `story`, `toast`, `npcMeet`, `conversion`, `stageAdvance`, `npcStateShift`, `endOfDay`. Future: `letter` (Step 7), `journalEntry` (Step D), `unlockNotice` (Step F).
 - **Queue is in-memory only** — on page reload the in-flight queue is lost. Persistent flags like `pendingEndOfDay` survive in save and re-enqueue on boot.
 
 ### Action flow

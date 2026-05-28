@@ -1354,6 +1354,84 @@ input { user-select: text; }
 .toast-title { font-size: 13px; font-weight: 800; color: var(--gold); line-height: 1.2; }
 .toast-desc  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 
+/* ─── NPC STATE SHIFT CARD ─── */
+/* Richer than .toast — bigger card with NPC portrait. Bottom-anchored.   */
+/* Fires when an NPC crosses a meaningful threshold at end of day.        */
+.npc-state-card {
+  position: fixed;
+  bottom: calc(80px + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sakura);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s, transform 0.35s;
+  min-width: 260px;
+  max-width: calc(100vw - 40px);
+}
+
+.npc-state-card.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.npc-state-card.hidden { display: none; }
+
+.npc-state-portrait {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex: 0 0 48px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.npc-state-portrait .npc-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.npc-state-portrait .npc-portrait-fallback {
+  font-size: 18px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.npc-state-body { flex: 1; min-width: 0; }
+.npc-state-name {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: var(--sakura);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.npc-state-headline {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+.npc-state-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
 /* ─── MODAL ─── */
 .modal-overlay {
   position: fixed;
@@ -1499,6 +1577,36 @@ input { user-select: text; }
   border-left-color: var(--gold);
   font-size: 15px;
   line-height: 1.8;
+}
+
+/* ─── STAGE-ADVANCE MODAL ─── */
+/* Applied to the #modal overlay element when an NPC reaches stage 1–4.       */
+/* Sakura ring + softer than gold conversion modal — a warmth, not a triumph. */
+#modal.stage-advance-modal .modal-card {
+  border: 2px solid var(--sakura);
+  box-shadow: 0 0 32px rgba(255,143,171,0.22), var(--shadow-lg);
+}
+
+.stage-advance-eyebrow {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--sakura);
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.stage-advance-portrait {
+  box-shadow: 0 0 0 3px var(--sakura), 0 0 12px rgba(255,143,171,0.25);
+}
+
+.stage-advance-title {
+  color: var(--sakura-light);
+}
+
+.stage-advance-body {
+  border-left-color: var(--sakura);
 }
 
 /* ─── SETTINGS PANEL ─── */
@@ -1822,6 +1930,18 @@ input { user-select: text; }
   color: var(--danger);
   background: rgba(248, 113, 113, 0.08);
   border-left: 2px solid var(--danger);
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+/* NPC inner-shift row — sakura-tinted, shows what changed in mood/stress/burden */
+.story-popup-shift {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sakura-light);
+  background: rgba(255, 143, 171, 0.07);
+  border-left: 2px solid var(--sakura);
   border-radius: 4px;
   padding: 5px 8px;
 }

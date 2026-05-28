@@ -208,6 +208,11 @@ export function doAction(actionId) {
     effectiveReward = def.reward;
   }
 
+  // Snapshot NPC inner state BEFORE rewards + penalty mutate it, so we can show
+  // the player what their visit actually did to mood/stress/burden.
+  const npcShiftId = NPC_ACTION_MAP[actionId];
+  const npcBefore = npcShiftId ? snapshotNpcInner(npcShiftId) : null;
+
   const bonuses = applyRewards(actionId, effectiveReward);
 
   // Energy reward — beat.rewards.energyReward overrides the action def when present.
@@ -217,6 +222,9 @@ export function doAction(actionId) {
 
   // Apply any penalty declared on the beat. Mutates state; returns deltas for the popup.
   const setback = applyPenalty(beat?.penalty);
+
+  // Compute the npc inner-state delta. Includes effects from applyRewards AND any penalty.
+  const npcShift = npcShiftId ? diffNpcInner(npcShiftId, npcBefore) : null;
 
   // SpiritDry recovery from spiritual/rest actions — always fires on success.
   // These are the missionary's defenses against burnout: prayer, sleep, the onsen.
@@ -262,9 +270,32 @@ export function doAction(actionId) {
     beat,
     reward: displayReward,
     setback,                      // null if beat had no penalty
+    npcShift,                     // null when not an NPC action; else { npcId, mood, stress, burden } deltas (only non-zero fields)
     timeSpent: def.timeCost,
     energySpent: def.energyCost,
   };
+}
+
+// Snapshot of an NPC's mutable inner state for diffing post-action.
+function snapshotNpcInner(npcId) {
+  const npc = state.npcs[npcId];
+  if (!npc) return null;
+  return { mood: npc.mood ?? 0, stress: npc.stress ?? 0, burden: npc.burden ?? 0 };
+}
+
+// Returns a shift object { npcId, mood, stress, burden } with only non-zero deltas.
+// null if nothing actually changed (so the UI can skip rendering an empty row).
+function diffNpcInner(npcId, before) {
+  if (!before) return null;
+  const after = snapshotNpcInner(npcId);
+  if (!after) return null;
+  const out = { npcId };
+  let any = false;
+  for (const key of ['mood', 'stress', 'burden']) {
+    const delta = after[key] - before[key];
+    if (delta !== 0) { out[key] = delta; any = true; }
+  }
+  return any ? out : null;
 }
 
 // Does the player have at least one available action OR a travel option that fits remaining time + energy?

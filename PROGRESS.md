@@ -12,7 +12,7 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Travel + location system | ✅ | n/a | ✅ |
 | Notification queue | ✅ | n/a | ✅ |
 | Journal tab | ✅ | n/a | ✅ |
-| Stage-advance notifications | ✅ | ⚠️ first draft | ✅ |
+| Stage-advance notifications (upgraded to sakura modal in v33) | ✅ | ⚠️ first draft | ✅ |
 | NPC reveal system | ✅ | n/a | ✅ |
 | Story popups (90+ beats) | ✅ | ⚠️ text not reviewed | ⚠️ |
 | Language barrier UI | ✅ | ⚠️ text not reviewed | ⚠️ |
@@ -25,6 +25,9 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Variable outcome rewards — pray/preach/study (v30) | ✅ | ⚠️ first draft | ❌ not yet |
 | Conversion popup — Stage 5 gold modal (v30) | ✅ | ✅ | ❌ not yet |
 | Negative outcomes + spiritDry + setback popup (Phase A, v32) | ✅ | ⚠️ ~18 beats — needs play-tuning | ❌ not yet |
+| Stage-advance sakura modal + warm chord (Phase B, v33) | ✅ | n/a | ❌ not yet |
+| npcStateShift card with portrait (Phase B, v33) | ✅ | n/a | ❌ not yet |
+| Story popup mood/stress/burden shift row (Phase B, v33) | ✅ | n/a | ❌ not yet |
 
 ---
 

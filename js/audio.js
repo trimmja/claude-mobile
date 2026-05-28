@@ -68,6 +68,15 @@ export function playSetback() {
   tone(262, 0.30, 'sine', 0.14, 0.10);
 }
 
+// Warm major-7 arpeggio — the "relationship deepened" cue.
+// Softer + slower than playMilestone so it lands as warmth, not triumph.
+// Reserved for NPC stage advances (1–4). Conversion (stage 5) still uses playMilestone.
+export function playStageAdvance() {
+  tone(392, 0.35, 'sine',     0.14);          // G4
+  tone(494, 0.40, 'sine',     0.13, 0.14);    // B4
+  tone(587, 0.55, 'triangle', 0.11, 0.28);    // D5 — softer triangle for the held note
+}
+
 export function toggleMute() {
   state.flags.muted = !state.flags.muted;
   // Sync ambient audio with mute state

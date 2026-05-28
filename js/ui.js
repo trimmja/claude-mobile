@@ -612,11 +612,53 @@ export function showToast(icon, title, desc = '', onDismiss = null) {
   }, 2800);
 }
 
+// ─── NPC STATE SHIFT CARD ───────────────────────────────────────────────────
+// Richer than toast — shows portrait + NPC name + headline + description.
+// Auto-dismisses after 3.6s (slightly longer than a regular toast).
+let npcStateTimer = null;
+let npcStateOnDismiss = null;
+
+export function showNpcStateCard(npcId, headline, desc = '', onDismiss = null) {
+  const def = NPC_DEFS[npcId];
+  if (!def) { if (onDismiss) onDismiss(); return; }
+
+  const card = $('npc-state-card');
+  const portrait = $('npc-state-portrait');
+  portrait.className = 'npc-state-portrait ' + (def.portraitClass || '');
+  portrait.innerHTML = '';
+  const img = document.createElement('img');
+  img.src       = `assets/images/npcs/${npcId}.png`;
+  img.alt       = def.name;
+  img.className = 'npc-portrait-img';
+  img.onerror   = () => { img.style.display = 'none'; };
+  portrait.appendChild(img);
+  portrait.appendChild(el('span', 'npc-portrait-fallback', def.nameJP[0]));
+
+  $('npc-state-name').textContent     = def.name;
+  $('npc-state-headline').textContent = headline;
+  $('npc-state-desc').textContent     = desc;
+
+  card.classList.remove('hidden');
+  // force reflow so the CSS transition runs
+  void card.offsetWidth;
+  card.classList.add('show');
+
+  if (npcStateTimer) clearTimeout(npcStateTimer);
+  npcStateOnDismiss = onDismiss;
+  npcStateTimer = setTimeout(() => {
+    card.classList.remove('show');
+    setTimeout(() => card.classList.add('hidden'), 380);
+    const cb = npcStateOnDismiss;
+    npcStateOnDismiss = null;
+    if (cb) cb();
+  }, 3600);
+}
+
 // ─── STORY POPUP ─────────────────────────────────────────────────────────────
 let storyPopupTimer = null;
 let storyPopupOnDismiss = null;
 
-export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = null, setback = null) {
+export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = null, setback = null, npcShift = null) {
   if (!text) { if (onDismiss) onDismiss(); return; }
   storyPopupOnDismiss = onDismiss;
 
@@ -625,6 +667,7 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
   const npcEl     = $('story-popup-npc');
   const bonusEl   = $('story-popup-bonus');
   const setbackEl = $('story-popup-setback');
+  const shiftEl   = $('story-popup-shift');
 
   textEl.textContent = text;
 
@@ -673,6 +716,18 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
     }
   }
 
+  // NPC inner shift row — sakura-tinted chips showing what changed in the NPC.
+  // Only renders for NPC visit/deep actions where mood/stress/burden actually moved.
+  if (shiftEl) {
+    const shiftText = formatNpcShiftChips(npcShift);
+    if (shiftText) {
+      shiftEl.textContent = shiftText;
+      shiftEl.classList.remove('hidden');
+    } else {
+      shiftEl.classList.add('hidden');
+    }
+  }
+
   popup.classList.remove('hidden');
   if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
 }
@@ -694,6 +749,21 @@ function formatSetbackChips(setback) {
 }
 
 function signed(n) { return n > 0 ? `+${n}` : `${n}`; }
+
+// Build the NPC inner-shift chip-row string for the story popup.
+// npcShift = { npcId, mood?, stress?, burden? } — only non-zero deltas.
+// Returns null when there's nothing meaningful to show.
+function formatNpcShiftChips(npcShift) {
+  if (!npcShift) return null;
+  const def = NPC_DEFS[npcShift.npcId];
+  if (!def) return null;
+  const parts = [];
+  if (typeof npcShift.mood   === 'number') parts.push(`mood ${signed(npcShift.mood)}`);
+  if (typeof npcShift.stress === 'number') parts.push(`stress ${signed(npcShift.stress)}`);
+  if (typeof npcShift.burden === 'number') parts.push(`burden ${signed(npcShift.burden)}`);
+  if (parts.length === 0) return null;
+  return `${def.name}: ${parts.join('  ·  ')}`;
+}
 
 function dismissStoryPopup() {
   $('story-popup').classList.add('hidden');
@@ -805,6 +875,43 @@ export function showNPCMeetModal(npcId, onDismiss = null) {
     <div class="modal-body">${introText}</div>
     <button class="modal-btn modal-btn-primary" data-close>Nice to meet you</button>
   `, () => {
+    renderPeople();
+    renderActions(true);
+    if (onDismiss) onDismiss();
+  });
+}
+
+// Sakura-ringed modal for non-conversion stage advances (1–4).
+// Smaller emotional beat than conversion, but bigger than the routine story popup.
+export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = null) {
+  const def = NPC_DEFS[npcId];
+  if (!def) { if (onDismiss) onDismiss(); return; }
+
+  const stageName = def.stages[newStage] || `Stage ${newStage}`;
+  const bodyText  = momentText || `Your relationship with ${def.name} has deepened.`;
+
+  const portraitHtml = `
+    <div class="modal-portrait ${def.portraitClass} stage-advance-portrait">
+      <img src="assets/images/npcs/${npcId}.png"
+           alt="${def.name}"
+           class="npc-portrait-img modal-portrait-img"
+           onerror="this.style.display='none'">
+      <span class="npc-portrait-fallback modal-portrait-fallback">${def.nameJP[0]}</span>
+    </div>
+  `;
+
+  const modal = $('modal');
+  modal.classList.add('stage-advance-modal');
+
+  showModal(`
+    <div class="stage-advance-eyebrow">— Relationship deepening —</div>
+    ${portraitHtml}
+    <div class="modal-title stage-advance-title">${def.name} <span class="modal-title-jp">${def.nameJP}</span></div>
+    <div class="modal-subtitle">Now: ${stageName}</div>
+    <div class="modal-body stage-advance-body">${bodyText}</div>
+    <button class="modal-btn modal-btn-primary" data-close>Continue →</button>
+  `, () => {
+    modal.classList.remove('stage-advance-modal');
     renderPeople();
     renderActions(true);
     if (onDismiss) onDismiss();

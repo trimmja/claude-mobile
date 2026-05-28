@@ -17,7 +17,7 @@ import { refillTime, refillEnergyDaily, adjustSpiritDry } from './resources.js';
 import {
   renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
   renderActions, renderPeople, renderJournal, invalidateTravelRow,
-  showToast, showNPCMeetModal, showStoryPopup, showConversionModal,
+  showToast, showNPCMeetModal, showStoryPopup, showConversionModal, showStageAdvanceModal, showNpcStateCard,
   bindStoryPopup, bindJournalList,
   bindContentTabs, bindSettings, bindActionList, bindEndPhase, bindTravelRow,
   bindPeopleList, flashActionCard, showEndOfDayScreen, bindSheetHandle, bindSceneOpenBtn,
@@ -131,7 +131,7 @@ function startGame() {
   // ─── Notification renderers ────────────────────────────────────────────────
   // Every renderer must call `done()` when its UI is dismissed so the queue advances.
   registerNotificationRenderer('story', (e, done) => {
-    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, e.reward, done, e.setback);
+    showStoryPopup(e.text, e.icon, e.npcId, e.bonuses, e.reward, done, e.setback, e.npcShift);
   });
   registerNotificationRenderer('toast', (e, done) => {
     showToast(e.icon, e.title, e.desc, done);
@@ -142,12 +142,18 @@ function startGame() {
   registerNotificationRenderer('conversion', (e, done) => {
     showConversionModal(e.npcId, e.text, done);
   });
+  registerNotificationRenderer('stageAdvance', (e, done) => {
+    showStageAdvanceModal(e.npcId, e.newStage, e.text, done);
+  });
+  registerNotificationRenderer('npcStateShift', (e, done) => {
+    showNpcStateCard(e.npcId, e.headline, e.desc, done);
+  });
   registerNotificationRenderer('endOfDay', (e, done) => {
     showEndOfDayScreen(() => { handleEndDay(); done(); });
   });
 
   // ─── Engine hooks → enqueue notifications ──────────────────────────────────
-  hooks.onActionComplete = ({ id, bonuses, beat, reward, setback }) => {
+  hooks.onActionComplete = ({ id, bonuses, beat, reward, setback, npcShift }) => {
     audio.playActionComplete();
     if (setback) audio.playSetback();
     flashActionCard(id);
@@ -176,7 +182,7 @@ function startGame() {
     if (text) {
       const def = ACTION_DEFS[id];
       const npcId = NPC_ACTION_MAP[id] ?? null;
-      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses, reward, setback });
+      enqueueNotification({ type: 'story', text, icon: def?.icon, npcId, bonuses, reward, setback, npcShift });
     }
   };
 
@@ -193,7 +199,6 @@ function startGame() {
     const moment    = getStageAdvanceText(npcId, newStage);
     const headline  = `✨ ${def.name} is now ${stageName}.`;
 
-    audio.playMilestone();
     addJournalEntry({
       id: `stage_${npcId}_${newStage}`,
       icon: newStage === 5 ? '✝️' : '✨',
@@ -205,12 +210,14 @@ function startGame() {
     renderJournal();
 
     if (newStage === 5) {
-      // Conversion — show dedicated full-screen modal instead of story popup.
+      // Conversion — gold modal + triumphant milestone sound.
       // state.stats.converts is already incremented by addNPCTrust in npcs.js.
+      audio.playMilestone();
       enqueueNotification({ type: 'conversion', npcId, text: moment });
     } else {
-      const text = moment ? `${headline} ${moment}` : headline;
-      enqueueNotification({ type: 'story', text, icon: '✨', npcId, bonuses: null });
+      // Stages 1–4: dedicated sakura-ringed modal + warmer stage-advance chord.
+      audio.playStageAdvance();
+      enqueueNotification({ type: 'stageAdvance', npcId, newStage, text: moment });
     }
   };
 
@@ -376,30 +383,31 @@ function checkNPCEndOfDay() {
     // 3. Threshold notifications (re-read stats after events may have changed them)
     const updatedNpc = state.npcs[npcId];
     const def = NPC_DEFS[npcId];
+    const name = def?.name || npcId;
 
     if (updatedNpc.mood < -4) {
       enqueueNotification({
-        type: 'toast',
-        icon: def?.emoji || '👤',
-        title: `${def?.name || npcId} is pulling back`,
-        desc: `You haven't connected with ${def?.name || npcId} in a while.`,
+        type: 'npcStateShift',
+        npcId,
+        headline: `${name} is pulling back.`,
+        desc: `You haven't connected with ${name} in a while.`,
       });
     }
 
     if (updatedNpc.burden > 8) {
       enqueueNotification({
-        type: 'toast',
-        icon: '✨',
-        title: `Something in ${def?.name || npcId} seems ready`,
+        type: 'npcStateShift',
+        npcId,
+        headline: `Something in ${name} seems ready.`,
         desc: 'A deeper conversation might matter right now.',
       });
     }
 
     if (npcId === 'kenji' && updatedNpc.stress > 7) {
       enqueueNotification({
-        type: 'toast',
-        icon: '👔',
-        title: `Kenji's messages have been short`,
+        type: 'npcStateShift',
+        npcId,
+        headline: `Kenji's messages have been short.`,
         desc: 'Work must be crushing him right now.',
       });
     }
