@@ -6,7 +6,37 @@ This file is the entry point for Claude. The auto-loaded companions are:
 @PROGRESS.md
 @CHARACTERS.md
 
+**Read-on-demand docs (`docs/`)** — open the one the task touches:
+- `docs/architecture.md` — engine, state shape, hooks, action flow, notification queue, time + energy, save versions
+- `docs/files.md` — file map (what every file does)
+- `docs/ui.md` — UI layout (DOM tree) + CSS design tokens
+- `docs/gameplay.md` — locations, travel, actions, language, milestones
+- `docs/npcs.md` — NPC system, language-tiered trust, stage thresholds, **New NPC checklist**
+- `docs/stories.md` — story beats (fields, conditions, flags), journal, reflections
+- `docs/recipes.md` — locked design decisions + "how to continue building" recipes
+
 `TODO.md` is read on demand when Jacob says "process todo" — see the TODO workflow section below.
+
+---
+
+## Keeping docs in sync (IMPORTANT)
+
+When a change ships in a session, update the matching doc **in the same session, before declaring done**. Don't let `docs/` drift from the code.
+
+| If the change touches… | Update this file |
+|---|---|
+| State shape, hooks, engine flow, notification queue, save format | `docs/architecture.md` |
+| Adding/removing/renaming a JS or data file | `docs/files.md` |
+| DOM structure, CSS tokens, layout, new UI element IDs | `docs/ui.md` |
+| Actions, locations, travel rules, language thresholds, milestone defs | `docs/gameplay.md` |
+| NPC system code, stage thresholds, langWeights, NPC action conventions | `docs/npcs.md` |
+| Story beat fields, story conditions, journal triggers, reflection conditions | `docs/stories.md` |
+| New "how to extend" recipes, new locked design decisions | `docs/recipes.md` |
+| Roadmap-level direction change or shipped roadmap step | `ROADMAP.md` (Section 6 decision log) + `PROGRESS.md` (Shipped table) |
+| NPC bio, arc, personality, church role | `CHARACTERS.md` |
+| **Anything else changes the project rules / coding guidelines / project entry-point info** | `CLAUDE.md` |
+
+**Rule of thumb:** if a future Claude session would need to know about this change to do its job correctly, it must end up in one of these files — not just in the commit message. The commit message explains *why*; the docs are the durable *what*.
 
 ---
 
@@ -33,7 +63,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 
 **3. Goal-driven execution** — Turn asks into verifiable goals (tests, repro steps, before/after checks). Multi-step work gets a short plan with a verify line per step. Prefer strong success criteria over "make it work."
 
-**4. No conflicting cost+reward on the same stat** — Never define an action's `reward` in `data/actions.json` to both cost AND reward the same resource (e.g. `cost.faith: 5, reward.faith: 3` is forbidden — that's a net-negative on faith). Story beats in `data/stories.json` are the exception: a beat's `rewards` field CAN give faith back even if the action costs faith — that's the variable-outcome design (you spend faith to preach; sometimes you get some back, sometimes you don't). The ban is on the base `reward` object in `actions.json`. Caught once on `study_scripture` — don't reintroduce in actions.json.
+**4. No conflicting cost+reward on the same stat** — Never define an action's `reward` in `data/actions.json` to both cost AND reward the same resource (e.g. `cost.faith: 5, reward.faith: 3` is forbidden — that's a net-negative on faith). Story beats in `data/stories.json` are the exception: a beat's `rewards` field CAN give faith back even if the action costs faith — that's the variable-outcome design. The ban is on the base `reward` object in `actions.json`. Caught once on `study_scripture` — don't reintroduce.
 
 ---
 
@@ -41,8 +71,6 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Bias toward cautio
 A PWA simulation game about being an American missionary in Tokyo, Japan.
 Built by someone with real missionary experience in Japan — authenticity matters.
 Playable on iPhone via GitHub Pages (Add to Home Screen as a standalone app).
-Dark theme, cherry blossom + gold palette, Japanese kanji in the UI that translates
-as the player's language skill grows.
 
 **Game model:** Turn-based **phase + time + energy** simulation (NOT a real-time idle game). Each day has three phases — Morning / Afternoon / Evening. Each phase has a **time budget** (default 6 units); when time runs out the phase auto-advances. Across the whole day you have an **energy budget** (default 14) that refills only at the next morning. Every action costs both time AND energy in different ratios. See `ROADMAP.md` for the full design direction and the multi-step plan (Steps 1–7).
 
@@ -57,495 +85,7 @@ URL: `https://trimmja.github.io/japan-evangelistic-band/` (not `claude-mobile` �
 - Web Audio API for procedural sounds (no audio files needed)
 - PWA: `manifest.json` + `sw.js` service worker for iPhone "Add to Home Screen"
 
-## File map
-```
-ROADMAP.md            — design direction, locked decisions, multi-step roadmap (Steps 1–7)
-PROGRESS.md           — what's actually shipped, ideas backlog
-CHARACTERS.md         — NPC bios (read before any NPC change)
-data/actions.json     — action defs: timeCost, energyCost, energyReward, cost, reward, npcChance
-data/timing.json      — timePerPhase, energyPerDay, faithPerDay, payday config
-data/stories.json     — story beat text keyed by action + conditions (editable content)
-data/reflections.json — end-of-day reflections; conditional shape (specific matches weight 3× catch-alls) — see Phase C condition keys
-data/stageAdvances.json — text shown when an NPC advances to a new relationship stage (per NPC, per stage)
-data/npcEvents.json   — scripted arc events + random texture pools per NPC (loaded by gameData.js)
-data/README.md        — how to edit the JSON files
-index.html            — full game shell (all DOM structure, all IDs)
-css/style.css         — all styles (dark theme, cherry blossom + gold palette)
-js/main.js            — entry point: boot, intro screen, startGame(), engine hooks
-js/gameData.js        — loads data/*.json at startup
-js/state.js           — single mutable state object (source of truth, imported everywhere)
-js/engine.js          — event-driven engine: doAction, endPhase, endDay; hooks
-js/save.js            — localStorage save/load/reset (key: 'tokyo_called_v2')
-js/language.js        — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
-js/resources.js       — spend/gain (incl. spendTime + spendEnergy + refillTime + refillEnergyDaily)
-js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, hasFittingAction
-js/locations.js       — LOCATION_DEFS, LOCATION_ORDER, TRAVEL_COSTS, travelTo() — real navigation, see "Travel" section
-js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
-js/stories.js         — getStoryBeat(actionId, state) → { text, rewards? } — picks story beat from stories.json; getStoryText() is a thin wrapper for backward compat
-js/reflections.js     — pickReflection() — picks an end-of-day line, matching state against conditions in data/reflections.json
-js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
-js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead — append-only record powering the Journal tab
-js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
-js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute(); startStationAmbience()/stopStationAmbience() fade station ambient in/out; toggleMute() also syncs ambient muted state
-js/ui.js              — all DOM rendering + phase strip + top-bar + bottom-sheet + end-of-day screen; renderFrame() on rAF; togglePanel()/bindSheetHandle()/bindSceneOpenBtn() control the panel
-js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
-js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
-js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
-manifest.json         — PWA config (display: standalone)
-sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION; MP4/video files are bypassed (browser needs Range requests for video)
-assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
-assets/video/shinjuku.MP4 — looping 10s video of Shinjuku Station; used as animated background (muted <video>) + ambient audio source (<audio>) when player is at station
-```
-
 ---
-
-## Architecture
-
-### Event-driven (no setInterval)
-The engine is event-driven. There is **no tick loop**. Actions resolve instantly when the player taps a card; phase transitions fire when time hits 0 (or the player taps End Phase); day transitions fire when the player taps Continue on the end-of-day screen.
-
-### Notification queue (`js/notifications.js`)
-All player-facing events — story popups, NPC first-meet modal, stage-advance moments, milestone toasts, payday toasts, phase auto-advance toasts, end-of-day overlay — go through a single queue. The queue shows ONE event at a time; the next event does not fire until the current one is dismissed (tap, button, or auto-timeout).
-
-- **Renderers** are registered in `main.js` (`registerNotificationRenderer(type, fn)`) — each renderer takes the event payload and a `done()` callback it must invoke when its UI is dismissed.
-- **Enqueue** with `enqueueNotification({ type, ...payload })` — engine hooks in `main.js` do this instead of calling `showToast/showStoryPopup/showModal` directly.
-- **Why this exists:** Without the queue, end-of-day overlay would cover a story popup and the popup would only surface again after the day had already advanced. The queue enforces strict FIFO order.
-- **Registered types:** `story`, `toast`, `npcMeet`, `conversion`, `stageAdvance`, `npcStateShift`, `endOfDay`. Future: `letter` (Step 7), `journalEntry` (Step D), `unlockNotice` (Step F).
-- **Queue is in-memory only** — on page reload the in-flight queue is lost. Persistent flags like `pendingEndOfDay` survive in save and re-enqueue on boot.
-
-### Action flow
-1. UI → `bindActionList` click → `main.js` `handleAction(id)` → `engine.doAction(id)`
-2. `engine.doAction` calls `actions.js doAction` which: checks unlock → spends time → spends energy → spends other costs → **selects story beat** → applies rewards (beat.rewards if present, else def.reward) → updates dayLog → rolls NPC encounter. Beat is selected before rewards so its `rewards` field can override the blanket action reward.
-3. Engine fires hooks in order: `onActionComplete`, then `onNPCMeet` (if NPC first-met this action), then `onNPCStageAdvance` (for each stage advance queued by `addNPCTrust`), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each. The story popup is suppressed if a first-meet or stage advance is about to fire — those bigger moments take precedence.
-4. Engine checks `state.time.remaining <= 0` → auto-calls `endPhase(true)`.
-5. `endPhase` fires `onBetweenPhases` (empty hook — future home for NPC moods/weather) + `onPhaseChange` to UI; refills time, does NOT refill energy. On evening end, sets `pendingEndOfDay` and fires `onEndOfDayReady` → UI shows reflection screen.
-6. `endDay` increments day, resets phase to morning, refills both time AND energy, restores small faith, runs payday check, runs milestone check.
-7. `requestAnimationFrame(loop)` in `main.js` calls `renderFrame()` ~60fps (HUD, header, phase strip, action list). Action list rebuild is gated by a cache key so it only rebuilds when something changed.
-
-### State object shape
-```js
-{
-  meta: { version: 2, saveDate: null },
-  character: { name: '', spiritDry: 0 },     // spiritDry 0–10: player's own dryness — ticks up from penalty beats + dry days; down from pray/rest/onsen
-  time: {
-    day: 1,
-    phase: 'morning',          // 'morning' | 'afternoon' | 'evening' | 'reflecting'
-    actionsThisPhase: 0,
-    remaining: 6,              // time units left in current phase
-    max: 6,                    // from data/timing.json
-  },
-  resources: {
-    faith:    { current: 50, max: 100 },     // restored +faithPerDay at start of each day
-    contacts: 0,
-    money:    { current: 300, nextPayday: 6 },
-    wisdom:   0,
-    energy:   { current: 14, max: 14 },      // DAILY pool — refills only at start of new day
-  },
-  language: { xp: 0, level: 0 },             // 0–5
-  location: 'apartment',                     // auto-updates to last-action's location (flavor)
-  npcs: {
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [], flags: {} },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [], flags: {} },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [], flags: {} },
-    // mood: -5 to +5 (warmth); stress: 0–10 (busyness, blocks visits); burden: 0–10 (weariness, opens gospel)
-    // firedEvents: scripted event IDs already fired (prevents re-firing)
-    // flags: { name: dayItWasSet } — Phase C carryover for callback beats; set by setsFlag, consumed by clearsFlag
-  },
-  world: {},                                 // empty — placeholder for future weather/events (Step 4)
-  milestones: { completed: [] },
-  journal: [],                               // append-only: { id, day, phase, icon, title, body, type, npcId? }
-  stats: { converts: 0, actionsCompleted: 0, onsenVisited: false, daysSurvived: 0 },
-  flags: {
-    muted: false,
-    pendingNPCMeet: null,
-    pendingMilestone: null,
-    pendingEndOfDay: false,                  // true → UI shows reflection screen
-    pendingStageAdvances: [],                // [{ npcId, newStage }] — drained by engine after each action
-    pendingLangLevelUp: 0,                   // 0 if none; otherwise new level — drained by engine
-    unreadJournalCount: 0,                   // badge on Journal tab; resets when player taps it
-    lastBeatByAction: {},                    // { actionId: beatId } — last beat with explicit id per action; powers prevBeatId_X
-  },
-  dayLog: {
-    phases: { morning: [], afternoon: [], evening: [] },  // rebuilt each day
-    startContacts: 0,                        // snapshot at start of day — used to compute contactsToday for reflections
-    paydayToday: false,                      // set true by engine.endDay when payday fires
-    setbackToday: false,                     // set true by actions.doAction when a beat with a penalty fired
-    langLevelUpToday: false,                 // set true by main.onLangLevelUp when level rose today
-  },
-}
-```
-
-### Time and energy
-- **Time** is per-phase. `state.time.remaining` ticks down from `state.time.max` (default 6) as actions are taken. When it hits 0, the phase auto-advances. Refilled at the start of each phase.
-- **Energy** is per-day. `state.resources.energy.current` ticks down from `.max` (default 14) across all three phases. Only refills at the start of a new day.
-- **Faith** is restored by +`faithPerDay` (default 3) at the start of each day. No per-tick regen anywhere.
-- **Payday** fires when `state.time.day >= state.resources.money.nextPayday` (default every 6 days).
-
-### Hooks for future steps (empty no-ops in Step 1)
-- `hooks.onBetweenPhases({ from, to })` — fires on each phase transition. Future home for NPC mood drift, weather re-rolls.
-- `hooks.onEndOfDay({ dayLog })` — fires before the reflection screen. Future home for emergent events (persecution, letters from home, NPC inter-interactions).
-
----
-
-## CSS design tokens (css/style.css)
-```css
---bg: #0F0F1A           /* deep navy background */
---surface: #1A1A2E      /* card background */
---surface-2: #252540    /* elevated card */
---surface-3: #303058    /* inputs, track backgrounds */
---text: #F0EDE8         /* warm white */
---text-muted: #8080A8
---text-dim: #454568
---sakura: #FF8FAB       /* cherry blossom pink — primary accent; also time bar */
---sakura-light: #FFB3C6
---gold: #F0C040         /* gold — milestones, achievements */
---faith: #A78BFA        /* purple */
---trust: #34D399        /* green */
---money: #FBBF24        /* amber */
---wisdom: #60A5FA       /* blue */
---lang: #FB7185         /* coral/red */
---energy: #FCD34D       /* warm yellow — energy bar + ⚡ tags */
---danger: #F87171
---success: #34D399
-```
-Fonts: `Nunito` (English UI) + `Noto Sans JP` (Japanese text) — Google Fonts in `index.html`.
-
----
-
-## Locations
-
-**Locations are real now — `state.location` is where you ARE.** Actions are filtered by it (a station action only appears when you're at the station). The `.location-view` background reflects your current location.
-
-You change location with **Travel** — see the Travel section below.
-
-| ID | Icon | JP | EN | BG class |
-|----|------|----|----|----------|
-| apartment | 🏠 | アパート | Your Apartment | bg-apartment (purple) |
-| station   | 🚉 | 駅       | Shinjuku Station | bg-station (blue) |
-| park      | 🌸 | 公園     | Yoyogi Park    | bg-park (green) |
-| cafe      | ☕ | カフェ   | English Café   | bg-cafe (brown) |
-| shrine    | ⛩️ | 神社     | Local Shrine   | bg-shrine (red) |
-| onsen     | ♨️ | 温泉     | Onsen          | bg-onsen (teal) |
-
-The previous per-location unlock conditions (e.g. café requires wisdom 10) are now baked into the individual **action** unlocks instead. E.g. `host_english` requires wisdom ≥ 10; the café-located action is hidden behind that, but the café "location" itself isn't gated.
-
----
-
-## Language progression (js/language.js)
-
-XP thresholds: `[0, 20, 50, 80, 95, 100]`
-- Level 0: kanji UI labels, no commuter_convo, NPC intros mostly in Japanese
-- Level 1: English UI labels + tab names, commuter_convo unlocks, NPC intros mixed
-- Level 2: NPC open→studying stage accessible, NPC intros fully in English
-- Level 3: NPC studying→believer stage accessible
-- Level 4: (reserved)
-- Level 5: full fluency
-
-`TAB_LABELS` exported from `language.js` — used by `renderHUD()` to update tab text when level changes.
-
----
-
-## Travel (js/locations.js)
-
-Travel is how `state.location` changes. It costs **time only** (never energy). Cost is destination-based and independent of where you came from:
-
-| Destination | Time |
-|-------------|------|
-| Apartment (home) | 1 |
-| Station | 1 |
-| Shrine | 1 |
-| Café | 2 |
-| Park (Yoyogi) | 2 |
-| Onsen | 3 |
-
-**Where you wake up:** `engine.endDay()` resets `state.location = 'apartment'` — each new morning starts at home.
-
-**Travel UI:** Always-visible row inside `.top-bar` (between the HUD and the scene, above `.location-view`). Shows one Travel button per other location with ⏳cost; disabled when you can't afford it. Tapping calls `engine.doTravel(locId)`. The `📍 You are at: …` header is gone — current location is shown in the `.location-info` overlay on the scene itself.
-
-**People-tab tap-to-visit:** Each met NPC card has "Visit" and (if unlocked) "Heart-to-Heart" buttons. Tapping handles travel automatically: if the relevant action's location differs from `state.location`, travel runs first, then the action runs. Button shows `→ ☕ ⏳2` chip when travel is needed.
-
-**Action filtering:** `allVisibleActions()` filters by `state.location`. An action's `location` field must equal `state.location` for the card to appear. A `null` location means "available anywhere" — currently only `pray` (1 time / 0 energy filler — missionaries pray everywhere).
-
-**Actions no longer auto-update location.** The old auto-set in `doAction` is removed; only `doTravel()` writes to `state.location`.
-
-**The `hasFittingAction()` shortcut:** Returns true if there's at least 1 time left (since travel costs 1 minimum, you can always go somewhere). Only returns false when the time bar is genuinely empty.
-
----
-
-## Actions (js/actions.js)
-
-Actions resolve **instantly** when tapped (with a brief CSS card-flash animation + story popup). Costs and rewards apply in the same call inside `doAction()`. No "in-flight" action state, no progress bar, no cancel.
-
-**Each action costs both time AND energy** (in different ratios — see `data/actions.json`). Time gates the phase, energy gates the day. Examples:
-- `pray` = 1 time, 0 energy (always-available filler)
-- `rest` = 3 time, +3 energy (half-phase recovery)
-- `open_air_preach` = 2 time, 3 energy (short + intense)
-- `visit_hiro` = 3 time, 1 energy (long + restful — Hiro is presence-based)
-- `host_english` = 4 time, 3 energy (whole evening)
-
-**Visibility vs. unlock vs. fits-now:** Actions have three separate concepts:
-- `visible()` — if false, card is completely hidden (NPC actions before NPC is met)
-- `unlocked()` — if false, card shows as locked/greyed with requirements visible
-- `disabled-time` / `disabled-energy` — visually dimmed when current time/energy can't afford the cost
-
-**`hasFittingAction()`** in `actions.js` returns whether any visible+unlocked+affordable action exists. UI uses this to glow the End Phase button + show "— nothing more fits this phase —" nudge.
-
-**Stat bonuses (applied in `applyRewards()`):**
-- Communication actions (`hand_tracts`, `commuter_convo`, `casual_convo`, `host_english`): +contacts scaled to language level
-- Spiritual actions (`pray`, `study_scripture`, `observe_shrine`): +faith scaled to wisdom
-- NPC visit/deep actions: +trust scaled to language level (langWeight)
-
-Adding a new action: entry in `data/actions.json` (with `timeCost` + `energyCost`) + rule in `ACTION_UNLOCK` + rule in `ACTION_VISIBLE` (if NPC-gated) + entry in `REQUIREMENT_BUILDERS` (if it has visible requirements) + name in `js/language.js` `ACTION_TEXT`.
-
----
-
-## NPCs (js/npcs.js)
-
-**Bios, arcs, langWeights, and future church roles all live in `CHARACTERS.md`** — always read that first before touching NPC code or content. This section covers code/data only.
-
-| NPC | Met via | npcChance |
-|---|---|---|
-| Kenji (健二) | hand_tracts at station | 30% |
-| Yuki (由紀) | host_english at café | 45% |
-| Hiro (浩) | open_air_preach at park / observe_shrine at shrine | 35% / 25% |
-
-**NPC_DEF fields:**
-- `introByLang[]` — first-meet text indexed by language level (0/1/2+); picked by `getIntroText(npcId)`
-- `stages[]` — stage name strings
-- `trustNeeded[]` — trust threshold per stage
-- `stageCondition[]` — extra condition functions per stage advance
-- `stageConditionHints[]` — human-readable hint strings for those conditions
-
-**Key functions:**
-- `getIntroText(npcId)` — returns correct intro for current language level
-- `getStageAdvanceHint(npcId)` — returns "X trust to next stage" or "Needs: Wisdom 15" or null
-- `addNPCTrust(npcId, amount)` — applies trust + checks stage advance
-- `adjustNPC(npcId, {mood, stress, burden})` — applies deltas with clamping (mood -5/+5, stress 0–10, burden 0–10)
-- `calcVisitMoodDelta(npcId, actionType)` — returns mood delta for a visit, factoring in stress + lang level
-- `initNPCMoodStats(npcId)` — migration helper; idempotent; sets defaults if fields missing
-- `getNPCEvents(npcId)` — returns `{ scripted[], random[] }` from loaded `npcEvents.json`
-
-**Stage thresholds (shared):**
-```
-Stage 0: Stranger     — trust: 0
-Stage 1: Acquaintance — trust: 10
-Stage 2: Friend       — trust: 28
-Stage 3: Open         — trust: 55  + wisdom >= 15
-Stage 4: Studying     — trust: 85  + lang level (varies per NPC)
-Stage 5: Believer     — trust: 100 + lang >= 3
-```
-
----
-
-## Story system (js/stories.js + data/stories.json)
-
-Story beats are shown after every action completion (bottom-sheet popup).
-
-**stories.json structure:**
-```json
-{
-  "action_id": [
-    { "conditions": { "dayMax": 7 }, "rewards": { "faith": 14, "wisdom": 1 }, "text": "..." },
-    { "conditions": { "langMin": 2, "npcMet": "kenji" }, "text": "..." },
-    { "conditions": {}, "rewards": {}, "text": "dry catch-all — no reward" }
-  ]
-}
-```
-
-**`rewards` field (optional):** When present on a beat, its values replace the action's `reward` in `actions.json` for non-trust stats (faith, wisdom, contacts, langXP). NPC trust always comes from the action def. Omitting `rewards` means the action's default reward applies. `"rewards": {}` means no reward at all (dry outcome). This is how `pray`, `study_scripture`, and `open_air_preach` produce variable outcomes. **`rewards.energyReward`** (number, optional) overrides the action's `energyReward` from `actions.json` — used for the dry-rest beat (energy +1 instead of +3).
-
-**`penalty` field (optional):** When present, stat losses apply AFTER rewards. Use this for hostile/hollow outcomes that should actually hurt the player. Schema:
-- `faith`, `wisdom`, `contacts` — positive magnitudes (deducted; floor at 0)
-- `spiritDry` — signed delta (positive = drier, negative = recovers)
-- `trust` — `{ id, amount }` (positive magnitude; trust never drops past the current stage's threshold — they don't forget you)
-- `npcMood`, `npcStress`, `npcBurden` — signed `{ id, amount }` deltas (mood −5..+5, stress 0..10, burden 0..10)
-
-Penalty beats render a red chip-row under the story popup, play `playSetback()` (descending minor third), and log a journal entry with `type: 'setback'` and icon `⛅`.
-
-**Supported conditions:** `dayMin`, `dayMax`, `wisdomMin`, `wisdomMax`, `langMin`, `langMax`, `contactsMin`, `contactsMax`, `spiritDryMin`, `spiritDryMax`, `npcMet` (string), `stageMin_{npcId}`, `stageMax_{npcId}`, `moodMin_{npcId}`, `moodMax_{npcId}`, `stressMin_{npcId}`, `stressMax_{npcId}`, `burdenMin_{npcId}`, `burdenMax_{npcId}`, `daysNotSeenMin_{npcId}`, **`flagSet_{npcId}`** (string — beat only matches when `state.npcs[npcId].flags[<value>]` is present; see "Beat flags" below), **`prevBeatId_{actionId}`** (string — matches when the last beat to fire for that action had this `id`). Picker bias: when `spiritDry >= 6` on preaching/tract/study actions, penalty beats are weighted 2× — bad outcomes more likely, not guaranteed.
-
-**Beat-level fields beyond `conditions`, `rewards`, `penalty`:**
-- `id` (string, optional) — when present, fires `state.flags.lastBeatByAction[actionId] = id` after the beat resolves. Enables `prevBeatId_{actionId}` chaining on subsequent runs of the same action.
-- `setsFlag` (string, optional) — writes `state.npcs[<actionNPC>].flags[<value>] = state.time.day`. Only takes effect on NPC actions (those in `NPC_ACTION_MAP`); silently ignored elsewhere.
-- `clearsFlag` (string, optional) — deletes the named flag on the action's NPC. Use on callback beats so they fire once and step aside.
-
-Flags are short-lived per-NPC carryover for callback beats ("today she apologizes for last time"). Author the original beat with `setsFlag`, then write one or more responder beats that require `flagSet_<sameNpc>` and use `clearsFlag` to consume it. Flag value is the day it was set — useful for future staleness rules.
-
-**Selection:** specific matches (any condition key) take priority over catch-all. Picks randomly among matching specifics. Falls back to catch-all if nothing matches.
-
-**To add story text:** edit `data/stories.json` only — no JS changes needed. To add variable rewards to a beat, add `"rewards": { ... }` alongside the text.
-
-**Popup behaviour:** slides up from bottom, sits above tab bar. Shows NPC portrait for NPC visit/deep actions (determined by `NPC_ACTION_MAP` in `actions.js`, not by naming convention). Skipped when NPC first-meet modal is pending. Auto-dismisses 6s or tap.
-
----
-
-## Journal (js/journal.js)
-
-Append-only record of important moments in the player's missionary life. Rendered on the bottom-nav "Journal" tab. Empty at start of a new game.
-
-**Entries are added automatically** in response to engine events:
-- **Milestone unlock** (`onMilestone`) — every milestone becomes a journal entry
-- **NPC first-meet** (`onNPCMeet`) — body = the lang-tiered intro text
-- **NPC stage advance** (`onNPCStageAdvance`) — body = the stage-advance moment text from `data/stageAdvances.json`
-- **Language level-up** (`onLangLevelUp`) — body = a short flavor line
-
-Entries don't trigger their own notifications — the engine event that produced them already does (toast / modal / popup). The Journal tab badge ("(N)" suffix on the tab label) is the persistent indicator that fresh entries are waiting. Tapping the tab calls `markJournalRead()` and resets the badge to 0.
-
-**Entry shape:** `{ id, day, phase, icon, title, body, type, npcId? }` — `id` is the dedupe key (same id never appears twice).
-
-**Backfill on load:** Saves made before the journal existed have an empty `state.journal`. On load, `save.js` backfills entries for every completed milestone with placeholder day=1/phase=morning (real day isn't recoverable from historical data).
-
-**To add a new journal-triggering event:** wire it in `js/main.js` next to the existing hooks: `addJournalEntry({...})` + `renderJournal()`. The Journal tab DOM is rebuilt on hook so even if the tab is currently visible, new entries appear immediately.
-
----
-
-## Milestones (js/milestones.js)
-
-| ID | Icon | Name | Trigger |
-|----|------|------|---------|
-| first_conversation | 💬 | First Conversation | contacts >= 1 |
-| bible_accepted | 📖 | Someone Accepts a Bible | any NPC stage >= 1 |
-| lang_level_1 | 🗣️ | Ohayō Gozaimasu | language level >= 1 |
-| first_coffee | ☕ | First Coffee Together | any NPC met + trust >= 12 |
-| first_month | 📅 | First Month Survived | day >= 30 |
-| wisdom_15 | 📚 | The Word Takes Root | wisdom >= 15 |
-| lang_level_2 | 🌏 | Getting Through | language level >= 2 |
-| first_home_visit | 🏡 | A Japanese Home | any NPC trust >= 30 |
-| first_bible_study | ✝️ | First Bible Study | any NPC stage >= 4 |
-| onsen | ♨️ | The Onsen | stats.onsenVisited === true |
-| first_convert | 🕊️ | First Convert | stats.converts >= 1 |
-| lang_level_4 | 📣 | Preaching in Japanese | language level >= 4 |
-| hundred_contacts | 👥 | 100 Contacts | contacts >= 100 |
-| small_group | 🙌 | A Small Group | converts >= 2 + wisdom >= 50 |
-| first_disciple | ⭐ | First Disciple | converts >= 1 + day >= 50 |
-
----
-
-## UI layout (index.html)
-
-```
-[#story-popup]      — bottom-sheet popup; slides up after action; tap to dismiss
-[#end-of-day]       — full-overlay reflection screen; appears when evening ends
-[game-header]       — character name | "Day N" | ⚙ settings button
-[.hud]              — 6 resource widgets: Faith ✦ | Energy ⚡ N/M | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
-[.top-bar]          — always-visible bar between HUD and scene; two columns:
-  [.top-bar-phase]  — phase icon + phase name (EN) + pink scene-time bar fill + "N/M" count
-  [#travel-row]     — one Travel button per other location with ⏳cost; disabled when time too low
-[.location-view]    — fills remaining vertical space; immersive scene background
-  [#location-img]   — still PNG for non-station locations; cross-fades on location change
-  [#location-vid]   — looping MP4 for Shinjuku Station only; muted for iOS autoplay; opacity-fades in/out
-  [#location-bg]    — CSS-gradient fallback layer (class swapped per location)
-  [#scene-open-btn] — floating pill button "↑ Activities" near bottom of scene; tap to open panel; hidden when panel is open
-  [.location-info]  — JP/EN location name overlaid at bottom of scene
-[#station-ambience] — hidden <audio> element; plays ambient station sound at volume 0.35 when at station
-[#sheet-scrim]      — dark overlay (z-index 19) behind the sheet when open; dims scene + top-bar; tap to close panel
-[#bottom-sheet]     — slides up over the scene; fully hidden (translateY 100%) when closed — no peek strip
-  [.sheet-handle]   — close-only row at top of sheet; tap to close; shows "↓ tap to close" pill when sheet is open
-  [.content-area]   — scrollable panel area
-    [#tab-actions]  — phase strip (icon + time bar + End Phase button) + nudge + action list
-    [#tab-people]   — .people-list (only met NPCs; empty state if none) + contacts-summary
-    [#tab-journal]  — .journal-list (empty on day 1; entries added on milestones, NPC meets, stage advances, lang level-ups; tap to expand body)
-  [.content-tabs]   — bottom nav inside the sheet: Activities | People | Journal (📖 — shows "(N)" badge when unread entries)
-[#toast]            — fixed, bottom-center; slides up on milestone/payday/phase-auto-advance
-[#modal]            — full-screen overlay; NPC first meetings + reset confirm
-[#settings-overlay] — bottom sheet; mute + reset buttons
-```
-
-**Phase strip** appears in **two places**: (1) `.top-bar` — always visible above the scene, shows phase icon + EN name + pink time bar + `N/M` count. (2) Inside the Activities tab (bottom sheet) — same data plus JP phase name and the End Phase button (glows when no action fits).
-
-**End-of-day screen** (`#end-of-day`) shows: "Day N" header, per-phase summary of actions taken, totals (actions / contacts / lang level / goals), one random reflection line from `data/reflections.json`, Continue button.
-
----
-
-## Design decisions
-
-- **Turn-based, not real-time** — engine is event-driven; no `setInterval`. Days only advance when the player completes all three phases.
-- **Time and energy are different things** — time gates the phase (per-phase budget), energy gates the day (across-phase budget). Different actions cost them in different ratios. See `ROADMAP.md` Section 3 for the rationale.
-- **Pray as filler** — `pray` is 1 time, 0 energy, +faith. Always available; absorbs leftover time slots naturally so there's no "stuck with 1 time and nothing to do" corner case.
-- **Rest as sabbath** — `rest` is 3 time, 0 energy, +3 energy reward. Half-a-phase commitment for real recovery; can't be looped because of the time cost.
-- **NPC visibility** — NPC action cards are invisible until NPC is met (`ACTION_VISIBLE` in `actions.js`). Other gated actions show as locked with requirements.
-- **Story popup skips NPC meet** — `pendingNPCMeet` flag is checked; if set, story popup is suppressed so the NPC modal takes focus.
-- **Language barrier is a UI mechanic** — tab labels, HUD labels, NPC intro text all shift based on language level. Add more as the game grows.
-- **Stat bonuses are modest** — multipliers (lang × 0.25 × contacts, etc.) are noticeable but not game-breaking.
-- **Action requirements always visible** — gated actions show every unlock rule on the card. New gated actions need a `REQUIREMENT_BUILDERS` entry.
-- **Save** — auto-saves after every action, on every phase end, and on every day end. localStorage key `tokyo_called_v2`. Saves with `meta.version < 2` are wiped on load.
-- **Version bump** — when deploying: bump `APP_VERSION` in `js/version.js`, `CACHE` in `sw.js`, and `?v=` param on script tag in `index.html`. All three should match.
-
----
-
-## NPC interaction system (language-tiered)
-
-**Read `CHARACTERS.md` before writing any NPC story text or changing NPC mechanics.** It has each character's personality, arc, communication style, and langWeight.
-
-### Trust scaling by language level
-
-Each NPC_DEF has a `langWeight` field (0.0–1.0):
-- `1.0` = highly language-dependent (Kenji, Yuki) — verbal communication IS the relationship
-- `0.3` = presence-based (Hiro) — silence and being there is enough
-
-Trust gain formula (applied in `applyRewards()` in `actions.js`):
-```js
-const LANG_SCALE = [0.4, 0.7, 1.0, 1.15, 1.3, 1.5]; // indexed by language level 0–5
-const langFactor = 1 - (npcDef.langWeight * (1 - LANG_SCALE[lang]));
-// Apply langFactor to base npcTrust amount. Then existing lang bonus applies on top.
-```
-
-At level 0, Kenji (langWeight 1.0): 40% of base trust — communication is stilted, progress is slow.
-At level 0, Hiro (langWeight 0.3): ~82% of base trust — presence counts even without words.
-At level 2+: 100% base + existing lang bonus.
-
-### Story branches (3 language tiers)
-
-Every NPC visit and deep-conversation story entry in `stories.json` must have 3 language-tiered versions:
-- `"langMax": 0` — phone translator, gestures, long silences, presence
-- `"langMin": 1, "langMax": 1` — basics flow, simple questions, cautious exchange
-- `"langMin": 2` — real conversation, things are learned and shared
-
-Combine `langMin`/`langMax` with `stageMin`/`stageMax` as needed.
-
-### NPC action locations (never `null` for NPC visit/deep actions)
-
-| Action | Location | Reason |
-|--------|----------|--------|
-| visit_kenji | station | He's a commuter; station kiosk coffee. Station always available (avoids café-gate blocking). |
-| evening_kenji | cafe | Deeper relationship → proper sit-down café meetup after work |
-| visit_yuki | cafe | Where she is; café unlocks same time as host_english (when you meet her) |
-| questions_yuki | cafe | Same venue, deeper depth — she brings her notebook of hard questions |
-| visit_hiro | park | He's always on the bench |
-| pray_hiro | park | The deep moment IS prayer — he asks you to pray out loud on the bench |
-
-### Contact-info rule
-
-NPCs need a plausible reason you can reach them after first meeting:
-- **Kenji**: hands you his business card before hurrying off (update intro text)
-- **Yuki**: LINE ID exchange at end of English event (update intro text)
-- **Hiro**: always at the same park bench — no contact needed
-
-### Action naming convention
-
-NPC interaction cards use narrative names, not generic ones:
-- `visit_*` → describes what you're actually doing ("Coffee with Kenji", "Sit with Hiro")
-- Deep actions use **character-specific IDs and names** — no generic "deep_*" or "Heart-to-Heart" pattern:
-  - `evening_kenji` → "Evening with Kenji" (late café, long conversation)
-  - `questions_yuki` → "Questions with Yuki" (she brings her notebook)
-  - `pray_hiro` → "Pray with Hiro" (the deep moment IS prayer)
-- Future NPC deep actions should follow the same pattern: an ID and name grounded in that character's specific arc
-- All NPC action IDs must be registered in `NPC_ACTION_MAP` in `actions.js` — this is how portraits and `lastSeenDay` are looked up (not by naming convention)
-- JP labels: action-specific, not just "visit"
-
----
-
-## New NPC checklist
-
-When adding a new NPC, do ALL of these:
-1. Add bio to `CHARACTERS.md` — personality, language notes, arc, church role, `langWeight`
-2. Add state entry in `js/state.js`: `{ met: false, trust: 0, stage: 0 }`
-3. Add `NPC_DEFS` entry in `js/npcs.js` — include `langWeight` + `introByLang[]` with 3 tiers (level 0 / 1 / 2+). Intro text at level 0 must include how the player can reach the NPC again (business card, LINE, or "they're always here").
-4. Add `visit_{npc}` + a character-specific deep action ID to `data/actions.json` with correct `"location"` (not null). Name the deep action after what the relationship actually IS for that character.
-5. Add unlock/visible rules in `js/actions.js` (ACTION_UNLOCK, ACTION_VISIBLE, REQUIREMENT_BUILDERS). Add both IDs to `NPC_VISIT_ACTIONS` set; add only the deep ID to `NPC_DEEP_ACTIONS` set. Add both to `NPC_ACTION_MAP`. Also add the deep action to `NPC_DEEP_ACTION` const in `ui.js`.
-6. Add narrative labels to `js/language.js` ACTION_TEXT
-7. Add `npcChance` to the relevant outreach action in `data/actions.json`
-8. Write story beats in `data/stories.json` — 3 lang tiers × ~3 stage tiers ≈ ~9 beats per action
 
 ## TODO workflow
 
@@ -566,53 +106,8 @@ Never auto-clear without confirmation. The point of triage is that Jacob sees ea
 
 ---
 
-## Local testing & debugging
+## Local testing
 
-**For any UI bug Jacob reports on iPhone ("nothing happens when I tap", "blank area where X should be", "page acts dead"), run the local game with playwright and capture the actual `pageerror` / `console.error` before reading the source.** Reading code by inspection wastes hours; playwright surfaces the real cause in one run. We learned this the hard way debugging v17's "actions don't fire + travel row empty" — the root cause was a one-line `ReferenceError: handleEndPhase is not defined` that startGame() threw mid-execution, and it was invisible from code reading because everything looked syntactically fine.
+Do NOT run playwright — it doesn't work in this environment. Push and let Jacob test on iPhone. See memory `feedback_no_playwright.md`.
 
-**Setup (one-time per machine):**
-
-```bash
-cd /tmp && npm install playwright
-PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers npx playwright install chromium
-```
-
-**Start local server** (port 8080 is held by Jacob's `start.command`; use 8090):
-
-```bash
-python3 -m http.server 8090 > /tmp/jbe-server.log 2>&1 &
-```
-
-**Test-script template:** see `~/.claude/projects/-Users-jacobtrimm-projects-jbe/memory/reference_playwright_jbe.md` — has a reusable script, key DOM selectors, and cleanup commands.
-
-**When debugging:**
-- Trust the **local** working tree, not deployed `curl https://trimmja.github.io/japan-evangelistic-band/...` output. Local is the source of truth for what changed; deployed-curl only confirms what got pushed.
-- Verify fixes with playwright before pushing. "It looks right" is not enough — confirm the runtime behavior.
-- The render loop in `js/ui.js` wraps each render in `safeRender(name, fn)` so a single throw doesn't kill the loop. If you see `[render:Foo]` errors in the console, that's safeRender catching them — find and fix the underlying error.
-
----
-
-## Authentic Japan touches to preserve
-- Onsens as relationship-building (costs money, big trust reward)
-- English conversation events as a real outreach method
-- Tract distribution at train stations (hand_tracts action)
-- Long slow relationship arcs — trust thresholds are not trivial
-- Shame culture / wa baked into stage conditions (need wisdom before someone opens up)
-- Monthly support from home church (real mechanic, not infinite money)
-- Japanese location/action names in the UI even for English speakers
-
-## How to continue building
-
-- **Tune action balance**: edit `data/actions.json` (timeCost, energyCost, energyReward, cost.faith, reward.*), push, refresh.
-- **Tune day pacing**: edit `data/timing.json` (timePerPhase, energyPerDay, faithPerDay, paydayEveryDays), push, refresh.
-- **Add/edit story text**: edit `data/stories.json` only — no JS needed.
-- **Add/edit end-of-day reflection lines**: edit `data/reflections.json` (just an array of strings).
-- **Add an action**: entry in `data/actions.json` (with `timeCost` + `energyCost`) + `ACTION_UNLOCK` + `ACTION_VISIBLE` (if NPC-gated) + `REQUIREMENT_BUILDERS` (if it has visible requirements) + `ACTION_TEXT` in `language.js`.
-- **Add NPC portrait**: drop `{npcId}.png` in `assets/images/npcs/` — appears everywhere automatically.
-- **Add a location** (flavor): extend `LOCATION_DEFS` in `locations.js` + bg CSS class in `style.css`. Reference it as a string in any action's `location` field.
-- **Add an NPC**: follow the New NPC checklist above — don't skip steps.
-- **Add milestones**: extend `MILESTONE_DEFS` in `milestones.js`.
-- **Add BGM**: load `<audio>` in `audio.js`, play on phase change or day change.
-- **Add real location art**: set `background-image` on `.location-bg` elements in CSS.
-- **Add a new system that runs between phases** (NPC mood, weather, etc.): hook into `engine.hooks.onBetweenPhases` in `main.js`. The hook is wired but no-op in Step 1.
-- **Add a new system that runs at end of day** (events, persecution, etc.): hook into `engine.hooks.onEndOfDay` in `main.js`. Same — wired but no-op in Step 1.
+The render loop in `js/ui.js` wraps each render in `safeRender(name, fn)` so a single throw doesn't kill the loop. If Jacob reports `[render:Foo]` errors in the console, that's safeRender catching them — read the file and find the underlying error.
