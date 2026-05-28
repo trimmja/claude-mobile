@@ -23,10 +23,13 @@ Living design reference. Update this whenever a design decision changes a charac
 - Friend → Open: Questions about faith, doubt, his father. He's never spoken this way to anyone.
 - Open → Studying: He wants to understand — intellectually first, then personally
 - Studying → Believer: The Gospel becomes personal, not philosophical
+- Believer → Disciple (D1, v35): He reads on his commute. He asks practical questions about prayer. He looks for fathers in church history.
+- Disciple → Servant (D1, v35): He stays after to clean up. He invites a coworker. He starts taking responsibility before being asked.
+- Servant → Elder (D1, v35 / unlocked by D3): He drafts the hospitality rota. He tracks who needs a call this week. He apologizes for being so "salaryman" about it — and the flock is cared for.
 
 **Where you meet:** Station (early), Café (later)
 
-**Future church role:** Elder / leader. He's organized, respected, and when he commits to something he means it. The church will need him.
+**Church role:** **Elder, organizational gifting.** He's organized, respected, and when he commits to something he means it. In Phase D2 his passive effect will be income (his salaryman tithe) + coworker introductions — the gifting expressed mechanically.
 
 **Language sensitivity:** High (langWeight: 1.0) — verbal communication is the relationship. Without language, you're just two people sitting near each other.
 
@@ -56,10 +59,13 @@ Living design reference. Update this whenever a design decision changes a charac
 - Friend → Open: Her grandmother's incense rituals. What does faith mean when family is woven into other beliefs?
 - Open → Studying: Gospel of John. She reads it in Japanese and English side by side.
 - Studying → Believer: She understands the Incarnation in a way that undoes her. "God couldn't just send a message."
+- Believer → Disciple (D1, v35): She brings two Bibles. She reads Romans on her own. She makes peace with her grandmother's butsudan as memory, not worship.
+- Disciple → Servant (D1, v35): She starts informally teaching a classmate. She prepares notes "in case someone needs them."
+- Servant → Elder (D1, v35 / unlocked by D3): She teaches half the Sunday study. She is clear, slow, kind. She reaches people you cannot.
 
 **Where you meet:** Café (always — it's her territory)
 
-**Future church role:** Teacher / theologian. Her linguistic precision and intellectual depth will make her exceptional at explaining faith. She'll reach people you can't.
+**Church role:** **Elder, teaching gifting.** Her linguistic precision and intellectual depth make her exceptional at explaining faith. In Phase D2 her passive effect will be wisdom shared with you + silent discipling of other believers (she helps Hiro through Romans on her own time) — the teaching gifting expressed mechanically.
 
 **Language sensitivity:** High (langWeight: 1.0) — language is her discipline. Your effort with Japanese is itself a signal about who you are.
 
@@ -89,10 +95,13 @@ Living design reference. Update this whenever a design decision changes a charac
 - Friend → Open: He asks if the dead can hear us. He's not asking philosophically.
 - Open → Studying: He reads Emiko's Bible. Her bookmarks are still inside.
 - Studying → Believer: He asks you to pray out loud. He closes his eyes. "I think she prayed like that."
+- Believer → Disciple (D1, v35): He reads in Emiko's chair at home now. Some days he doesn't come to the bench. White chrysanthemums sometimes appear on the bench when he does.
+- Disciple → Servant (D1, v35): He visits a widow from his building. He doesn't preach. He sits. "I know that bench." He's noticing people.
+- Servant → Elder (D1, v35 / unlocked by D3): He's the one who notices when someone has stopped coming. He brings tea. He sits on their bench. You did not appoint him. Grace did.
 
-**Where you meet:** Park (always — the bench is his whole world right now)
+**Where you meet:** Park (always — the bench is his whole world right now; later, also at the apartment for studies)
 
-**Future church role:** Pastoral heart. He remembers everyone's names, their children's names, what people are carrying. The church will feel different when he's in it.
+**Church role:** **Elder, pastoral gifting.** He remembers everyone's names, their children's names, what people are carrying. In Phase D2 his passive effect will be mood lift on all met NPCs + stress reduction on overwhelmed ones — the long aftermath of grief turned into shepherding instinct, expressed mechanically.
 
 **Language sensitivity:** Low (langWeight: 0.3) — presence and silence are the relationship. You don't need fluency to sit with someone in grief.
 

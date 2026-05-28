@@ -22,9 +22,12 @@ const ACTION_UNLOCK = {
   visit_kenji: () => state.npcs.kenji.met,
   visit_yuki: () => state.npcs.yuki.met,
   visit_hiro: () => state.npcs.hiro.met,
-  evening_kenji:   () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2,
-  questions_yuki:  () => state.npcs.yuki.met  && state.npcs.yuki.stage  >= 2,
-  pray_hiro:       () => state.npcs.hiro.met  && state.npcs.hiro.stage  >= 2,
+  evening_kenji:   () => state.npcs.kenji.met && state.npcs.kenji.stage >= 2 && state.npcs.kenji.stage < 5,
+  questions_yuki:  () => state.npcs.yuki.met  && state.npcs.yuki.stage  >= 2 && state.npcs.yuki.stage  < 5,
+  pray_hiro:       () => state.npcs.hiro.met  && state.npcs.hiro.stage  >= 2 && state.npcs.hiro.stage  < 5,
+  disciple_kenji:  () => state.npcs.kenji.met && state.npcs.kenji.stage >= 5,
+  disciple_yuki:   () => state.npcs.yuki.met  && state.npcs.yuki.stage  >= 5,
+  disciple_hiro:   () => state.npcs.hiro.met  && state.npcs.hiro.stage  >= 5,
 };
 
 const ACTION_HOOKS = {
@@ -32,13 +35,18 @@ const ACTION_HOOKS = {
 };
 
 // Actions completely hidden (not just locked) when conditions aren't met.
+// Pre-conversion deep actions hide once the NPC is a Believer (stage 5+) so the
+// disciple_* card takes their slot — one deep action per NPC at any time.
 const ACTION_VISIBLE = {
   visit_kenji:    () => state.npcs.kenji.met,
   visit_yuki:     () => state.npcs.yuki.met,
   visit_hiro:     () => state.npcs.hiro.met,
-  evening_kenji:  () => state.npcs.kenji.met,
-  questions_yuki: () => state.npcs.yuki.met,
-  pray_hiro:      () => state.npcs.hiro.met,
+  evening_kenji:  () => state.npcs.kenji.met && state.npcs.kenji.stage < 5,
+  questions_yuki: () => state.npcs.yuki.met  && state.npcs.yuki.stage  < 5,
+  pray_hiro:      () => state.npcs.hiro.met  && state.npcs.hiro.stage  < 5,
+  disciple_kenji: () => state.npcs.kenji.met && state.npcs.kenji.stage >= 5,
+  disciple_yuki:  () => state.npcs.yuki.met  && state.npcs.yuki.stage  >= 5,
+  disciple_hiro:  () => state.npcs.hiro.met  && state.npcs.hiro.stage  >= 5,
 };
 
 export const ACTION_DEFS = {};
@@ -114,6 +122,21 @@ function reqFriendStage(npcId) {
   };
 }
 
+function reqStage(npcId, n, stageLabelOverride) {
+  const npc = state.npcs[npcId];
+  const def = NPC_DEFS[npcId];
+  const met = npc.met && npc.stage >= n;
+  const stageName     = def.stages[npc.stage] ?? `Stage ${npc.stage}`;
+  const requiredLabel = stageLabelOverride || (def.stages[n] ?? `Stage ${n}`);
+  return {
+    label: `${def.name} reached ${requiredLabel}`,
+    met,
+    detail: npc.met
+      ? (met ? 'Done' : `Now: ${stageName} (need ${requiredLabel})`)
+      : 'Meet them first',
+  };
+}
+
 function reqMin(label, current, need, fmt = v => String(v)) {
   const met = current >= need;
   return {
@@ -142,6 +165,9 @@ const REQUIREMENT_BUILDERS = {
   evening_kenji:  () => [reqMet('kenji'), reqFriendStage('kenji')],
   questions_yuki: () => [reqMet('yuki'), reqFriendStage('yuki')],
   pray_hiro:      () => [reqMet('hiro'), reqFriendStage('hiro')],
+  disciple_kenji: () => [reqMet('kenji'), reqStage('kenji', 5, 'Believer')],
+  disciple_yuki:  () => [reqMet('yuki'),  reqStage('yuki',  5, 'Believer')],
+  disciple_hiro:  () => [reqMet('hiro'),  reqStage('hiro',  5, 'Believer')],
 };
 
 // All visible activity IDs, in stable order.
@@ -161,15 +187,20 @@ const SPIRIT_ACTIONS  = new Set(['pray', 'study_scripture', 'observe_shrine']);
 const NPC_VISIT_ACTIONS = new Set([
   'visit_kenji', 'visit_yuki', 'visit_hiro',
   'evening_kenji', 'questions_yuki', 'pray_hiro',
+  'disciple_kenji', 'disciple_yuki', 'disciple_hiro',
 ]);
-// Deep-conversation actions (affect stress/burden scaling differently from quick visits)
-const NPC_DEEP_ACTIONS = new Set(['evening_kenji', 'questions_yuki', 'pray_hiro']);
+// Deep-conversation actions (affect stress/burden scaling differently from quick visits).
+// Disciple actions count as deep — the relationship intensity is the same or higher.
+const NPC_DEEP_ACTIONS = new Set([
+  'evening_kenji', 'questions_yuki', 'pray_hiro',
+  'disciple_kenji', 'disciple_yuki', 'disciple_hiro',
+]);
 
 // Maps any NPC action ID → npcId (used by UI to show portrait in story popups).
 export const NPC_ACTION_MAP = {
-  visit_kenji:    'kenji', evening_kenji:   'kenji',
-  visit_yuki:     'yuki',  questions_yuki:  'yuki',
-  visit_hiro:     'hiro',  pray_hiro:       'hiro',
+  visit_kenji:    'kenji', evening_kenji:   'kenji', disciple_kenji: 'kenji',
+  visit_yuki:     'yuki',  questions_yuki:  'yuki',  disciple_yuki:  'yuki',
+  visit_hiro:     'hiro',  pray_hiro:       'hiro',  disciple_hiro:  'hiro',
 };
 
 // Instant action. Returns { ok, id, bonuses, timeSpent, energySpent, reason }.

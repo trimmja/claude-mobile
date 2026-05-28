@@ -670,5 +670,134 @@
       "conditions": {},
       "text": "Time with Hiro. Something is growing."
     }
+  ],
+
+  "disciple_kenji": [
+    {
+      "conditions": { "stageMax_kenji": 5 },
+      "text": "Kenji has read 1 Peter ahead of time. He has questions. 'About suffering,' he says — then more carefully, 'about how we are supposed to bear it.' You realize he is thinking about his father. He doesn't say so. He doesn't have to. You read the chapter together slowly. He underlines verse 7."
+    },
+    {
+      "conditions": { "stageMax_kenji": 5 },
+      "rewards": { "wisdom": 3 },
+      "text": "He shows you his Bible — already worn at the edges. 'I read it on the train,' he says, almost apologizing. 'It is the only quiet I get.' You talk about the Sermon on the Mount. He keeps coming back to 'blessed are those who mourn.' You think of his mother at the household altar before sunrise."
+    },
+    {
+      "conditions": { "stageMax_kenji": 5 },
+      "text": "Kenji asks how prayer works. Not philosophically — practically. 'When? How long? What do I say if I don't know what to say?' You realize no one has ever taught him this. You go through the Lord's Prayer one line at a time. He writes it in his notebook in his neat, careful hand."
+    },
+    {
+      "conditions": { "stageMin_kenji": 6, "stageMax_kenji": 6 },
+      "rewards": { "wisdom": 3 },
+      "text": "He has started reading before work, he tells you — sitting in the café before the morning rush, with a coffee and a Bible. 'I never told anyone,' he says. 'Not the people at the office. They wouldn't…' He shakes his head. You tell him he doesn't have to perform. He nods. He stays for an hour."
+    },
+    {
+      "conditions": { "stageMin_kenji": 6, "stageMax_kenji": 6 },
+      "text": "Kenji wants to know about church history. Not in a curious way — in a needing way. 'Who has done this before me?' he asks. 'Who in Japan?' You talk about Uchimura, about the Hidden Christians, about Kanzō Uemura. He writes the names down. He's looking for fathers."
+    },
+    {
+      "conditions": { "stageMin_kenji": 7, "stageMax_kenji": 7 },
+      "rewards": { "wisdom": 4 },
+      "text": "Kenji has invited a coworker for the first time. Not to anything formal — just for coffee, with you there. 'He works late like me,' Kenji says. 'I think he is also tired.' His hands are nervous on his cup. The coworker doesn't show. Kenji says, 'Next week, maybe.' He'll ask again. He always asks again."
+    },
+    {
+      "conditions": { "stageMin_kenji": 7, "stageMax_kenji": 7 },
+      "text": "He's started staying after to help you clean up. Tonight he asks about the chairs — should they go in a circle, or rows? 'For Sunday,' he says. He's already thinking about Sunday. You realize he is taking responsibility before you have asked him to."
+    },
+    {
+      "conditions": { "stageMin_kenji": 8 },
+      "rewards": { "wisdom": 5 },
+      "text": "Kenji has a clipboard. He has actually made a clipboard. Hospitality rota, prayer requests, who needs a call this week. He apologizes for it — 'I know it is too much, I am a salaryman' — but you can see he is in his element. The flock will be cared for. He won't let anyone slip."
+    },
+    {
+      "conditions": {},
+      "text": "An hour with Kenji. He is patient, attentive, careful with every word. You think: this is what discipling looks like — slow, ordinary, real."
+    }
+  ],
+
+  "disciple_yuki": [
+    {
+      "conditions": { "stageMax_yuki": 5 },
+      "text": "Yuki has questions about translation. Of course she does. 'In John 1, the word — 言葉, ロゴス — does it mean the same thing in Japanese as in Greek?' You don't know. You read it together. She is unfazed by your ignorance. She loves the puzzle. You tell her this is how she will teach others one day. She blushes."
+    },
+    {
+      "conditions": { "stageMax_yuki": 5 },
+      "rewards": { "wisdom": 3 },
+      "text": "She brings up her grandmother. 'I lit incense at her butsudan last week,' she says, watching you carefully. 'Is that…?' You don't answer immediately. You think about how to say it. 'Honoring her memory is not the same as worship,' you say slowly. She nods. 'I thought so. But I needed someone to say it.'"
+    },
+    {
+      "conditions": { "stageMax_yuki": 5 },
+      "text": "Yuki has been reading Romans. She comes today with a single underlined verse — 8:38–39 — and tears in her eyes. 'I needed this verse,' she says. 'I didn't know I needed it.' She doesn't elaborate. You sit with her in silence for a long time. The café noise around you sounds far away."
+    },
+    {
+      "conditions": { "stageMin_yuki": 6, "stageMax_yuki": 6 },
+      "rewards": { "wisdom": 3 },
+      "text": "Yuki has begun teaching her friend from class — informally, over lunch. 'She has questions I had a year ago,' she says, marveling. 'I can answer them now.' She looks shocked at herself. 'I just say what you said to me. Is that allowed?' Yes, you tell her. That's exactly how it works."
+    },
+    {
+      "conditions": { "stageMin_yuki": 6, "stageMax_yuki": 6 },
+      "text": "She brings two notebooks today — her own, and a copy of her notes for you. 'In case I die,' she jokes, then more seriously: 'In case someone needs them.' Her handwriting is precise. Her categories are precise. You realize she is preparing to teach."
+    },
+    {
+      "conditions": { "stageMin_yuki": 7, "stageMax_yuki": 7 },
+      "rewards": { "wisdom": 4 },
+      "text": "Yuki asks if she can lead next week. 'I would like to take John 1:1–14,' she says. 'In Greek, Japanese, and English. The two creations side by side — Genesis and John.' She has been preparing for weeks. She doesn't need your permission. She is asking out of respect."
+    },
+    {
+      "conditions": { "stageMin_yuki": 7, "stageMax_yuki": 7 },
+      "text": "She teaches a section today. She is nervous in the first three minutes and then she is not nervous anymore. She makes someone cry — gently. She makes someone laugh — kindly. Afterward she sits down beside you and shakes her hands out and says, 'I want to do that again.'"
+    },
+    {
+      "conditions": { "stageMin_yuki": 8 },
+      "rewards": { "wisdom": 5 },
+      "text": "Yuki teaches half the Sunday study now, and the half she teaches is the half people most want to attend. She is clear, slow, and kind, and she reaches people you cannot. Linguistics was always her gift — now it is given back to the Church. Her grandmother's incense is no longer an enemy. It is the ground she stands on to reach others."
+    },
+    {
+      "conditions": {},
+      "text": "An hour with Yuki. She brings real questions. You sit across from each other in the café and the conversation is one of equals — two people working out what is true."
+    }
+  ],
+
+  "disciple_hiro": [
+    {
+      "conditions": { "stageMax_hiro": 5 },
+      "text": "Hiro is reading the Psalms now. He doesn't talk much about what he reads — he just nods sometimes, like he is meeting an old friend. Today he says: 'Psalm 23 — Emiko had it taped to the kitchen cabinet.' He smiles. It is the first time you have seen him smile easily."
+    },
+    {
+      "conditions": { "stageMax_hiro": 5 },
+      "rewards": { "wisdom": 3 },
+      "text": "He brings chrysanthemums to the bench today — white ones, the ones for grief, the ones Emiko loved. He sets them down beside him. He doesn't explain. You don't ask. The pigeons come close. You sit with him in the long quiet of a man learning how to be alive again."
+    },
+    {
+      "conditions": { "stageMax_hiro": 5 },
+      "text": "Hiro asks if he can bring his daughter next time. 'She doesn't believe what I believe,' he says. 'I don't want to push. I just want her to know what I am doing here.' You tell him bring her. He nods. He does not say it, but you can see he is preparing to be a father again, after a long absence of his own."
+    },
+    {
+      "conditions": { "stageMin_hiro": 6, "stageMax_hiro": 6 },
+      "rewards": { "wisdom": 3 },
+      "text": "Hiro tells you he has been reading at home, in Emiko's chair. 'The light is good there in the morning,' he says. 'She would have liked that I am using it.' He has stopped coming to the park every day. He doesn't need to. The bench was where the grief lived. The chair is where the life is."
+    },
+    {
+      "conditions": { "stageMin_hiro": 6, "stageMax_hiro": 6 },
+      "text": "He tells you a story today — a long one, about a man from his old office whose wife died last year. 'I should have called him,' Hiro says. 'I didn't know how then. I do now.' He says he will call this week. You believe him."
+    },
+    {
+      "conditions": { "stageMin_hiro": 7, "stageMax_hiro": 7 },
+      "rewards": { "wisdom": 4 },
+      "text": "Hiro tells you about the woman in his building who lost her husband. 'I sat with her,' he says. 'I did not preach. I do not know how to preach. I just sat.' He looks down. 'I think it helped.' You tell him: that is the help. He nods slowly. He understands."
+    },
+    {
+      "conditions": { "stageMin_hiro": 7, "stageMax_hiro": 7 },
+      "text": "He has noticed that one of the newer believers — a young woman who comes alone — hasn't been there two weeks running. 'I think someone should check on her,' he says, then quietly: 'Maybe me.' This is what the gift looks like. He is becoming a shepherd before he has the word for it."
+    },
+    {
+      "conditions": { "stageMin_hiro": 8 },
+      "rewards": { "wisdom": 5 },
+      "text": "Hiro is the one who notices when someone has stopped coming. He brings them tea. He sits on their bench, whatever their bench is. The flock has a shepherd — Hiro, who knows what grief is, who knows what silence is, who knows the long aftermath where most pastoral care actually happens. You did not appoint him. Grace did."
+    },
+    {
+      "conditions": {},
+      "text": "Time with Hiro. He is quieter than most teachers, and he teaches more. You sit beside him and the world feels less hurried."
+    }
   ]
 }

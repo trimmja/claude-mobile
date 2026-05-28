@@ -70,11 +70,23 @@ export function playSetback() {
 
 // Warm major-7 arpeggio — the "relationship deepened" cue.
 // Softer + slower than playMilestone so it lands as warmth, not triumph.
-// Reserved for NPC stage advances (1–4). Conversion (stage 5) still uses playMilestone.
+// Reserved for NPC stage advances (1–4, 6–7). Conversion (stage 5) uses playMilestone;
+// Elder (stage 8) uses playElderChord below.
 export function playStageAdvance() {
   tone(392, 0.35, 'sine',     0.14);          // G4
   tone(494, 0.40, 'sine',     0.13, 0.14);    // B4
   tone(587, 0.55, 'triangle', 0.11, 0.28);    // D5 — softer triangle for the held note
+}
+
+// Fuller variant of playStageAdvance — adds an octave G above + a small held bass.
+// Reserved for Stage 8 (Elder) — the "they're a leader now" cue. Warmer than playMilestone,
+// fuller than playStageAdvance.
+export function playElderChord() {
+  tone(196, 0.60, 'triangle', 0.10);          // G3 — held bass
+  tone(392, 0.35, 'sine',     0.14, 0.04);    // G4
+  tone(494, 0.40, 'sine',     0.13, 0.18);    // B4
+  tone(587, 0.55, 'triangle', 0.11, 0.32);    // D5
+  tone(784, 0.55, 'sine',     0.10, 0.46);    // G5 — octave shimmer
 }
 
 export function toggleMute() {

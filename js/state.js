@@ -32,9 +32,12 @@ export const state = {
     // flags: { name: dayItWasSet } — short-lived per-NPC carryover (e.g. "left_early": 12).
     //   Beats set with setsFlag_<npcId>: "name" and require flagSet_<npcId>: "name".
     //   Beats can clear consumed flags with clearsFlag_<npcId>: "name".
-    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [], flags: {} },
-    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [], flags: {} },
-    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [], flags: {} },
+    // roleProgress: D1 — counters that gate Stage 8 (Elder). Each gifting has its own counter;
+    //   incremented by D3 hosting events. Stays 0 until D3 ships, so Stage 8 is effectively
+    //   locked until then (correct sequencing).
+    kenji: { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 3, burden: 5, firedEvents: [], flags: {}, roleProgress: { servicesAttended: 0, studiesCoTaught: 0, othersShepherded: 0 } },
+    yuki:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 2, burden: 3, firedEvents: [], flags: {}, roleProgress: { servicesAttended: 0, studiesCoTaught: 0, othersShepherded: 0 } },
+    hiro:  { met: false, trust: 0, stage: 0, lastSeenDay: null, mood: 0, stress: 1, burden: 7, firedEvents: [], flags: {}, roleProgress: { servicesAttended: 0, studiesCoTaught: 0, othersShepherded: 0 } },
   },
 
   world: {},

@@ -1,24 +1,33 @@
 {
-  "_readme": "Stage-advance moments per NPC per stage. Triggered when an NPC's stage increases. Stage index matches NPC_DEFS.stages (0=Stranger, 1=Acquaintance, 2=Friend, 3=Open, 4=Studying, 5=Believer). Index 0 is never used (it's the starting stage, not an advancement).",
+  "_readme": "Stage-advance moments per NPC per stage. Triggered when an NPC's stage increases. Stage index matches NPC_DEFS.stages (0=Stranger, 1=Acquaintance, 2=Friend, 3=Open, 4=Studying, 5=Believer, 6=Disciple, 7=Servant, 8=Elder). Index 0 is never used (it's the starting stage, not an advancement). Stages 6–8 belong to D1 — post-conversion discipleship arc.",
   "kenji": {
     "1": "Kenji nods at you across the station platform now. He remembers your face.",
     "2": "Kenji is no longer formal with you. He stays longer, talks more, lets things slip.",
     "3": "Kenji has started asking real questions — the kind you only ask people you trust.",
     "4": "Kenji has asked to read scripture with you. He brings a notebook and writes everything down.",
-    "5": "Kenji has put his trust in Christ. He says it quietly, like he's afraid of breaking something. The first of many, you pray."
+    "5": "Kenji has put his trust in Christ. He says it quietly, like he's afraid of breaking something. The first of many, you pray.",
+    "6": "Kenji asks if he can come early to the café next week. He wants to read before work, while the city is still quiet. 'I want this to be real,' he says. 'Not just Sunday.' He is your first disciple.",
+    "7": "Kenji has started staying after to help you clean up. Tonight he asked who else from the office he could invite. He carries the chairs without being asked. He's not just listening anymore — he's serving.",
+    "8": "Kenji shows you the schedule he's drafted on his phone. Hospitality rota. Who covers Sunday. Who calls who if someone misses two weeks. 'This is what I'm good at,' he says, embarrassed. You realize you're looking at an elder."
   },
   "yuki": {
     "1": "Yuki LINEs you a question from her notebook. The first of many.",
     "2": "Yuki shows up to events with friends now. She's introducing you.",
     "3": "Yuki has started reading the Bible — Japanese and English side by side. She has questions she's been saving.",
     "4": "Yuki is studying the Gospel of John with you weekly. She marks every page.",
-    "5": "Yuki believes. 'God couldn't just send a message,' she says. 'He had to come.' She understands the Incarnation in a way that undoes her."
+    "5": "Yuki believes. 'God couldn't just send a message,' she says. 'He had to come.' She understands the Incarnation in a way that undoes her.",
+    "6": "Yuki shows up with two Bibles now — hers, marked beyond recognition, and a spare. 'For when someone comes,' she says. She is reading Romans on her own and texts you photos of underlined verses at 1am.",
+    "7": "Yuki asks if she can teach a section next time. 'You take Genesis, I'll take John 1. The two creations side by side.' She has notes. She has pages of notes. You realize she's been preparing for this for weeks.",
+    "8": "Yuki teaches half the Sunday study now. People come because of how she explains things — clear, slow, kind. Her grandmother's incense rituals are not enemies anymore; they are the ground she stands on to reach others. She is an elder, in the gift of teaching."
   },
   "hiro": {
     "1": "Hiro brings you coffee from the vending machine without asking now. He pays.",
     "2": "Hiro tells you Emiko's name. He tells you she prayed.",
     "3": "Hiro has asked you if the dead can hear us. He wasn't asking philosophically.",
     "4": "Hiro is reading Emiko's Bible with you. He keeps her bookmarks where she left them.",
-    "5": "Hiro asked you to pray out loud. He closed his eyes. 'I think she prayed like that,' he said."
+    "5": "Hiro asked you to pray out loud. He closed his eyes. 'I think she prayed like that,' he said.",
+    "6": "Hiro doesn't come to the bench every morning now — he comes every other day. 'The other days I'm reading at home,' he says. 'Emiko's chair faces the window. The light is good there.' Something in him is being slowly mended.",
+    "7": "Hiro tells you he visited a woman from the building who lost her husband. He didn't preach. He just sat. 'I know that bench,' he said when he came back. He's noticing people now — who is missing, who is carrying something.",
+    "8": "Hiro is the one who notices when someone has stopped coming. He brings them tea. He sits beside them. He doesn't say much, and somehow it is more. The flock has a shepherd; you didn't appoint him. Grace did."
   }
 }

@@ -30,6 +30,9 @@ export const ACTION_TEXT = {
   evening_kenji:    { jp: '健二との夜',           en: 'Evening with Kenji' },
   questions_yuki:   { jp: '由紀の問いに向き合う', en: 'Questions with Yuki' },
   pray_hiro:        { jp: '浩と祈る',             en: 'Pray with Hiro' },
+  disciple_kenji:   { jp: '健二を導く',           en: 'Mentor Kenji' },
+  disciple_yuki:    { jp: '由紀と聖書を学ぶ',     en: 'Study with Yuki' },
+  disciple_hiro:    { jp: '浩と歩む',             en: 'Walk with Hiro' },
 };
 
 // UI labels that shift to Japanese at language level 0

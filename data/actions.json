@@ -146,6 +146,33 @@
       "energyCost": 2,
       "cost": { "faith": 20 },
       "reward": { "npcTrust": { "id": "hiro", "amount": 22 }, "wisdom": 3 }
+    },
+    "disciple_kenji": {
+      "location": "cafe",
+      "icon": "🛡️",
+      "timeCost": 3,
+      "energyCost": 2,
+      "cost": { "faith": 15 },
+      "reward": { "npcTrust": { "id": "kenji", "amount": 18 }, "wisdom": 2 },
+      "unlockHint": "Kenji has become a Believer"
+    },
+    "disciple_yuki": {
+      "location": "cafe",
+      "icon": "📖",
+      "timeCost": 3,
+      "energyCost": 2,
+      "cost": { "faith": 15 },
+      "reward": { "npcTrust": { "id": "yuki", "amount": 18 }, "wisdom": 2 },
+      "unlockHint": "Yuki has become a Believer"
+    },
+    "disciple_hiro": {
+      "location": "park",
+      "icon": "🕯️",
+      "timeCost": 3,
+      "energyCost": 1,
+      "cost": { "faith": 15 },
+      "reward": { "npcTrust": { "id": "hiro", "amount": 18 }, "wisdom": 2 },
+      "unlockHint": "Hiro has become a Believer"
     }
   }
 }

@@ -2,8 +2,10 @@
 // Called by the engine after every action and after every new day.
 //
 // Only announces a curated list of "real" unlocks (gated by stats/day/contacts).
-// NPC actions (visit_/evening_/questions_/pray_hiro) have their own notification surfaces — meet modal,
-// stage-advance popup — and are intentionally excluded here to avoid double-noise.
+// Pre-conversion NPC actions (visit_/evening_/questions_/pray_hiro) have their own notification
+// surfaces — meet modal, stage-advance popup — and are intentionally excluded here to avoid
+// double-noise. Disciple actions ARE announced: the conversion modal has already fired by the
+// time they unlock, so the unlock toast is a fresh moment ("Mentor Kenji is now open to you").
 
 import { state } from './state.js';
 import { ACTION_DEFS } from './actions.js';
@@ -11,7 +13,10 @@ import { ACTION_TEXT } from './language.js';
 import { enqueueNotification } from './notifications.js';
 import { addJournalEntry } from './journal.js';
 
-const ANNOUNCEABLE = ['commuter_convo', 'host_english', 'observe_shrine', 'onsen_visit'];
+const ANNOUNCEABLE = [
+  'commuter_convo', 'host_english', 'observe_shrine', 'onsen_visit',
+  'disciple_kenji', 'disciple_yuki', 'disciple_hiro',
+];
 
 // One-time backfill for existing saves loading v17 for the first time.
 // Marks all currently-unlocked announceable actions as already-notified so the

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { MILESTONE_DEFS } from './milestones.js';
-import { initNPCMoodStats } from './npcs.js';
+import { initNPCMoodStats, initNPCRoleProgress } from './npcs.js';
 
 const KEY = 'tokyo_called_v2';
 const LEGACY_KEYS = ['tokyo_called_v1'];
@@ -76,6 +76,8 @@ export function loadGame() {
       if (!state.npcs[id].flags || typeof state.npcs[id].flags !== 'object') {
         state.npcs[id].flags = {};
       }
+      // D1 migration: roleProgress counters (Elder-stage gates) default to 0 for pre-v35 saves
+      initNPCRoleProgress(id);
     });
 
     state.world = saved.world || {};

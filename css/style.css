@@ -1609,6 +1609,26 @@ input { user-select: text; }
   border-left-color: var(--sakura);
 }
 
+/* ─── ELDER STAGE (8) — sakura ring with gold accent ─── */
+/* Same vocabulary as stage-advance, but heavier — they're a leader now.        */
+#modal.stage-advance-modal.elder-modal .modal-card {
+  border: 2px solid var(--sakura);
+  box-shadow: 0 0 32px rgba(255,143,171,0.22), 0 0 28px rgba(240,192,64,0.18), var(--shadow-lg);
+}
+
+.stage-advance-eyebrow.elder-eyebrow {
+  color: var(--gold);
+}
+
+.stage-advance-portrait.elder-portrait {
+  box-shadow: 0 0 0 3px var(--sakura), 0 0 0 5px var(--gold), 0 0 16px rgba(240,192,64,0.30);
+}
+
+/* Subtle gold underline on the People-tab card avatar when they're an Elder. */
+.npc-card.elder .npc-avatar {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(240,192,64,0.30);
+}
+
 /* ─── SETTINGS PANEL ─── */
 .settings-overlay {
   position: fixed;

@@ -30,6 +30,10 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Story popup mood/stress/burden shift row (Phase B, v33) | ✅ | n/a | ❌ not yet |
 | NPC flag system + lastBeatByAction (Phase C, v34) | ✅ | ⚠️ 1 demo callback (Yuki) | ❌ not yet |
 | Conditional reflections — keyed on day events (Phase C, v34) | ✅ | ✅ 15 new lines | ❌ not yet |
+| Discipleship — stages 6–8 (Disciple/Servant/Elder) per NPC (Phase D1, v35) | ✅ | ✅ 9 stage moments | ❌ not yet |
+| 3 disciple_* actions w/ pre-conv hide + REQUIREMENT_BUILDERS (Phase D1, v35) | ✅ | n/a | ❌ not yet |
+| Elder modal — sakura+gold ring + playElderChord (Phase D1, v35) | ✅ | n/a | ❌ not yet |
+| Disciple story beats — 27 beats across 3 NPCs × stages 5–8 (Phase D1, v35) | ✅ | ⚠️ first draft | ❌ not yet |
 
 ---
 

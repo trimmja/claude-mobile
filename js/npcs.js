@@ -27,8 +27,11 @@ export const NPC_DEFS = {
       'Open to faith',
       'Studying scripture',
       'Believer',
+      'Disciple',
+      'Servant',
+      'Elder',
     ],
-    trustNeeded: [0, 10, 28, 55, 85, 100],
+    trustNeeded: [0, 10, 28, 55, 85, 100, 115, 135, 160],
     stageCondition: [
       () => true,
       () => true,
@@ -36,10 +39,13 @@ export const NPC_DEFS = {
       () => state.resources.wisdom >= 15,
       () => state.language.level >= 2,
       () => state.language.level >= 3,
+      () => true,                                                       // Stage 6 (Disciple) — open after conversion
+      () => state.resources.wisdom >= 30,                               // Stage 7 (Servant — Kenji wants to understand before serving)
+      () => (state.npcs.kenji.roleProgress?.servicesAttended ?? 0) >= 3, // Stage 8 (Elder — organizational gifting)
     ],
     // Human-readable hint for the extra condition on each stage advance.
     // null means trust alone is sufficient.
-    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 2', 'Language Level 3'],
+    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 2', 'Language Level 3', null, 'Wisdom 30', 'Attend 3 Sunday services'],
   },
 
   yuki: {
@@ -66,8 +72,11 @@ export const NPC_DEFS = {
       'Open to faith',
       'Studying scripture',
       'Believer',
+      'Disciple',
+      'Servant',
+      'Elder',
     ],
-    trustNeeded: [0, 10, 28, 55, 85, 100],
+    trustNeeded: [0, 10, 28, 55, 85, 100, 115, 135, 160],
     stageCondition: [
       () => true,
       () => true,
@@ -75,8 +84,11 @@ export const NPC_DEFS = {
       () => state.resources.wisdom >= 15,
       () => state.language.level >= 2,
       () => state.language.level >= 3,
+      () => true,                                                       // Stage 6 (Disciple)
+      () => state.language.level >= 4,                                  // Stage 7 (Servant — teaching gift surfaces with deeper language)
+      () => (state.npcs.yuki.roleProgress?.studiesCoTaught ?? 0) >= 2,  // Stage 8 (Elder — teaching gifting)
     ],
-    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 2', 'Language Level 3'],
+    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 2', 'Language Level 3', null, 'Language Level 4', 'Co-teach 2 Bible studies'],
   },
 
   hiro: {
@@ -103,8 +115,11 @@ export const NPC_DEFS = {
       'Open to faith',
       'Studying scripture',
       'Believer',
+      'Disciple',
+      'Servant',
+      'Elder',
     ],
-    trustNeeded: [0, 10, 28, 55, 85, 100],
+    trustNeeded: [0, 10, 28, 55, 85, 100, 115, 135, 160],
     stageCondition: [
       () => true,
       () => true,
@@ -112,8 +127,11 @@ export const NPC_DEFS = {
       () => state.resources.wisdom >= 15,
       () => state.language.level >= 1,
       () => state.language.level >= 3,
+      () => true,                                                         // Stage 6 (Disciple)
+      () => state.stats.daysSurvived >= 60,                               // Stage 7 (Servant — pastoral gift is slow grief-tempered patience)
+      () => (state.npcs.hiro.roleProgress?.othersShepherded ?? 0) >= 3,   // Stage 8 (Elder — pastoral gifting)
     ],
-    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 1', 'Language Level 3'],
+    stageConditionHints: [null, null, null, 'Wisdom 15', 'Language Level 1', 'Language Level 3', null, '60 days survived', 'Shepherd 3 other believers'],
   },
 };
 
@@ -144,7 +162,7 @@ export function getTrustPercent(npcId) {
 export function getStageAdvanceHint(npcId) {
   const npc = state.npcs[npcId];
   const def = NPC_DEFS[npcId];
-  if (npc.stage >= 5) return null;
+  if (npc.stage >= 8) return null;
 
   const nextStage = npc.stage + 1;
   const trustNeeded = def.trustNeeded[nextStage];
@@ -169,9 +187,10 @@ export function addNPCTrust(npcId, amount) {
   const npc = state.npcs[npcId];
   const def = NPC_DEFS[npcId];
   const stageFloor = def.trustNeeded[npc.stage] ?? 0;
-  npc.trust = Math.max(stageFloor, Math.min(100, npc.trust + amount));
+  // Trust ceiling lifted to 200 to accommodate discipleship stages 6–8 (trustNeeded reaches 160).
+  npc.trust = Math.max(stageFloor, Math.min(200, npc.trust + amount));
   // check stage advance (only on positive deltas naturally — negative can't push you up)
-  if (npc.stage < 5) {
+  if (npc.stage < 8) {
     const needed = def.trustNeeded[npc.stage + 1];
     const cond   = def.stageCondition[npc.stage + 1];
     if (npc.trust >= needed && cond()) {
@@ -206,7 +225,12 @@ export function metNPCCount() {
 }
 
 export function believerCount() {
-  return Object.values(state.npcs).filter(n => n.stage === 5).length;
+  // Stages 5+ are all believers (Believer → Disciple → Servant → Elder).
+  return Object.values(state.npcs).filter(n => n.stage >= 5).length;
+}
+
+export function elderCount() {
+  return Object.values(state.npcs).filter(n => n.stage >= 8).length;
 }
 
 // ─── NPC mood / stress / burden system ────────────────────────────────────────
@@ -279,4 +303,17 @@ export function initNPCMoodStats(npcId) {
   if (typeof npc.stress  !== 'number') npc.stress  = d.stress;
   if (typeof npc.burden  !== 'number') npc.burden  = d.burden;
   if (!Array.isArray(npc.firedEvents)) npc.firedEvents = [];
+}
+
+/**
+ * Migration helper: initialize roleProgress on an NPC entry if missing (saves before D1).
+ * roleProgress fields are the gates for Stage 8 (Elder) — counters incremented by D3 events.
+ */
+export function initNPCRoleProgress(npcId) {
+  const npc = state.npcs[npcId];
+  if (!npc) return;
+  if (!npc.roleProgress || typeof npc.roleProgress !== 'object') npc.roleProgress = {};
+  if (typeof npc.roleProgress.servicesAttended !== 'number') npc.roleProgress.servicesAttended = 0;
+  if (typeof npc.roleProgress.studiesCoTaught  !== 'number') npc.roleProgress.studiesCoTaught  = 0;
+  if (typeof npc.roleProgress.othersShepherded !== 'number') npc.roleProgress.othersShepherded = 0;
 }

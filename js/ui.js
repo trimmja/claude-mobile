@@ -4,8 +4,15 @@ import {
   hasFittingAction, NPC_ACTION_MAP,
 } from './actions.js';
 
-// Maps npcId → their character-specific deep action ID
-const NPC_DEEP_ACTION = { kenji: 'evening_kenji', yuki: 'questions_yuki', hiro: 'pray_hiro' };
+// Maps npcId → their character-specific deep action ID, picking pre- or post-conversion
+// version based on current stage. Post-conversion (stage ≥ 5) the disciple_* action
+// takes the slot the pre-conversion deep action used.
+const NPC_DEEP_ACTION_PRE  = { kenji: 'evening_kenji',  yuki: 'questions_yuki', hiro: 'pray_hiro' };
+const NPC_DEEP_ACTION_POST = { kenji: 'disciple_kenji', yuki: 'disciple_yuki',  hiro: 'disciple_hiro' };
+function deepActionFor(npcId) {
+  const stage = state.npcs[npcId]?.stage ?? 0;
+  return (stage >= 5 ? NPC_DEEP_ACTION_POST : NPC_DEEP_ACTION_PRE)[npcId];
+}
 import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo, currentLocation } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
 import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
@@ -398,7 +405,12 @@ export function renderPeople() {
   } else {
     metNPCs.forEach(([id, def]) => {
       const npc  = state.npcs[id];
-      const card = el('div', ['npc-card', def.cardClass, npc.stage === 5 ? 'believer' : ''].filter(Boolean).join(' '));
+      const card = el('div', [
+        'npc-card',
+        def.cardClass,
+        npc.stage >= 5 ? 'believer' : '',
+        npc.stage >= 8 ? 'elder'    : '',
+      ].filter(Boolean).join(' '));
 
       const avatar = buildNpcAvatar(id, def, 'npc-avatar');
 
@@ -421,7 +433,7 @@ export function renderPeople() {
       // Interact buttons — auto-travel + run the action
       const actions = el('div', 'npc-actions');
       const visitId = `visit_${id}`;
-      const deepId  = NPC_DEEP_ACTION[id];
+      const deepId  = deepActionFor(id);
       const visitDef = ACTION_DEFS[visitId];
       const deepDef  = deepId ? ACTION_DEFS[deepId] : null;
       if (visitDef) {
@@ -881,7 +893,8 @@ export function showNPCMeetModal(npcId, onDismiss = null) {
   });
 }
 
-// Sakura-ringed modal for non-conversion stage advances (1–4).
+// Sakura-ringed modal for non-conversion stage advances (1–4, 6–7).
+// Stage 8 (Elder) gets a gold-accented variant — same warm vocabulary, with weight.
 // Smaller emotional beat than conversion, but bigger than the routine story popup.
 export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = null) {
   const def = NPC_DEFS[npcId];
@@ -889,9 +902,16 @@ export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = n
 
   const stageName = def.stages[newStage] || `Stage ${newStage}`;
   const bodyText  = momentText || `Your relationship with ${def.name} has deepened.`;
+  const isElder   = newStage === 8;
+
+  // Eyebrow text shifts by stage so the moment has the right register.
+  let eyebrow;
+  if      (isElder)        eyebrow = '— An elder rises —';
+  else if (newStage >= 6)  eyebrow = '— Growing in faith —';
+  else                     eyebrow = '— Relationship deepening —';
 
   const portraitHtml = `
-    <div class="modal-portrait ${def.portraitClass} stage-advance-portrait">
+    <div class="modal-portrait ${def.portraitClass} stage-advance-portrait${isElder ? ' elder-portrait' : ''}">
       <img src="assets/images/npcs/${npcId}.png"
            alt="${def.name}"
            class="npc-portrait-img modal-portrait-img"
@@ -902,16 +922,18 @@ export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = n
 
   const modal = $('modal');
   modal.classList.add('stage-advance-modal');
+  if (isElder) modal.classList.add('elder-modal');
 
   showModal(`
-    <div class="stage-advance-eyebrow">— Relationship deepening —</div>
+    <div class="stage-advance-eyebrow${isElder ? ' elder-eyebrow' : ''}">${eyebrow}</div>
     ${portraitHtml}
     <div class="modal-title stage-advance-title">${def.name} <span class="modal-title-jp">${def.nameJP}</span></div>
     <div class="modal-subtitle">Now: ${stageName}</div>
     <div class="modal-body stage-advance-body">${bodyText}</div>
-    <button class="modal-btn modal-btn-primary" data-close>Continue →</button>
+    <button class="modal-btn ${isElder ? 'modal-btn-gold' : 'modal-btn-primary'}" data-close>Continue →</button>
   `, () => {
     modal.classList.remove('stage-advance-modal');
+    modal.classList.remove('elder-modal');
     renderPeople();
     renderActions(true);
     if (onDismiss) onDismiss();

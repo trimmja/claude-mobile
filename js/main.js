@@ -201,7 +201,7 @@ function startGame() {
 
     addJournalEntry({
       id: `stage_${npcId}_${newStage}`,
-      icon: newStage === 5 ? '✝️' : '✨',
+      icon: newStage === 5 ? '✝️' : newStage === 8 ? '⭐' : '✨',
       title: `${def.name} — ${stageName}`,
       body: moment || headline,
       type: 'stageAdvance',
@@ -214,8 +214,12 @@ function startGame() {
       // state.stats.converts is already incremented by addNPCTrust in npcs.js.
       audio.playMilestone();
       enqueueNotification({ type: 'conversion', npcId, text: moment });
+    } else if (newStage === 8) {
+      // Elder — sakura+gold modal + fuller chord. The "they're a leader now" cue.
+      audio.playElderChord();
+      enqueueNotification({ type: 'stageAdvance', npcId, newStage, text: moment });
     } else {
-      // Stages 1–4: dedicated sakura-ringed modal + warmer stage-advance chord.
+      // Stages 1–4 (relationship), 6–7 (discipleship): sakura-ringed modal + warm chord.
       audio.playStageAdvance();
       enqueueNotification({ type: 'stageAdvance', npcId, newStage, text: moment });
     }
