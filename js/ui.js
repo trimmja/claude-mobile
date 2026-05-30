@@ -870,6 +870,58 @@ export function showConfirmModal(title, body, onConfirm) {
   });
 }
 
+// ─── TRAVEL OVERLAY ──────────────────────────────────────────────────────────
+// Cinematic ~5s "you are traveling" transition shown on every trip. Add more clips
+// to TRAVEL_VIDEOS for variety — one is picked at random per trip.
+const TRAVEL_VIDEOS = ['assets/video/travel.MP4'];
+const TRAVEL_DURATION = 5000;
+let travelTimer = null;
+
+export function showTravelOverlay(toLocId, onComplete) {
+  const overlay = $('travel-overlay');
+  const vid     = $('travel-vid');
+  const caption = $('travel-caption');
+  if (!overlay || !vid) { if (onComplete) onComplete(); return; }
+
+  const def = LOCATION_DEFS[toLocId] || LOCATION_DEFS.apartment;
+  if (caption) caption.textContent = `🚃 Traveling to ${def.short}…`;
+
+  vid.src = TRAVEL_VIDEOS[Math.floor(Math.random() * TRAVEL_VIDEOS.length)];
+  vid.currentTime = 0;
+  vid.play().catch(() => {});
+
+  overlay.classList.remove('hidden');
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+
+  if (travelTimer) clearTimeout(travelTimer);
+  travelTimer = setTimeout(() => {
+    overlay.classList.remove('show');
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      if (!vid.paused) vid.pause();
+      if (onComplete) onComplete();
+    }, 400);   // matches .travel-overlay opacity transition
+  }, TRAVEL_DURATION);
+}
+
+// ─── GO-HOME MODAL ───────────────────────────────────────────────────────────
+// Shown when the evening ends and the player is not home. The only way out is the
+// Go Home button — no backdrop / data-close dismissal.
+export function showGoHomeModal(onGoHome) {
+  showModal(`
+    <div class="gohome-icon">🌙</div>
+    <div class="modal-title">It's getting late</div>
+    <div class="modal-body">The last trains will run soon. Time to head home and rest.</div>
+    <button class="modal-btn modal-btn-primary" id="gohome-btn">Go Home 🏠</button>
+  `);
+  const btn = $('gohome-btn');
+  if (btn) btn.addEventListener('click', () => {
+    $('modal').classList.add('hidden');
+    if (onGoHome) onGoHome();
+  });
+}
+
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 export function bindSettings(onReset) {
   const versionEl = $('app-version');

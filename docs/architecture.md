@@ -9,7 +9,8 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 - **Renderers** are registered in `main.js` (`registerNotificationRenderer(type, fn)`) — each renderer takes the event payload and a `done()` callback it must invoke when its UI is dismissed.
 - **Enqueue** with `enqueueNotification({ type, ...payload })` — engine hooks in `main.js` do this instead of calling `showToast/showStoryPopup/showModal` directly.
 - **Why this exists:** Without the queue, end-of-day overlay would cover a story popup and the popup would only surface again after the day had already advanced. The queue enforces strict FIFO order.
-- **Registered types:** `story`, `toast`, `npcMeet`, `conversion`, `stageAdvance`, `npcStateShift`, `endOfDay`. Future: `letter` (Step 7), `journalEntry` (Step D), `unlockNotice` (Step F).
+- **Registered types:** `story`, `toast`, `npcMeet`, `conversion`, `stageAdvance`, `npcStateShift`, `goHome`, `endOfDay`. Future: `letter` (Step 7), `journalEntry` (Step D), `unlockNotice` (Step F).
+  - `goHome` (v37): fires when the evening ends while the player is away from home. Renders a forced modal (`showGoHomeModal` — no backdrop/close, only a **Go Home** button). Its `done()` is called when Go Home is tapped, which then runs the cinematic travel home → arrival fires the reflection.
 - **Queue is in-memory only** — on page reload the in-flight queue is lost. Persistent flags like `pendingEndOfDay` survive in save and re-enqueue on boot.
 
 ## Action flow
@@ -18,7 +19,11 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 3. Engine fires hooks in order: `onActionComplete`, then `onNPCMeet` (if NPC first-met this action), then `onNPCStageAdvance` (for each stage advance queued by `addNPCTrust`), then loops `checkMilestones` for any newly-triggered milestones, then `onMilestone` for each. The story popup is suppressed if a first-meet or stage advance is about to fire — those bigger moments take precedence.
 4. Engine checks `state.time.remaining <= 0` → auto-calls `endPhase(true)`.
 5. `endPhase` fires `onBetweenPhases` (empty hook — future home for NPC moods/weather) + `onPhaseChange` to UI; refills time, does NOT refill energy. On evening end, sets `pendingEndOfDay` and fires `onEndOfDayReady` → UI shows reflection screen.
+   - **Go-home gate (v37):** on evening end, if `state.location !== 'apartment'`, `endPhase` does NOT enter `reflecting`. Instead it sets `flags.pendingGoHome` (once) and fires `onGoHomeReady` → `goHome` modal; the phase stays `evening` (time 0). Only after the player travels home (a *free* trip — see travel below) does `endPhase` take the at-home branch: clear `pendingGoHome`, set `reflecting` + `pendingEndOfDay`, fire `onEndOfDay`/`onEndOfDayReady`. So **the day can only end from home.**
 6. `endDay` increments day, resets phase to morning, refills both time AND energy, restores small faith, runs payday check, runs milestone check.
+
+## Travel (`engine.doTravel` / `locations.travelTo`)
+`doTravel(loc, { free })` → `travelTo(loc, free)`. `free` skips the time cost (used only by the end-of-day trip home, when phase-time is already 0) but still moves you; cost reported as 0. All trips route through `main.runTravel(loc)`, which plays a cinematic ~5s full-screen train video (`showTravelOverlay`, `#travel-overlay`, `assets/video/travel.MP4`) and then commits `doTravel` in the overlay's completion callback. For the free home trip, `doTravel`'s own "time ≤ 0 → `endPhase`" path arrives at the at-home reflection branch automatically.
 7. `requestAnimationFrame(loop)` in `main.js` calls `renderFrame()` ~60fps (HUD, header, phase strip, action list). Action list rebuild is gated by a cache key so it only rebuilds when something changed.
 
 ## State object shape
@@ -59,6 +64,7 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
     pendingNPCMeet: null,
     pendingMilestone: null,
     pendingEndOfDay: false,                  // true → UI shows reflection screen
+    pendingGoHome: false,                    // true → evening ended away from home; must travel home before the day can end (v37)
     pendingStageAdvances: [],                // [{ npcId, newStage }] — drained by engine after each action
     pendingLangLevelUp: 0,                   // 0 if none; otherwise new level — drained by engine
     unreadJournalCount: 0,                   // badge on Journal tab; resets when player taps it
@@ -83,6 +89,7 @@ All player-facing events — story popups, NPC first-meet modal, stage-advance m
 ## Hooks for future steps (empty no-ops in Step 1)
 - `hooks.onBetweenPhases({ from, to })` — fires on each phase transition. Future home for NPC mood drift, weather re-rolls.
 - `hooks.onEndOfDay({ dayLog })` — fires before the reflection screen. Future home for emergent events (persecution, letters from home, NPC inter-interactions).
+- `hooks.onGoHomeReady()` — fires when the evening ends away from home (v37). `main.js` enqueues the `goHome` modal.
 
 ## Save versioning
 Auto-saves after every action, on every phase end, and on every day end. localStorage key `tokyo_called_v2`. Saves with `meta.version < 2` are wiped on load.

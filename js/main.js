@@ -8,6 +8,7 @@ import {
 import { loadGameData } from './gameData.js';
 import { loadGame, saveGame, resetGame } from './save.js';
 import { doAction, doTravel, endPhase, endDay, hooks } from './engine.js';
+import { travelCostTo } from './locations.js';
 import * as audio from './audio.js';
 import { ACTION_DEFS, NPC_ACTION_MAP } from './actions.js';
 import { getStoryText, getStoryBeat } from './stories.js';
@@ -20,6 +21,7 @@ import {
   showToast, showNPCMeetModal, showStoryPopup, showConversionModal, showStageAdvanceModal, showNpcStateCard,
   bindStoryPopup, bindNav, bindSettings, bindActionList, bindEndPhase, bindTravelRail,
   bindPeopleList, flashActionCard, showEndOfDayScreen,
+  showTravelOverlay, showGoHomeModal,
 } from './ui.js';
 import { enqueueNotification, registerNotificationRenderer } from './notifications.js';
 import { silentBackfillUnlocks } from './unlocks.js';
@@ -148,6 +150,10 @@ function startGame() {
   registerNotificationRenderer('endOfDay', (e, done) => {
     showEndOfDayScreen(() => { handleEndDay(); done(); });
   });
+  registerNotificationRenderer('goHome', (e, done) => {
+    // Releasing the queue, then running the (visual) travel + reflection chain.
+    showGoHomeModal(() => { done(); runTravel('apartment'); });
+  });
 
   // ─── Engine hooks → enqueue notifications ──────────────────────────────────
   hooks.onActionComplete = ({ id, bonuses, beat, reward, setback, npcShift }) => {
@@ -245,6 +251,10 @@ function startGame() {
     enqueueNotification({ type: 'endOfDay' });
   };
 
+  hooks.onGoHomeReady = () => {
+    enqueueNotification({ type: 'goHome' });
+  };
+
   // Step 2: NPC mood / life-events system
   hooks.onBetweenPhases = () => {
     // No per-phase changes needed — all NPC stat changes are event-driven
@@ -317,8 +327,11 @@ function startGame() {
     enqueueNotification({ type: 'npcMeet', npcId });
   };
 
-  // If we loaded into a pending end-of-day state, show the screen immediately.
-  if (state.flags.pendingEndOfDay) {
+  // If we loaded mid-"go home" (evening ended away from home), re-show the prompt —
+  // it must clear before the day can end. Otherwise, if a reflection is pending, show it.
+  if (state.flags.pendingGoHome) {
+    enqueueNotification({ type: 'goHome' });
+  } else if (state.flags.pendingEndOfDay) {
     enqueueNotification({ type: 'endOfDay' });
   }
 
@@ -451,7 +464,29 @@ function npcEventConditionsMet(conditions) {
   return true;
 }
 
+// Centralized travel: plays the ~5s train overlay, then commits the move. Every
+// trip (rail pill, People "Visit", end-of-day Go Home) routes through here.
+function runTravel(locId) {
+  if (locId === state.location) return;
+  const goingHomeToEnd = state.flags.pendingGoHome && locId === 'apartment';
+  // Don't show the overlay for a trip that can't be afforded (rail already disables
+  // these; this guards the People "Visit" path). The end-of-day trip home is free.
+  if (!goingHomeToEnd && state.time.remaining < travelCostTo(locId)) return;
+  audio.playTap();
+  showTravelOverlay(locId, () => {
+    doTravel(locId, { free: goingHomeToEnd });
+    // When free (going home to end the day), doTravel's own "time === 0" check fires
+    // endPhase, which takes the at-home reflection branch — no extra wiring needed.
+  });
+}
+
 function handleAction(actionId) {
+  // While the go-home prompt is pending and you're still out, any action attempt just
+  // re-surfaces the prompt — you can't act until you've gone home.
+  if (state.flags.pendingGoHome && state.location !== 'apartment') {
+    enqueueNotification({ type: 'goHome' });
+    return;
+  }
   const result = doAction(actionId);
   if (!result.ok) {
     // Silently ignore — UI already prevents clicking when locked/no-energy
@@ -461,9 +496,7 @@ function handleAction(actionId) {
 }
 
 function handleTravel(locId) {
-  const result = doTravel(locId);
-  if (!result.ok) return;
-  audio.playTap();
+  runTravel(locId);
 }
 
 function handleEndPhase() {
@@ -481,9 +514,10 @@ function handleVisit(npcId) {
   const home = ACTION_DEFS[`visit_${npcId}`]?.location;
   setView('actions');
   if (home && home !== state.location) {
-    doTravel(home);   // best-effort; if time is short you simply arrive next chance
+    runTravel(home);   // plays the travel overlay; best-effort if time is short
+  } else {
+    audio.playTap();
   }
-  audio.playTap();
 }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ export const hooks = {
   onPhaseChange:     null, // ({ from, to, auto }) => void  (UI-facing)
   onBetweenPhases:   null, // ({ from, to }) => void  (future: mood drift, world refresh)
   onEndOfDayReady:   null, // ({ dayLog }) => void
+  onGoHomeReady:     null, // () => void  (evening ended away from home — prompt to head home)
   onEndOfDay:        null, // ({ dayLog }) => void  (future: emergent events)
   onNewDay:          null, // (day) => void
   onPayday:          null, // () => void
@@ -76,9 +77,9 @@ export function doAction(actionId) {
 
 // Travel to a location. Spends time, changes state.location. Auto-advances phase if time runs out.
 // Returns the same shape as travelTo from locations.js: { ok, reason?, cost? }.
-export function doTravel(targetLoc) {
+export function doTravel(targetLoc, { free = false } = {}) {
   const from = state.location;
-  const result = travelTo(targetLoc);
+  const result = travelTo(targetLoc, free);
   if (!result.ok) return result;
 
   hooks.onTravel?.({ from, to: targetLoc, cost: result.cost });
@@ -119,7 +120,19 @@ export function endPhase(auto = false) {
     return true;
   }
 
-  // Evening done — reflection mode.
+  // Evening done. You can only end the day from home — if you're out, prompt to head
+  // home first and stay in evening (time 0) until you do.
+  if (state.location !== 'apartment') {
+    if (!state.flags.pendingGoHome) {       // fire the prompt once
+      state.flags.pendingGoHome = true;
+      hooks.onGoHomeReady?.();
+    }
+    saveGame();
+    return true;                            // no reflection yet
+  }
+
+  // At home — reflection mode.
+  state.flags.pendingGoHome = false;
   state.time.phase = 'reflecting';
   state.flags.pendingEndOfDay = true;
   hooks.onEndOfDay?.({ dayLog: state.dayLog });

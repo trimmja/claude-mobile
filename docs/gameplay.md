@@ -32,6 +32,10 @@ Travel is how `state.location` changes. It costs **time only** (never energy). C
 
 **Where you wake up:** `engine.endDay()` resets `state.location = 'apartment'` — each new morning starts at home.
 
+**Cinematic travel (v37):** every trip plays a ~5s full-screen train video before you arrive (`showTravelOverlay` → `assets/video/travel.MP4`). All trips route through `main.runTravel()`. Not skippable yet.
+
+**Go home to end the day (v37):** when the evening's time runs out while you're **away from home**, the day doesn't end — a 🌙 "It's getting late" prompt appears with a **Go Home** button, and any action you try just re-surfaces it. The trip home at this point is **free** (no time cost, since the phase is spent). Once you're home, the end-of-day reflection fires. Evenings spent at the apartment skip the prompt and reflect immediately.
+
 **Travel UI (Direction D):** A horizontal `.travel-rail` of glass pills sits at the bottom of the Scene (above the anchor card + dock). Each pill shows glyph + short name; non-current pills add a `⏳cost` chip and disable when you can't afford it. The current location is the solid-pink pill. Tapping a pill calls `engine.doTravel(locId)`. The current location is also named in the **"You are here" anchor card** glued directly above the dock. The pill for the *recommended* location gets a ★ ring when you're not there.
 
 **People-view "Visit" button:** Each met NPC card has a single "Visit ⛩️" button that **navigates** — it switches to the Scene and travels to that NPC's location (`handleVisit` in `main.js`). It does NOT auto-run the visit action; you tap their card in the dock once you arrive. (This matches the Direction D design — Visit orients you, the dock does the acting.)

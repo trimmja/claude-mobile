@@ -33,7 +33,8 @@ js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead
 js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
 js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute(); startStationAmbience()/stopStationAmbience()
 js/ui.js              — Direction D rendering: stats bar, day-beat, scene, anchor, travel rail, dock,
-                        people/journal overlays, setView() view-switching, all modals/popups; renderFrame() on rAF
+                        people/journal overlays, setView() view-switching, all modals/popups; renderFrame() on rAF;
+                        showTravelOverlay() (cinematic travel) + showGoHomeModal() (end-of-day go-home gate)
 js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
 js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
 js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)
@@ -41,4 +42,5 @@ manifest.json         — PWA config (display: standalone)
 sw.js                 — caches all JS/CSS/HTML; bump CACHE version to match APP_VERSION; MP4/video files are bypassed
 assets/images/npcs/   — NPC portrait images (kenji/yuki/hiro.png); kanji fallback if missing
 assets/video/shinjuku.MP4 — looping 10s video of Shinjuku Station; used as animated background + ambient audio source
+assets/video/travel.MP4   — train-interior clip for the ~5s travel-transition overlay (TRAVEL_VIDEOS in ui.js; add more clips here for variety)
 ```

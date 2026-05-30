@@ -91,13 +91,15 @@ export function travelCostTo(locId) {
 
 // Attempts to move the player to `locId`. Returns { ok, reason }.
 // Fails if the destination is invalid, you're already there, or you can't afford the time.
-export function travelTo(locId) {
+// `free` = skip the time cost (used for the end-of-day trip home, when the evening's
+// time is already spent). Location still changes.
+export function travelTo(locId, free = false) {
   if (!LOCATION_DEFS[locId])    return { ok: false, reason: 'unknown' };
   if (state.location === locId) return { ok: false, reason: 'sameLocation' };
 
   const cost = travelCostTo(locId);
-  if (!spendTime(cost)) return { ok: false, reason: 'time' };
+  if (!free && !spendTime(cost)) return { ok: false, reason: 'time' };
 
   state.location = locId;
-  return { ok: true, cost };
+  return { ok: true, cost: free ? 0 : cost };
 }

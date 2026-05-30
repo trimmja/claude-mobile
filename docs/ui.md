@@ -64,10 +64,20 @@ drives which view is visible (set by `setView()` in `js/ui.js`).
 [#toast]              — fixed bottom-center; milestone/payday/phase-auto-advance
 [#npc-state-card]     — bottom-anchored card w/ portrait; end-of-day NPC threshold moments
 [#story-popup]        — Direction D bottom sheet (grip + body + reward/setback/shift chip rows)
-[#modal]              — NPC meet / stage-advance / conversion / reset confirm
+[#modal]              — NPC meet / stage-advance / conversion / reset confirm / go-home (🌙 "It's getting late" + Go Home)
+[#travel-overlay]     — top-most (z130) cinematic travel transition: full-bleed <video#travel-vid> + scrim + #travel-caption
 [#end-of-day]         — full-overlay reflection screen
 [#settings-overlay]   — bottom sheet; refresh + mute + reset
 ```
+
+**Travel transition (v37):** every trip plays `showTravelOverlay(toLocId, onComplete)` — a full-screen
+~5s train video (`#travel-overlay`, src from `TRAVEL_VIDEOS` in `js/ui.js`) with a "🚃 Traveling to X…"
+caption, then commits the move. Not skippable for now (a toggle is planned). Routed through
+`main.runTravel()` (rail pills, People "Visit", and the end-of-day Go Home button all use it).
+
+**Go-home gate (v37):** when the evening ends while you're not home, the day won't end until you go
+home. `showGoHomeModal(onGoHome)` is a forced modal (🌙, "It's getting late", single **Go Home 🏠**
+button — no backdrop/close). Tapping it plays the travel overlay home; arriving fires the reflection.
 
 **Dock cards** (`.dock-card`): icon, name, JP subtitle (Zen Maru Gothic), 2-line clamped description
 (from `ACTION_DESC` in `language.js`), and a meta chip row — ⏳time · ⚡energy · gain · cost. The

@@ -107,6 +107,7 @@ export function loadGame() {
       pendingNPCMeet: null,
       pendingMilestone: null,
       pendingEndOfDay: saved.flags?.pendingEndOfDay || false,
+      pendingGoHome: saved.flags?.pendingGoHome || false,
       pendingStageAdvances: [],
       pendingLangLevelUp: 0,
       unreadJournalCount: saved.flags?.unreadJournalCount ?? 0,

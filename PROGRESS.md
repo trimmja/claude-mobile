@@ -38,6 +38,8 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | Stats bar = 5 cells (Faith/Energy/Wisdom/Language/Support); contacts moved to People (v36) | ✅ | n/a | ❌ not yet |
 | ★ Recommendation engine + dock card / travel-pill ring (v36) | ✅ | n/a | ❌ not yet |
 | Editorial day-beat header + dayBeats.json phrases (v36) | ✅ | ✅ 20 lines | ❌ not yet |
+| Cinematic travel overlay — ~5s train video on every trip (v37) | ✅ | ✅ 1 clip (travel.MP4) | ❌ not yet |
+| Go-home end-of-day gate — must travel home before the day ends (v37) | ✅ | ✅ | ❌ not yet |
 
 ---
 
@@ -47,6 +49,7 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 - **Touch targets** — ✅ done in v36 (⚙ gear + ✕ settings-close are now 44px). Re-audit any remaining small hit areas on iPhone.
 - **Faith balance** — faith regen feels fast enough that costs are trivial; consider raising costs or slowing regen
 - **Payday countdown** — no way to know when support arrives; add "Support in X days" somewhere
+- **Travel popup skip/off toggle** — v37 ships the ~5s travel video as always-full / not-skippable. Add a Settings toggle (and/or tap-to-skip) once it's been played enough to know the right default. More travel clips can be added to `TRAVEL_VIDEOS` in `js/ui.js` for variety.
 
 ---
 

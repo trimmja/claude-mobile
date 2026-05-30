@@ -60,6 +60,7 @@ export const state = {
     pendingNPCMeet: null,
     pendingMilestone: null,
     pendingEndOfDay: false,
+    pendingGoHome: false,       // true → evening ended away from home; must travel home to end the day
     pendingStageAdvances: [],   // [{ npcId, newStage }] — drained after action by engine
     pendingLangLevelUp: 0,      // 0 if none; otherwise the new level — drained by engine
     unreadJournalCount: 0,      // resets when player taps the Journal tab
