@@ -90,9 +90,9 @@ export function actionUnlockCacheKey() {
     state.resources.contacts,
     state.resources.energy.current,
     state.location,
-    `k:${n.kenji.met}:${n.kenji.stage}`,
-    `y:${n.yuki.met}:${n.yuki.stage}`,
-    `h:${n.hiro.met}:${n.hiro.stage}`,
+    `k:${n.kenji.met}:${n.kenji.stage}:${n.kenji.lastSeenDay}:${Math.floor(n.kenji.trust)}`,
+    `y:${n.yuki.met}:${n.yuki.stage}:${n.yuki.lastSeenDay}:${Math.floor(n.yuki.trust)}`,
+    `h:${n.hiro.met}:${n.hiro.stage}:${n.hiro.lastSeenDay}:${Math.floor(n.hiro.trust)}`,
   ].join('|');
 }
 

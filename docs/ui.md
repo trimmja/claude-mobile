@@ -1,58 +1,86 @@
 # UI
 
+The game screen is the **Direction D ("Immersive, Anchored")** redesign (shipped v36).
+A full-bleed location scene sits behind everything; chrome floats on glass. Three views
+(**Scene / People / Journal**) switch via a bottom segmented nav; the day-beat header and
+the action dock are Scene-only, while the stats bar is always present.
+
 ## CSS design tokens (css/style.css)
 ```css
---bg: #0F0F1A           /* deep navy background */
---surface: #1A1A2E      /* card background */
---surface-2: #252540    /* elevated card */
---surface-3: #303058    /* inputs, track backgrounds */
---text: #F0EDE8         /* warm white */
+--bg: #0B0B16           /* near-black base behind the scene */
+--surface: #1A1A2E      /* solid cards (modals, end-of-day, settings, toast) */
+--surface-2: #252540
+--surface-3: #303058
+--text: #F0EDE8
 --text-muted: #8080A8
 --text-dim: #454568
---sakura: #FF8FAB       /* cherry blossom pink — primary accent; also time bar */
---sakura-light: #FFB3C6
---gold: #F0C040         /* gold — milestones, achievements */
---faith: #A78BFA        /* purple */
---trust: #34D399        /* green */
---money: #FBBF24        /* amber */
---wisdom: #60A5FA       /* blue */
---lang: #FB7185         /* coral/red */
---energy: #FCD34D       /* warm yellow — energy bar + ⚡ tags */
---danger: #F87171
---success: #34D399
+--sakura: #FF8FAB       /* primary accent — buttons, time bar, current travel pill (== design pink) */
+--sakura-light: #FFB3C6 /* chips, eyebrows, rec hint */
+--gold: #F0C040         /* milestones, conversion, journal unread dot, Elder accent */
+--faith: #A78BFA  --trust: #34D399  --money: #FBBF24  --wisdom: #60A5FA  --lang: #FB7185
+--energy: #FCD34D       /* energy stat + ⚡ chips */
+--positive: #86E0AC     /* gain chips / reward row */
+--danger: #F87171  --success: #34D399
+/* Direction D glass */
+--glass: rgba(22,22,40,.58)            /* + blur(16px) saturate(160%) */
+--glass-border: rgba(255,255,255,.12)
+--glass-shadow: 0 4px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.12)
 ```
-Fonts: `Nunito` (English UI) + `Noto Sans JP` (Japanese text) — Google Fonts in `index.html`.
+**Location accent colors** (drive `--acc` on the anchor card; set per-location in `LOCATION_DEFS`):
+apartment `#A78BFA` · station `#60A5FA` · park `#34D399` · café `#D08A3E` · shrine `#F87171` · onsen `#2DD4BF`.
+
+**Fonts** (Google Fonts in `index.html`): `Nunito` (all UI), `Noto Sans JP` (kanji glyphs/fallbacks),
+`Zen Old Mincho` (the editorial day-beat phrase only), `Zen Maru Gothic` (JP place/word labels on cards).
 
 ## UI layout (index.html)
 
+`#game-screen` carries a mode class — `mode-scene` / `mode-people` / `mode-journal` — that
+drives which view is visible (set by `setView()` in `js/ui.js`).
+
 ```
-[#story-popup]      — bottom-sheet popup; slides up after action; tap to dismiss
-[#end-of-day]       — full-overlay reflection screen; appears when evening ends
-[game-header]       — character name | "Day N" | ⚙ settings button
-[.hud]              — 6 resource widgets: Faith ✦ | Energy ⚡ N/M | Contacts ◈ | Money ◎ | Wisdom ◆ | Language 語
-[.top-bar]          — always-visible bar between HUD and scene; two columns:
-  [.top-bar-phase]  — phase icon + phase name (EN) + pink scene-time bar fill + "N/M" count
-  [#travel-row]     — one Travel button per other location with ⏳cost; disabled when time too low
-[.location-view]    — fills remaining vertical space; immersive scene background
-  [#location-img]   — still PNG for non-station locations; cross-fades on location change
-  [#location-vid]   — looping MP4 for Shinjuku Station only; muted for iOS autoplay; opacity-fades in/out
-  [#location-bg]    — CSS-gradient fallback layer (class swapped per location)
-  [#scene-open-btn] — floating pill button "↑ Activities" near bottom of scene; tap to open panel; hidden when panel is open
-  [.location-info]  — JP/EN location name overlaid at bottom of scene
-[#station-ambience] — hidden <audio> element; plays ambient station sound at volume 0.35 when at station
-[#sheet-scrim]      — dark overlay (z-index 19) behind the sheet when open; dims scene + top-bar; tap to close panel
-[#bottom-sheet]     — slides up over the scene; fully hidden (translateY 100%) when closed — no peek strip
-  [.sheet-handle]   — close-only row at top of sheet; tap to close; shows "↓ tap to close" pill when sheet is open
-  [.content-area]   — scrollable panel area
-    [#tab-actions]  — phase strip (icon + time bar + End Phase button) + nudge + action list
-    [#tab-people]   — .people-list (only met NPCs; empty state if none) + contacts-summary
-    [#tab-journal]  — .journal-list (empty on day 1; entries added on milestones, NPC meets, stage advances, lang level-ups; tap to expand body)
-  [.content-tabs]   — bottom nav inside the sheet: Activities | People | Journal (📖 — shows "(N)" badge when unread entries)
-[#toast]            — fixed, bottom-center; slides up on milestone/payday/phase-auto-advance
-[#modal]            — full-screen overlay; NPC first meetings + reset confirm
-[#settings-overlay] — bottom sheet; mute + reset buttons
+[.scene-layer]        — full-bleed scene behind everything (z0)
+  [#location-bg]      — CSS-gradient fallback layer (class swapped per location)
+  [#location-img]     — still PNG for non-station locations; cross-fades on change
+  [#location-vid]     — looping MP4 for Shinjuku Station only; muted for iOS autoplay
+  [.scene-scrim]      — Direction D vertical gradient scrim for text legibility
+[#station-ambience]   — hidden <audio>; ambient station sound when at station
+[.top-chrome]         — absolute, top; z20 (above overlays). Holds:
+  [#day-beat]         — SCENE ONLY (hidden in mode-people/journal). Editorial header:
+    [#beat-eyebrow]   — "Day N · Weekday phase" (uppercase, pink, wide tracking)
+    [.beat-phrase]    — Zen Old Mincho serif line (#beat-phrase-en) + phase kanji (#beat-phrase-jp)
+    [.beat-timeline]  — ⏳ + phase name + pink time bar (#beat-time-fill) + "N of M left"
+    [.beat-right]     — ⛅ spiritDry indicator (≥5 only) + ⚙ gear (#header-settings)
+  [.stats-bar]        — ALWAYS visible (margin-top:0 in overlay modes so it pins to the top).
+                        5 glass cells: ✦ Faith · ⚡ Energy N/M · ◆ Wisdom · 語 Lv.N · ¥ Support
+[.scene-bottom]       — SCENE ONLY (hidden in overlay modes); absolute bottom; z10. Stacks:
+  [#travel-row]       — .travel-rail of glass pills (glyph + short name + ⏳cost); current=solid pink;
+                        the recommended location's pill gets a ★ ring when you're not there
+  [#location-anchor]  — "● You are here" card: thumbnail + name/JP + accent bar (--acc) + "Travel ↑"
+  [.dock]             — [.dock-head] label "What fits this <phase>" + "· swipe →" hint + [#end-phase-btn];
+                        [#phase-nudge]; [#action-list] = horizontal scroll-snap .dock-card row
+[#tab-people]         — .overlay (z15). Title "Your People 人々" + [#contacts-top] (◈ contacts) + .people-list
+[#tab-journal]        — .overlay. Title "Journal 日記" + .journal-list of .jcard (always-expanded; unread dot)
+[#content-tabs]       — .seg-nav (z30, glass pill): 🗺️ Scene | 👥 People | 📖 Journal (shows "(N)" when unread)
+[#toast]              — fixed bottom-center; milestone/payday/phase-auto-advance
+[#npc-state-card]     — bottom-anchored card w/ portrait; end-of-day NPC threshold moments
+[#story-popup]        — Direction D bottom sheet (grip + body + reward/setback/shift chip rows)
+[#modal]              — NPC meet / stage-advance / conversion / reset confirm
+[#end-of-day]         — full-overlay reflection screen
+[#settings-overlay]   — bottom sheet; refresh + mute + reset
 ```
 
-**Phase strip** appears in **two places**: (1) `.top-bar` — always visible above the scene, shows phase icon + EN name + pink time bar + `N/M` count. (2) Inside the Activities tab (bottom sheet) — same data plus JP phase name and the End Phase button (glows when no action fits).
+**Dock cards** (`.dock-card`): icon, name, JP subtitle (Zen Maru Gothic), 2-line clamped description
+(from `ACTION_DESC` in `language.js`), and a meta chip row — ⏳time · ⚡energy · gain · cost. The
+**recommended** card (`.rec`) gets a pink ring + `★ Recommended` tag and is sorted to the front; it
+only appears when the player is AT the recommendation's location (see `js/recommend.js`).
 
-**End-of-day screen** (`#end-of-day`) shows: "Day N" header, per-phase summary of actions taken, totals (actions / contacts / lang level / goals), one random reflection line from `data/reflections.json`, Continue button.
+**View switching:** the segmented nav calls `setView(tab)` → toggles `#game-screen` mode class +
+overlay `.hidden`. People/Journal hide the day-beat + dock so only the (useful) stats bar floats over
+the overlay — no day-text bleed-through behind the glass cards.
+
+**People "Visit" button** navigates (switch to Scene + travel to that NPC's location); the actual
+visit happens by tapping their card in the dock there.
+
+**End-of-day screen** (`#end-of-day`) shows: "Day N" header, per-phase summary of actions taken,
+totals (actions / contacts / lang level / goals), one reflection line from `data/reflections.json`,
+Continue button.

@@ -6,6 +6,7 @@ export const NPC_DEFS = {
     nameJP: '健二',
     role: 'Salaryman, 34',
     emoji: '👔',
+    line: 'Corporate stress surfaces. He says things he’d never say at work.',
     portraitClass: 'portrait-kenji',
     cardClass: 'npc-kenji',
     // langWeight: how much language level affects trust gain (1.0 = fully verbal)
@@ -53,6 +54,7 @@ export const NPC_DEFS = {
     nameJP: '由紀',
     role: 'University student, 21',
     emoji: '📚',
+    line: 'She came back with a list of written questions. Theology as a puzzle.',
     portraitClass: 'portrait-yuki',
     cardClass: 'npc-yuki',
     // langWeight: how much language level affects trust gain (1.0 = fully verbal)
@@ -96,6 +98,7 @@ export const NPC_DEFS = {
     nameJP: '浩',
     role: 'Retired, 68',
     emoji: '🌿',
+    line: 'He told you Emiko’s name. He told you she prayed.',
     portraitClass: 'portrait-hiro',
     cardClass: 'npc-hiro',
     // langWeight: low — presence and silence are this relationship

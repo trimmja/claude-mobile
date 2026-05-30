@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Nunito:wght@400;600;700;800&family=Zen+Old+Mincho:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap');
 
 :root {
-  --bg: #0F0F1A;
+  --bg: #0B0B16;
   --surface: #1A1A2E;
   --surface-2: #252540;
   --surface-3: #303058;
@@ -41,6 +41,12 @@
   --tab-bar-height: calc(var(--bottom-nav-h) + var(--safe-bottom));
 
   --energy: #FCD34D;
+
+  /* Direction D glass surfaces */
+  --glass: rgba(22,22,40,0.58);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-shadow: 0 4px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+  --positive: #86E0AC;
 }
 
 *, *::before, *::after {
@@ -214,140 +220,59 @@ input { user-select: text; }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.4; cursor: default; transform: none; }
 
-/* ─── GAME SCREEN ─── */
+/* ══════════════════════════════════════════════════════════════════
+   GAME SCREEN — Direction D ("Immersive, Anchored")
+   Full-bleed scene · glass day-beat + stats chrome · anchored task dock
+   ══════════════════════════════════════════════════════════════════ */
 #game-screen {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  /* No bottom padding — bottom sheet is a fixed overlay, not in flow */
-  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
-}
-
-/* Game Header */
-.game-header {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  gap: 8px;
-  flex-shrink: 0;
-  height: 50px;
-  position: relative;
-  z-index: 25;            /* stays above the sheet scrim */
-}
-
-.header-name {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--sakura-light);
-  flex: 1;
-}
-
-.header-day {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 700;
-}
-
-.header-spiritdry {
-  font-size: 18px;
-  line-height: 1;
-  margin-right: 4px;
-  opacity: 0.6;
-  transition: opacity 0.4s;
-  filter: drop-shadow(0 0 6px rgba(167,139,250,0.4));
-}
-
-.header-settings {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 6px;
-  line-height: 1;
-}
-
-/* Resource HUD */
-.hud {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 8px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 25;            /* stays above the sheet scrim */
-}
-
-.res {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  gap: 2px;
-  padding: 2px 4px;
-}
-
-.res-icon { font-size: 14px; line-height: 1; }
-.res-val  { font-size: 14px; font-weight: 800; line-height: 1; }
-.res-lbl  { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
-.res.faith  .res-icon, .res.faith  .res-val { color: var(--faith); }
-.res.energy .res-icon, .res.energy .res-val { color: var(--energy); }
-.res.trust  .res-icon, .res.trust  .res-val { color: var(--trust); }
-.res.money  .res-icon, .res.money  .res-val { color: var(--money); }
-.res.wisdom .res-icon, .res.wisdom .res-val { color: var(--wisdom); }
-.res.lang   .res-icon { color: var(--lang); font-family: 'Noto Sans JP'; font-size: 12px; }
-.res.lang   .res-val  { color: var(--lang); font-size: 11px; }
-
-.lang-pip-row {
-  display: flex;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-.lang-pip {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--surface-3);
-  transition: background 0.3s;
-}
-
-.lang-pip.filled { background: var(--lang); }
-
-/* Location View — fills all remaining space in the flex column */
-.location-view {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* Gradient fallback layer — shows through when image not loaded */
-.location-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  transition: background 0.8s ease;
-  z-index: 0;
+  display: block;            /* override .screen flex */
+  overflow: hidden;
+  background: #0B0B16;
+  padding: 0;
 }
+#game-screen * { box-sizing: border-box; }
 
-/* Scene photograph/illustration — above the gradient, below the vignette */
-.location-img {
+/* ── Full-bleed scene layer ── */
+.scene-layer { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+
+.location-bg { position: absolute; inset: 0; z-index: 0; transition: background 0.8s ease; }
+
+.location-img, .location-vid {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 40%;
+  object-position: center 42%;
+  z-index: 1;
   display: block;
   transition: opacity 0.6s ease;
-  z-index: 1;
+}
+.location-img { animation: sceneBreathe 18s ease-in-out infinite; transform-origin: center 42%; }
+.location-vid { opacity: 0; }
+
+@keyframes sceneBreathe {
+  0%, 100% { transform: scale(1.0); }
+  50%      { transform: scale(1.04); }
 }
 
+/* Direction D vertical scrim over the scene */
+.scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(8,8,20,0.82) 0%,
+    rgba(8,8,20,0.34) 24%,
+    rgba(8,8,20,0.06) 44%,
+    rgba(8,8,20,0.50) 64%,
+    rgba(8,8,20,0.96) 100%);
+}
+
+/* Gradient fallbacks (show through before the scene image loads) */
 .bg-apartment { background: linear-gradient(155deg, #1A0A30 0%, #3A1560 40%, #2A0A50 100%); }
 .bg-station   { background: linear-gradient(155deg, #050F1E 0%, #0F2A4A 50%, #1A4A7A 100%); }
 .bg-park      { background: linear-gradient(155deg, #081A0E 0%, #0F401A 50%, #1A7040 100%); }
@@ -355,864 +280,496 @@ input { user-select: text; }
 .bg-shrine    { background: linear-gradient(155deg, #1A0505 0%, #4A0F0F 50%, #8A2020 100%); }
 .bg-onsen     { background: linear-gradient(155deg, #050F18 0%, #0F2A3A 40%, #1A5070 100%); }
 
-/* Dark vignette over the scene — keeps text readable at bottom.
-   Lives on .location-view::after so it sits above the img (z-index: 1) */
-.location-view::after {
-  content: '';
+/* ── Top chrome: day-beat (scene only) + stats bar (always) ── */
+.top-chrome {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(15,15,26,0.05) 0%,
-    rgba(15,15,26,0.15) 40%,
-    rgba(15,15,26,0.85) 100%
-  );
-  z-index: 2;
-  pointer-events: none;
+  z-index: 20;
+  top: calc(var(--safe-top) + 14px);
+  left: 14px;
+  right: 14px;
 }
 
-/* Subtle scene animation — slight slow zoom gives a living feel */
-@keyframes sceneBreathe {
-  0%, 100% { transform: scale(1.0); }
-  50%       { transform: scale(1.04); }
+.day-beat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
-.location-img {
-  animation: sceneBreathe 18s ease-in-out infinite;
-  transform-origin: center 40%;
+#game-screen.mode-people  .day-beat,
+#game-screen.mode-journal .day-beat { display: none; }
+
+.beat-text { min-width: 0; }
+
+.beat-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #FFC2D2;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.7);
 }
 
-/* Station: looping video background — same stacking as .location-img */
-.location-vid {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
-  display: block;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  z-index: 1;
+.beat-phrase {
+  font-family: 'Zen Old Mincho', serif;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.65);
+  margin-top: 5px;
 }
+.beat-phrase .jp { font-size: 18px; color: rgba(255,255,255,0.72); margin-left: 9px; }
 
-/* decorative elements per location */
-.bg-apartment::before {
-  content: '窓';
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  font-family: 'Noto Sans JP';
-  font-size: 64px;
-  color: rgba(255,255,255,0.04);
-  line-height: 1;
-}
-
-.bg-station::before {
-  content: '駅';
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  font-family: 'Noto Sans JP';
-  font-size: 64px;
-  color: rgba(255,255,255,0.04);
-  line-height: 1;
-}
-
-.bg-park::before {
-  content: '🌸';
-  position: absolute;
-  right: 24px;
-  top: 18px;
-  font-size: 52px;
-  opacity: 0.12;
-}
-
-.bg-cafe::before {
-  content: '☕';
-  position: absolute;
-  right: 24px;
-  top: 18px;
-  font-size: 52px;
-  opacity: 0.12;
-}
-
-.bg-shrine::before {
-  content: '⛩';
-  position: absolute;
-  right: 24px;
-  top: 14px;
-  font-size: 56px;
-  opacity: 0.12;
-}
-
-.bg-onsen::before {
-  content: '♨';
-  position: absolute;
-  right: 24px;
-  top: 18px;
-  font-size: 56px;
-  opacity: 0.12;
-}
-
-.location-info {
-  position: absolute;
-  bottom: 14px;
-  left: 16px;
-  z-index: 3;
-}
-
-/* Scene open-panel floating button — replaces the old peek strip */
-.scene-open-btn {
-  position: absolute;
-  bottom: 80px;          /* above the location-info overlay */
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15, 15, 26, 0.82);
-  border: 1.5px solid var(--sakura);
-  border-radius: 999px;
-  color: var(--text);
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 22px;
+.beat-timeline {
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  z-index: 5;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  white-space: nowrap;
-  min-height: 44px;      /* iOS touch target */
-  box-shadow: 0 2px 16px rgba(0,0,0,0.5);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  gap: 9px;
+  margin-top: 11px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.82);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
 }
-
-.scene-open-btn:active {
-  opacity: 0.75;
-}
-
-/* Hidden state — when panel is open */
-.scene-open-btn.hidden {
-  opacity: 0 !important;
-  pointer-events: none;
-}
-
-.scene-open-divider {
-  color: var(--text-muted);
-  opacity: 0.5;
-}
-
-/* ── Top bar: phase + time + travel (sits under HUD in page flow) ── */
-.top-bar {
-  flex-shrink: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 8px 12px 10px;
-}
-
-/* Phase row inside the top bar */
-.top-bar-phase {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.top-phase-icon { font-size: 16px; line-height: 1; }
-
-.top-phase-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.scene-time-bar {
-  flex: 1;               /* stretches to fill available space */
+.beat-time-icon { font-size: 12px; }
+.beat-timebar {
+  flex: 1;
+  max-width: 130px;
   height: 5px;
-  background: var(--surface-3);
-  border-radius: 3px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.22);
   overflow: hidden;
 }
-
-.scene-time-fill {
+.beat-timebar > i {
+  display: block;
   height: 100%;
   background: var(--sakura);
-  border-radius: 3px;
+  border-radius: 99px;
   transition: width 0.4s ease;
 }
 
-.top-time-count {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 700;
-  min-width: 28px;
-  text-align: right;
-  white-space: nowrap;
+.beat-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.header-spiritdry {
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.4s;
+  filter: drop-shadow(0 0 6px rgba(167,139,250,0.4));
+}
+.beat-gear {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #F0EDE8;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
-/* Travel row inside the top bar — clean, no glass needed */
-.top-bar .travel-row {
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
+/* Stats bar — Faith · Energy · Wisdom · Language · Support */
+.stats-bar {
+  display: flex;
+  gap: 7px;
+  align-items: stretch;
+  margin-top: 13px;
+  padding: 9px 10px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
 }
+/* On People/Journal the day-beat is gone, so the stats bar sits at the very top */
+#game-screen.mode-people  .stats-bar,
+#game-screen.mode-journal .stats-bar { margin-top: 0; }
 
-/* Destination buttons scroll horizontally in the top bar */
-.top-bar .travel-dests {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-.top-bar .travel-dests::-webkit-scrollbar { display: none; }
+.stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.stat .v { font-size: 15px; font-weight: 800; white-space: nowrap; }
+.stat .v .stat-ic { font-size: 12px; opacity: 0.9; }
+.stat .l { font-size: 8px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(240,237,232,0.55); }
+.stat.eng .v { color: var(--energy); }
+.stat.lang .v .stat-ic { font-family: 'Noto Sans JP', sans-serif; color: var(--lang); }
+.stat-sep { width: 1px; background: rgba(255,255,255,0.12); margin: 2px 0; }
 
-.location-name-jp {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 16px rgba(0,0,0,0.9);
-  line-height: 1.2;
-}
-
-.location-name-en {
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-top: 2px;
-}
-
-.location-locked-badge {
+/* ── Scene bottom zone: travel rail · anchor · dock ── */
+.scene-bottom {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid var(--border-light);
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 11px;
-  color: var(--text-muted);
-  z-index: 1;
-}
-
-/* Sheet scrim — dark overlay behind the sheet when open */
-.sheet-scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 19;            /* above scene/top-bar, below sheet (20) */
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.35s;
-}
-.sheet-scrim.active {
-  pointer-events: auto;   /* tappable to close sheet */
-  opacity: 1;
-}
-
-/* Bottom sheet — slides up over the scene */
-.bottom-sheet {
-  position: fixed;
+  z-index: 10;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 75vh;
-  background: var(--bg);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 40px rgba(0,0,0,0.6);
-  z-index: 20;
+  bottom: calc(var(--safe-bottom) + 88px);
+}
+#game-screen.mode-people  .scene-bottom,
+#game-screen.mode-journal .scene-bottom { display: none; }
+
+/* Travel rail */
+.travel-rail {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;         /* clip children to sheet bounds */
-  transform: translateY(100%);
-  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
-  will-change: transform;
-}
-
-.bottom-sheet.sheet-open {
-  transform: translateY(0);
-}
-
-/* Sheet drag handle — acts as the close button row when open */
-.sheet-handle {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 0 8px;
-  cursor: pointer;
-  border-radius: 20px 20px 0 0;
-}
-
-/* No more .sheet-pill — was the "weird square" */
-
-.sheet-handle-hint {
-  background: var(--surface-2);
-  border: 1px solid var(--border-light);
-  border-radius: 999px;
-  padding: 6px 18px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  opacity: 0;          /* hidden when sheet is closed (off-screen anyway) */
-  transition: opacity 0.25s;
-}
-
-.bottom-sheet.sheet-open .sheet-handle-hint {
-  opacity: 1;          /* visible pill when sheet is open */
-}
-
-/* Content Area — inside the sheet */
-.content-area {
-  flex: 1 1 0;       /* 0 base-size forces iOS to treat this as a constrained flex item */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* Bottom nav (content tabs) — inside the sheet, not fixed */
-.content-tabs {
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-start;
-  min-height: var(--tab-bar-height);
-  padding-bottom: var(--safe-bottom);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-
-.content-tab {
-  flex: 1;
-  padding: 8px 4px 6px;
-  background: none;
-  border: none;
-  border-top: 2px solid transparent;
-  color: var(--text-muted);
-  font-family: 'Nunito', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-height: var(--bottom-nav-h);
-}
-
-.content-tab .content-tab-icon { font-size: 20px; line-height: 1; }
-.content-tab .content-tab-lbl  { font-size: 10px; letter-spacing: 0.4px; }
-
-.content-tab.active {
-  color: var(--sakura);
-  border-top-color: var(--sakura);
-}
-
-.tab-panel {
-  flex: 1 1 0;         /* 0 base-size is the iOS flex-scroll fix */
-  min-height: 0;
-  overflow-y: scroll;  /* scroll (not auto) forces iOS to recognize the scroll container */
-  padding: 12px 12px calc(24px + var(--safe-bottom));
+  gap: 7px;
+  padding: 0 14px 11px;
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+.travel-rail::-webkit-scrollbar { display: none; }
 
-.tab-panel.hidden { display: none !important; }
-
-/* Phase strip — sits above the action list, shows phase + energy + end-phase */
-.phase-strip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.phase-strip-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.travel-pill {
   flex-shrink: 0;
-}
-
-.phase-icon { font-size: 22px; line-height: 1; }
-
-.phase-labels { display: flex; flex-direction: column; line-height: 1.1; }
-
-.phase-name-en {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.phase-name-jp {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 1px;
-}
-
-.time-strip {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-}
-
-.time-icon { color: var(--sakura-light); font-size: 14px; line-height: 1; flex-shrink: 0; }
-
-.time-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--surface-3);
-  border-radius: 4px;
-  overflow: hidden;
-  min-width: 30px;
-}
-
-.time-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--sakura-light), var(--sakura));
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-
-.time-count {
-  font-size: 11px;
+  border-radius: 99px;
+  padding: 8px 13px;
+  font-size: 12px;
   font-weight: 800;
-  color: var(--sakura-light);
-  flex-shrink: 0;
-  min-width: 32px;
-  text-align: right;
-}
-
-.phase-nudge {
-  font-size: 11px;
-  font-style: italic;
-  color: var(--text-dim);
-  text-align: center;
-  margin: -4px 0 10px;
-  letter-spacing: 0.5px;
-}
-
-.end-phase-btn {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: 800;
-  font-family: 'Nunito', sans-serif;
-  color: var(--text-muted);
+  color: #F0EDE8;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  letter-spacing: 0.3px;
+  white-space: nowrap;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
+.travel-pill .c { font-size: 10px; color: var(--sakura-light); }
+.travel-pill.cur { background: rgba(255,143,171,0.95); color: #2A0E16; border-color: transparent; }
+.travel-pill.rec { border-color: rgba(255,143,171,0.9); box-shadow: 0 0 0 3px rgba(255,143,171,0.22); }
+.travel-pill.rec .star { color: var(--sakura-light); }
+.travel-pill.disabled-time { opacity: 0.4; }
 
-.end-phase-btn:active { transform: scale(0.97); }
-.end-phase-btn.warn {
-  color: var(--sakura);
-  border-color: rgba(255,143,171,0.4);
-  background: rgba(255,143,171,0.08);
-}
-
-/* ─── ACTION CARDS ─── */
-.action-list { display: flex; flex-direction: column; gap: 8px; }
-
-.action-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: transform 0.1s, opacity 0.2s, border-color 0.2s;
+/* Anchor card — "You are here" */
+.anchor {
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 62px;
+  margin: 0 14px 11px;
+  padding: 9px 11px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+.anchor::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--acc, #FF8FAB); }
+.anchor-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.45);
+}
+.anchor-body { flex: 1; min-width: 0; }
+.anchor-eye {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--acc, #FF8FAB);
+  margin-bottom: 3px;
+}
+.anchor-eye .pin {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--acc, #FF8FAB);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc, #FF8FAB) 28%, transparent);
+}
+.anchor-name { font-size: 17px; font-weight: 800; line-height: 1.05; display: flex; align-items: baseline; gap: 8px; color: #fff; }
+.anchor-name .jp { font-family: 'Zen Maru Gothic', sans-serif; font-size: 12px; color: rgba(255,255,255,0.62); font-weight: 700; }
+.anchor-go {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(240,237,232,0.78);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 99px;
+  padding: 6px 11px;
 }
 
-.action-card:active:not(.disabled):not(.locked) { transform: scale(0.985); }
+/* Dock */
+.dock-head { display: flex; align-items: center; gap: 7px; padding: 0 16px 9px; }
+.dock-head-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.72);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.dock-rec-hint { font-size: 10px; font-weight: 800; color: var(--sakura-light); }
+.dock-rec-hint.hidden { display: none !important; }
+.dock-head .end-phase-btn { margin-left: auto; }
 
-.action-card.disabled-energy,
-.action-card.disabled-time   { opacity: 0.4; cursor: not-allowed; }
-.action-card.locked          { opacity: 0.35; cursor: not-allowed; }
+.end-phase-btn {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 99px;
+  padding: 8px 13px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  color: #F0EDE8;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 36px;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  transition: transform 0.1s, background 0.15s, color 0.15s;
+}
+.end-phase-btn:active { transform: scale(0.97); }
+.end-phase-btn.warn { color: #2A0E16; background: rgba(255,143,171,0.95); border-color: transparent; }
+
+.phase-nudge {
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(255,255,255,0.62);
+  text-align: center;
+  padding: 0 16px 6px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+}
+.phase-nudge.hidden { display: none !important; }
+
+.dock-cards {
+  display: flex;
+  gap: 11px;
+  padding: 4px 14px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.dock-cards::-webkit-scrollbar { display: none; }
+
+.dock-card {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 176px;
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.1s;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+.dock-card:active { transform: scale(0.97); }
+.dock-card.locked { opacity: 0.5; }
+.dock-card.disabled-time, .dock-card.disabled-energy { opacity: 0.55; }
+.dock-card.rec {
+  border: 1.5px solid rgba(255,143,171,0.9);
+  box-shadow: 0 0 0 4px rgba(255,143,171,0.18), 0 8px 26px rgba(0,0,0,0.5);
+  background: rgba(58,30,42,0.62);
+}
 
 /* Brief flash when an action resolves */
 @keyframes card-flash {
-  0%   { background: var(--surface); }
-  30%  { background: rgba(255, 143, 171, 0.20); }
-  100% { background: var(--surface); }
+  0%   { box-shadow: var(--glass-shadow); }
+  30%  { box-shadow: 0 0 0 3px rgba(255,143,171,0.5), var(--glass-shadow); }
+  100% { box-shadow: var(--glass-shadow); }
 }
-.action-card.flash { animation: card-flash 0.7s ease; }
+.dock-card.flash { animation: card-flash 0.7s ease; }
 
-.action-icon {
-  font-size: 26px;
-  line-height: 1;
-  flex-shrink: 0;
-  width: 34px;
-  text-align: center;
-}
-
-.action-info { flex: 1; min-width: 0; }
-
-.action-name-jp {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 12px;
-  color: var(--text-dim);
-  line-height: 1.3;
-}
-
-.action-name-en {
-  font-size: 15px;
+.dock-card-tag {
+  font-size: 9px;
   font-weight: 800;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.action-meta {
-  display: flex;
-  gap: 6px;
-  margin-top: 5px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.tag {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.tag-faith  { color: var(--faith);  background: rgba(167,139,250,0.12); }
-.tag-trust  { color: var(--trust);  background: rgba(52,211,153,0.12); }
-.tag-money  { color: var(--money);  background: rgba(251,191,36,0.12); }
-.tag-wisdom { color: var(--wisdom); background: rgba(96,165,250,0.12); }
-.tag-lang   { color: var(--lang);   background: rgba(251,113,133,0.12); }
-.tag-cost   { color: var(--danger); background: rgba(248,113,113,0.10); }
-.tag-energy { color: var(--energy); background: rgba(252,211,77,0.14); }
-.tag-energy-up { color: var(--success); background: rgba(52,211,153,0.12); }
-.tag-time { color: var(--sakura-light); background: rgba(255,179,198,0.10); }
-
-/* Location chip on each action card */
-.location-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px 2px 5px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.05);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.location-chip .lc-icon { font-size: 11px; line-height: 1; }
-
-.action-hint {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-style: italic;
-  margin-top: 3px;
-}
-
-.action-requirements {
-  margin-top: 6px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--surface-3);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.action-req-line {
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--text-muted);
-}
-
-.action-req-line.met {
-  color: var(--success);
-}
-
-.action-req-line.unmet {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--sakura-light);
-}
-
-.action-card.locked .action-requirements {
-  border: 1px solid rgba(255, 143, 171, 0.25);
-}
-
-/* ─── NPC CARDS ─── */
-.people-list { display: flex; flex-direction: column; gap: 8px; }
-
-.npc-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 4px;
 }
+.dock-card-ic { font-size: 30px; margin-bottom: 7px; line-height: 1; }
+.dock-card-name { font-size: 16px; font-weight: 800; line-height: 1.1; color: #fff; }
+.dock-card-jp { font-family: 'Zen Maru Gothic', sans-serif; font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+.dock-card-desc {
+  font-size: 11px;
+  line-height: 1.38;
+  color: rgba(240,237,232,0.62);
+  margin-top: 6px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dock-card-meta { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+.dock-mp { font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 7px; background: rgba(255,255,255,0.12); }
+.dock-mp.t { color: var(--sakura-light); }
+.dock-mp.e { color: var(--energy); }
+.dock-mp.g { color: var(--positive); }
+.dock-mp.c { color: #F0A0A0; }
+.dock-card-req { font-size: 10px; color: var(--sakura-light); margin-top: 8px; line-height: 1.35; font-style: italic; }
 
-.npc-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+/* ── Bottom segmented nav ── */
+.seg-nav {
+  position: absolute;
+  z-index: 30;
+  left: 14px;
+  right: 14px;
+  bottom: calc(var(--safe-bottom) + 18px);
+  height: 54px;
+  border-radius: 99px;
+  display: flex;
+  padding: 5px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+.seg-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  border-radius: 99px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-}
-
-.npc-kenji  .npc-avatar { background: linear-gradient(135deg, #0F2A4A, #1A5080); }
-.npc-yuki   .npc-avatar { background: linear-gradient(135deg, #2A0F50, #5A2090); }
-.npc-hiro   .npc-avatar { background: linear-gradient(135deg, #0A2A10, #1A5A28); }
-
-.npc-card.believer .npc-avatar { border-color: var(--gold); }
-
-.npc-info { flex: 1; min-width: 0; }
-
-.npc-name {
-  font-size: 16px;
+  gap: 7px;
+  color: rgba(240,237,232,0.65);
   font-weight: 800;
-  margin-bottom: 1px;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+}
+.seg-btn .seg-ic { font-size: 17px; line-height: 1; }
+.seg-btn.active { background: rgba(255,255,255,0.16); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+
+/* ── People / Journal overlays ── */
+.overlay {
+  position: absolute;
+  z-index: 15;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: calc(var(--safe-bottom) + 84px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(var(--safe-top) + 80px) 16px 16px;
+  animation: dirDup 0.3s cubic-bezier(0.2,0.8,0.2,1);
+}
+.overlay::-webkit-scrollbar { display: none; }
+.overlay.hidden { display: none !important; }
+
+@keyframes dirDup {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
-.npc-role {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
+.overlay-title { font-size: 26px; font-weight: 800; margin-bottom: 3px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); color: #fff; }
+.overlay-title .jp { font-family: 'Zen Maru Gothic', sans-serif; font-size: 14px; color: var(--sakura-light); margin-left: 8px; }
+.overlay-sub { font-size: 12px; color: rgba(240,237,232,0.6); margin-bottom: 16px; font-weight: 600; }
 
-.npc-stage-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--trust);
-  margin-bottom: 5px;
-}
+.contacts-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; font-size: 12px; color: rgba(240,237,232,0.6); font-weight: 600; }
+.contacts-top .ct-num { font-size: 18px; font-weight: 800; color: var(--trust); }
 
-.npc-bar-wrap {
-  width: 100%;
-  height: 4px;
-  background: var(--surface-3);
-  border-radius: 2px;
+/* People cards */
+.people-list { display: flex; flex-direction: column; gap: 11px; }
+
+.person {
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+.person-row { display: flex; gap: 12px; align-items: center; }
+.person-ava {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
   overflow: hidden;
 }
+.person-ava.npc-kenji { background: linear-gradient(135deg, #3A4A8A, #5A6BB5); }
+.person-ava.npc-yuki  { background: linear-gradient(135deg, #8A3A5A, #B5567A); }
+.person-ava.npc-hiro  { background: linear-gradient(135deg, #4A6B3A, #6B8A4F); }
+.person-ava .npc-portrait-fallback { font-family: 'Zen Maru Gothic', sans-serif; font-size: 23px; }
+.person.elder .person-ava { box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(240,192,64,0.3); }
 
-.npc-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--trust), #6EE7B7);
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
-
-.npc-unmet {
-  opacity: 0.3;
-  filter: grayscale(1);
-}
-
-.npc-unmet .npc-name { color: var(--text-dim); }
-
-.contacts-summary {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
-  margin-top: 8px;
-}
-
-.contacts-big {
-  font-size: 36px;
+.person-id { min-width: 0; }
+.person-name { font-size: 16px; font-weight: 800; color: #fff; }
+.person-name .jp { font-family: 'Zen Maru Gothic', sans-serif; font-size: 11px; color: rgba(255,255,255,0.55); margin-left: 6px; }
+.person-role { font-size: 11px; color: rgba(240,237,232,0.55); font-weight: 700; }
+.person-stage { margin-left: auto; text-align: right; flex-shrink: 0; }
+.person-stage .s { font-size: 13px; font-weight: 800; color: var(--trust); }
+.person-stage .m { font-size: 10px; color: rgba(240,237,232,0.5); }
+.person-line { font-size: 12px; line-height: 1.5; color: rgba(240,237,232,0.78); margin: 11px 0; font-style: italic; }
+.person-top { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(240,237,232,0.5); margin-bottom: 5px; }
+.person-track { height: 7px; border-radius: 99px; background: rgba(255,255,255,0.14); overflow: hidden; margin-bottom: 6px; }
+.person-track > i { display: block; height: 100%; border-radius: 99px; background: var(--trust); transition: width 0.5s ease; }
+.person-hint { font-size: 11px; color: var(--sakura-light); font-style: italic; opacity: 0.85; margin-bottom: 6px; }
+.person-foot { display: flex; align-items: center; margin-top: 11px; }
+.person-meta { font-size: 11px; color: rgba(240,237,232,0.5); font-weight: 700; }
+.person-visit {
+  margin-left: auto;
+  background: rgba(255,143,171,0.92);
+  color: #2A0E16;
+  border: none;
   font-weight: 800;
-  color: var(--trust);
-  line-height: 1;
-}
-
-.contacts-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 4px;
-}
-
-/* ─── TRAVEL ROW ─── */
-.travel-row {
-  margin: 6px 0 12px;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid rgba(255,143,171,0.18);
-  border-radius: var(--radius-sm);
-}
-
-.travel-here {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.travel-here-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-.travel-here-name  { font-size: 14px; color: var(--sakura-light); font-weight: 700; }
-
-.travel-dests {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.travel-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 999px;
-  color: var(--text);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-.travel-btn:active:not(:disabled) { background: var(--surface-3); }
-.travel-btn.disabled-time { opacity: 0.4; cursor: not-allowed; }
-.travel-btn-icon { font-size: 15px; }
-.travel-btn-name { font-weight: 600; }
-.travel-btn-cost { font-size: 11px; color: var(--text-muted); }
-
-/* ─── NPC ACTION BUTTONS (People tab) ─── */
-.npc-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-.npc-act-btn {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 7px 10px;
-  background: var(--surface-3);
-  border: 1px solid rgba(255,143,171,0.25);
-  border-radius: 8px;
-  color: var(--text);
   font-size: 12px;
-  font-family: inherit;
+  padding: 9px 15px;
+  border-radius: 99px;
   cursor: pointer;
-  transition: background 0.2s;
+  min-height: 38px;
+  transition: transform 0.1s;
 }
-.npc-act-btn:active:not(:disabled) { background: var(--surface-2); }
-.npc-act-btn.disabled { opacity: 0.4; cursor: not-allowed; }
-.npc-act-label { font-weight: 700; color: var(--sakura-light); }
-.npc-act-meta  { font-size: 10px; color: var(--text-muted); display: inline-flex; gap: 6px; }
-.npc-act-travel { color: var(--text-dim); }
+.person-visit:active { transform: scale(0.97); }
 
-/* ─── JOURNAL ─── */
-.journal-list { display: flex; flex-direction: column; gap: 8px; }
+.people-empty { text-align: center; padding: 48px 18px; color: rgba(240,237,232,0.6); }
+.people-empty .empty-icon { font-size: 36px; margin-bottom: 12px; }
+.people-empty p { font-size: 14px; line-height: 1.7; }
 
-.journal-empty {
-  text-align: center;
-  padding: 36px 18px;
-  color: var(--text-muted);
+/* Journal cards */
+.journal-list { display: flex; flex-direction: column; gap: 10px; }
+
+.jcard {
+  border-radius: 16px;
+  padding: 13px 15px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow);
 }
+.jcard-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.jcard-ic { font-size: 17px; }
+.jcard-kind { font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sakura-light); }
+.jcard-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+.jcard-day { margin-left: auto; font-size: 10px; font-weight: 800; color: rgba(240,237,232,0.5); }
+.jcard-title { font-size: 15px; font-weight: 800; margin-bottom: 5px; color: #fff; }
+.jcard-body { font-size: 12px; line-height: 1.55; color: rgba(240,237,232,0.72); }
+
+.journal-empty { text-align: center; padding: 48px 18px; color: rgba(240,237,232,0.6); }
 .journal-empty .empty-icon { font-size: 36px; margin-bottom: 12px; }
 .journal-empty p { font-size: 14px; line-height: 1.7; margin: 0; }
-.journal-empty-sub { font-size: 12px !important; color: var(--text-dim); margin-top: 8px !important; font-style: italic; }
-
-.journal-row {
-  background: var(--surface);
-  border: 1px solid rgba(240,192,64,0.2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-}
-.journal-row:active { background: var(--surface-2); }
-.journal-row.open { border-color: rgba(240,192,64,0.55); }
-
-.journal-row .j-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-}
-.journal-row .j-icon { font-size: 22px; width: 28px; text-align: center; flex-shrink: 0; }
-.journal-row .j-meta { flex: 1; min-width: 0; }
-.journal-row .j-title { font-size: 14px; font-weight: 700; color: var(--gold); line-height: 1.3; }
-.journal-row .j-day { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-.journal-row .j-chevron { font-size: 14px; color: var(--text-dim); flex-shrink: 0; }
-
-.journal-row .j-body {
-  display: none;
-  padding: 0 14px 14px 54px;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--text);
-  line-height: 1.7;
-}
-.journal-row.open .j-body { display: block; }
-
-/* ─── MILESTONES (legacy — kept for any straggler references; not rendered) ─── */
-.milestones-list { display: flex; flex-direction: column; gap: 6px; }
-
-.milestone-row {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 11px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: border-color 0.3s, background 0.3s;
-}
-
-.milestone-row.done {
-  border-color: rgba(240,192,64,0.4);
-  background: rgba(240,192,64,0.05);
-}
-
-.milestone-row .m-icon { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
-.milestone-row .m-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--text-muted); }
-.milestone-row.done .m-name { color: var(--gold); }
-.milestone-row .m-check { font-size: 14px; color: var(--gold); }
-
-.milestones-header {
-  text-align: center;
-  padding: 8px 0 12px;
-}
-
-.milestones-count {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.milestones-count span { color: var(--gold); font-weight: 800; }
+.journal-empty-sub { font-size: 12px !important; color: rgba(240,237,232,0.45); margin-top: 8px !important; font-style: italic; }
 
 /* ─── END OF DAY OVERLAY ─── */
 .end-of-day {
@@ -1325,7 +882,7 @@ input { user-select: text; }
 /* ─── TOAST ─── */
 .toast {
   position: fixed;
-  bottom: calc(80px + 10px); /* sits above collapsed bottom sheet handle */
+  bottom: calc(var(--safe-bottom) + 88px);
   left: 50%;
   transform: translateX(-50%) translateY(12px);
   background: var(--surface-2);
@@ -1355,11 +912,9 @@ input { user-select: text; }
 .toast-desc  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 
 /* ─── NPC STATE SHIFT CARD ─── */
-/* Richer than .toast — bigger card with NPC portrait. Bottom-anchored.   */
-/* Fires when an NPC crosses a meaningful threshold at end of day.        */
 .npc-state-card {
   position: fixed;
-  bottom: calc(80px + 10px);
+  bottom: calc(var(--safe-bottom) + 88px);
   left: 50%;
   transform: translateX(-50%) translateY(16px);
   background: var(--surface-2);
@@ -1547,7 +1102,6 @@ input { user-select: text; }
 }
 
 /* ─── CONVERSION MODAL ─── */
-/* Applied to the #modal overlay element when a conversion is shown */
 #modal.conversion-modal .modal-card {
   border: 2px solid var(--gold);
   box-shadow: 0 0 40px rgba(240,192,64,0.25), var(--shadow-lg);
@@ -1580,8 +1134,6 @@ input { user-select: text; }
 }
 
 /* ─── STAGE-ADVANCE MODAL ─── */
-/* Applied to the #modal overlay element when an NPC reaches stage 1–4.       */
-/* Sakura ring + softer than gold conversion modal — a warmth, not a triumph. */
 #modal.stage-advance-modal .modal-card {
   border: 2px solid var(--sakura);
   box-shadow: 0 0 32px rgba(255,143,171,0.22), var(--shadow-lg);
@@ -1610,7 +1162,6 @@ input { user-select: text; }
 }
 
 /* ─── ELDER STAGE (8) — sakura ring with gold accent ─── */
-/* Same vocabulary as stage-advance, but heavier — they're a leader now.        */
 #modal.stage-advance-modal.elder-modal .modal-card {
   border: 2px solid var(--sakura);
   box-shadow: 0 0 32px rgba(255,143,171,0.22), 0 0 28px rgba(240,192,64,0.18), var(--shadow-lg);
@@ -1622,11 +1173,6 @@ input { user-select: text; }
 
 .stage-advance-portrait.elder-portrait {
   box-shadow: 0 0 0 3px var(--sakura), 0 0 0 5px var(--gold), 0 0 16px rgba(240,192,64,0.30);
-}
-
-/* Subtle gold underline on the People-tab card avatar when they're an Elder. */
-.npc-card.elder .npc-avatar {
-  box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(240,192,64,0.30);
 }
 
 /* ─── SETTINGS PANEL ─── */
@@ -1676,10 +1222,10 @@ input { user-select: text; }
   background: var(--surface-2);
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1750,7 +1296,7 @@ input { user-select: text; }
 .empty-state {
   text-align: center;
   padding: 32px 16px;
-  color: var(--text-dim);
+  color: rgba(240,237,232,0.6);
 }
 
 .empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; }
@@ -1777,10 +1323,8 @@ input { user-select: text; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 2px; }
 
-/* ─── NPC PORTRAIT (shared: cards, modal, story popup) ─── */
-/* The avatar wrapper holds both the <img> and the kanji fallback. */
-/* The image overlays the fallback; onerror hides it, revealing kanji. */
-.npc-avatar,
+/* ─── NPC PORTRAIT (shared: people avatar, modal, story popup) ─── */
+.person-ava,
 .modal-portrait,
 .story-npc-avatar {
   position: relative;
@@ -1797,8 +1341,9 @@ input { user-select: text; }
   z-index: 2; /* above kanji fallback */
 }
 
+.person-ava .npc-portrait-img { border-radius: 15px; }
+
 .modal-portrait-img {
-  /* same positioning, but parent already has border-radius */
   border-radius: inherit;
 }
 
@@ -1807,32 +1352,12 @@ input { user-select: text; }
   font-weight: 700;
   color: rgba(255,255,255,0.85);
   pointer-events: none;
-  position: relative; /* sits above the image slot */
+  position: relative;
   z-index: 1;
 }
 
-/* Fallback font sizes per context */
-.npc-avatar       .npc-portrait-fallback { font-size: 18px; }
 .modal-portrait   .npc-portrait-fallback { font-size: 30px; }
 .story-npc-avatar .npc-portrait-fallback { font-size: 15px; }
-
-/* NPC name JP suffix */
-.npc-name-jp {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-left: 4px;
-}
-
-/* Stage advance hint */
-.npc-advance-hint {
-  font-size: 11px;
-  color: var(--sakura);
-  margin-top: 5px;
-  font-style: italic;
-  opacity: 0.85;
-}
 
 /* Modal portrait with image */
 .modal-portrait {
@@ -1858,7 +1383,6 @@ input { user-select: text; }
 }
 
 /* ─── STORY POPUP ─── */
-/* Slides up from bottom, sits above the location tab bar. */
 .story-popup {
   position: fixed;
   inset: 0;
@@ -1871,17 +1395,28 @@ input { user-select: text; }
 
 .story-popup-backdrop {
   flex: 1;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(5, 5, 12, 0.5);
 }
 
 .story-popup-card {
-  background: var(--surface-2);
-  border-top: 1px solid rgba(240, 192, 64, 0.2);
-  padding: 18px 20px 24px;
-  max-height: 60vh;
+  background: rgba(26, 26, 46, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255,255,255,0.14);
+  border-radius: 26px 26px 0 0;
+  padding: 22px 20px calc(28px + var(--safe-bottom));
+  max-height: 64vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  animation: sheet-up 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.story-popup-grip {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.3);
+  margin: 0 auto 16px;
 }
 
 /* NPC header row inside story popup */
@@ -1904,7 +1439,6 @@ input { user-select: text; }
   justify-content: center;
 }
 
-/* Use existing card colour classes on the story avatar too */
 .story-npc-avatar.npc-kenji { background: linear-gradient(135deg, #0F2A4A, #1A5080); }
 .story-npc-avatar.npc-yuki  { background: linear-gradient(135deg, #2A0F50, #5A2090); }
 .story-npc-avatar.npc-hiro  { background: linear-gradient(135deg, #0A2A10, #1A5A28); }
@@ -1933,13 +1467,13 @@ input { user-select: text; }
 
 /* Stat bonus line */
 .story-popup-bonus {
-  margin-top: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--trust);
-  background: rgba(52, 211, 153, 0.08);
-  border-radius: 6px;
-  padding: 5px 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--positive);
+  background: rgba(52, 211, 153, 0.18);
+  border-radius: 11px;
+  padding: 8px 12px;
 }
 
 /* Setback line — red counterpart to the bonus row */
@@ -1948,26 +1482,26 @@ input { user-select: text; }
   font-size: 11px;
   font-weight: 700;
   color: var(--danger);
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(248, 113, 113, 0.10);
   border-left: 2px solid var(--danger);
   border-radius: 4px;
-  padding: 5px 8px;
+  padding: 6px 10px;
 }
 
-/* NPC inner-shift row — sakura-tinted, shows what changed in mood/stress/burden */
+/* NPC inner-shift row */
 .story-popup-shift {
   margin-top: 6px;
   font-size: 11px;
   font-weight: 700;
   color: var(--sakura-light);
-  background: rgba(255, 143, 171, 0.07);
+  background: rgba(255, 143, 171, 0.09);
   border-left: 2px solid var(--sakura);
   border-radius: 4px;
-  padding: 5px 8px;
+  padding: 6px 10px;
 }
 
 .story-popup-dismiss {
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: 10px;
   color: var(--text-dim);
   text-align: center;

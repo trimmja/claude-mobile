@@ -1,0 +1,33 @@
+{
+  "_readme": "Editorial day-beat phrases for the Direction D header. One short line per phase; the phase kanji (朝/昼/夜) is appended by code. Picked deterministically by day so the line is stable within a phase. Keep them quiet and missionary-toned — this is the contemplative opener, not a quest log.",
+  "beats": {
+    "morning": [
+      "A quiet start.",
+      "The city wakes.",
+      "Cold air, warm coffee.",
+      "Another morning given to you.",
+      "The trains are already full.",
+      "Grace, new again."
+    ],
+    "afternoon": [
+      "The day leans forward.",
+      "Sun over the crossing.",
+      "The middle hours.",
+      "Crowds thin and gather.",
+      "Work yourself warm.",
+      "Keep walking."
+    ],
+    "evening": [
+      "The day winds down.",
+      "Lanterns come on.",
+      "Tired, but here.",
+      "The last of the light.",
+      "Count the small things.",
+      "Rest is coming."
+    ],
+    "reflecting": [
+      "Be still.",
+      "Lay it down."
+    ]
+  }
+}

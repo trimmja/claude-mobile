@@ -32,9 +32,18 @@ Travel is how `state.location` changes. It costs **time only** (never energy). C
 
 **Where you wake up:** `engine.endDay()` resets `state.location = 'apartment'` — each new morning starts at home.
 
-**Travel UI:** Always-visible row inside `.top-bar` (between the HUD and the scene, above `.location-view`). Shows one Travel button per other location with ⏳cost; disabled when you can't afford it. Tapping calls `engine.doTravel(locId)`. Current location is shown in the `.location-info` overlay on the scene itself.
+**Travel UI (Direction D):** A horizontal `.travel-rail` of glass pills sits at the bottom of the Scene (above the anchor card + dock). Each pill shows glyph + short name; non-current pills add a `⏳cost` chip and disable when you can't afford it. The current location is the solid-pink pill. Tapping a pill calls `engine.doTravel(locId)`. The current location is also named in the **"You are here" anchor card** glued directly above the dock. The pill for the *recommended* location gets a ★ ring when you're not there.
 
-**People-tab tap-to-visit:** Each met NPC card has "Visit" and (if unlocked) "Heart-to-Heart" buttons. Tapping handles travel automatically: if the relevant action's location differs from `state.location`, travel runs first, then the action runs. Button shows `→ ☕ ⏳2` chip when travel is needed.
+**People-view "Visit" button:** Each met NPC card has a single "Visit ⛩️" button that **navigates** — it switches to the Scene and travels to that NPC's location (`handleVisit` in `main.js`). It does NOT auto-run the visit action; you tap their card in the dock once you arrive. (This matches the Direction D design — Visit orients you, the dock does the acting.)
+
+## What-to-do-next recommendation (js/recommend.js)
+
+`getRecommendation()` answers "who's closest to a breakthrough you haven't seen in a while?":
+
+1. Among **met, not-yet-Elder** NPCs whose *only* blocker to the next stage is trust (their `getStageAdvanceHint()` reads "N trust to next stage", not a condition gate), pick the one **closest to advancing**, tie-broken by **longest since last seen** (`lastSeenDay`). Recommend their `visit_<id>` action at that location.
+2. Fallbacks when none qualify: energy ≤ 4 → `rest`; else `study_scripture`; else `pray` at the current spot.
+
+The dock lights the `★ Recommended` card (sorted first) **only when the player is at the recommendation's location**; otherwise the travel rail rings that location's pill. `actionUnlockCacheKey()` includes each NPC's `lastSeenDay` + trust so the dock re-renders when the recommendation changes.
 
 **Action filtering:** `allVisibleActions()` filters by `state.location`. An action's `location` field must equal `state.location` for the card to appear. A `null` location means "available anywhere" — currently only `pray` (1 time / 0 energy filler — missionaries pray everywhere).
 

@@ -1,4 +1,4 @@
-const CACHE = 'jeb-v35';
+const CACHE = 'jeb-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './data/reflections.json',
   './data/stageAdvances.json',
   './data/npcEvents.json',
+  './data/dayBeats.json',
   './js/main.js',
   './js/version.js',
   './js/state.js',
@@ -29,6 +30,8 @@ const ASSETS = [
   './js/notifications.js',
   './js/journal.js',
   './js/unlocks.js',
+  './js/dayBeats.js',
+  './js/recommend.js',
   './assets/images/locations/apartment.png',
   './assets/images/locations/station.png',
   './assets/images/locations/park.png',

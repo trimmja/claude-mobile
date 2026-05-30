@@ -1,27 +1,18 @@
 import { state } from './state.js';
 import {
-  ACTION_DEFS, allVisibleActions, getActionRequirements, actionUnlockCacheKey,
-  hasFittingAction, NPC_ACTION_MAP,
+  ACTION_DEFS, allVisibleActions, actionUnlockCacheKey, hasFittingAction,
 } from './actions.js';
-
-// Maps npcId → their character-specific deep action ID, picking pre- or post-conversion
-// version based on current stage. Post-conversion (stage ≥ 5) the disciple_* action
-// takes the slot the pre-conversion deep action used.
-const NPC_DEEP_ACTION_PRE  = { kenji: 'evening_kenji',  yuki: 'questions_yuki', hiro: 'pray_hiro' };
-const NPC_DEEP_ACTION_POST = { kenji: 'disciple_kenji', yuki: 'disciple_yuki',  hiro: 'disciple_hiro' };
-function deepActionFor(npcId) {
-  const stage = state.npcs[npcId]?.stage ?? 0;
-  return (stage >= 5 ? NPC_DEEP_ACTION_POST : NPC_DEEP_ACTION_PRE)[npcId];
-}
-import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo, currentLocation } from './locations.js';
+import { LOCATION_DEFS, LOCATION_ORDER, travelCostTo } from './locations.js';
 import { NPC_DEFS, getStageName, getTrustPercent, getStageAdvanceHint, getIntroText } from './npcs.js';
-import { locText, actionText, langLevel, TAB_LABELS } from './language.js';
+import { locText, actionText, actionDesc, langLevel } from './language.js';
 import { playTap, startStationAmbience, stopStationAmbience } from './audio.js';
 import { APP_VERSION, hardRefreshApp } from './version.js';
 import { pickReflection } from './reflections.js';
 import { getJournalEntries, markJournalRead, unreadJournalCount } from './journal.js';
+import { dayBeat, weekdayFor } from './dayBeats.js';
+import { getRecommendation } from './recommend.js';
 
-// ─── DOM refs ───────────────────────────────────────────────────────────────
+// ─── DOM helpers ──────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -30,54 +21,52 @@ const el = (tag, cls, html) => {
   return e;
 };
 
-// ─── HUD ────────────────────────────────────────────────────────────────────
-let lastLangLevelForUI = -1;
-let lastUnreadForUI    = -1;
+const PHASE_DISPLAY = {
+  morning:    { icon: '☀️', en: 'Morning',    jp: '朝' },
+  afternoon:  { icon: '🌤', en: 'Afternoon',  jp: '昼' },
+  evening:    { icon: '🌙', en: 'Evening',    jp: '夜' },
+  reflecting: { icon: '✨', en: 'Reflecting', jp: '振り返り' },
+};
 
-export function renderHUD() {
+// ─── STATS BAR ────────────────────────────────────────────────────────────────
+export function renderStatsBar() {
   const e = state.resources.energy;
-  $('res-faith').textContent    = Math.floor(state.resources.faith.current);
-  $('res-energy').textContent   = `${e.current}/${e.max}`;
-  $('res-contacts').textContent = state.resources.contacts;
-  $('res-money').textContent    = '¥' + Math.floor(state.resources.money.current);
-  $('res-wisdom').textContent   = Math.floor(state.resources.wisdom);
+  $('res-faith').textContent  = Math.floor(state.resources.faith.current);
+  $('res-energy').textContent = `${e.current}/${e.max}`;
+  $('res-wisdom').textContent = Math.floor(state.resources.wisdom);
+  $('res-lang').textContent   = 'Lv.' + langLevel();
+  $('res-money').textContent  = '¥' + Math.floor(state.resources.money.current);
+}
 
-  const lv = langLevel();
-  $('res-lang').textContent = 'Lv.' + lv;
+// ─── DAY-BEAT HEADER (eyebrow + serif phrase + timeline + gear + spiritDry) ────
+export function renderDayBeat() {
+  const phase = state.time.phase;
+  const d = PHASE_DISPLAY[phase] || PHASE_DISPLAY.morning;
+  const weekday = weekdayFor(state.time.day);
 
-  const pips = document.querySelectorAll('.lang-pip');
-  pips.forEach((pip, i) => pip.classList.toggle('filled', i < lv));
+  $('beat-eyebrow').textContent = `Day ${state.time.day} · ${weekday} ${d.en.toLowerCase()}`;
 
-  const unread = unreadJournalCount();
-  if (lv !== lastLangLevelForUI || unread !== lastUnreadForUI) {
-    lastLangLevelForUI = lv;
-    lastUnreadForUI    = unread;
-    updateLanguageLabels(lv);
+  const beat = dayBeat();
+  $('beat-phrase-en').textContent = beat.phrase;
+  $('beat-phrase-jp').textContent = beat.jp;
+
+  $('beat-phase-name').textContent = d.en;
+  const t = state.time;
+  const tpct = t.max > 0 ? (t.remaining / t.max) * 100 : 0;
+  $('beat-time-fill').style.width = tpct + '%';
+  $('beat-time-count').textContent = `${t.remaining} of ${t.max} left`;
+
+  // End-phase button + nudge
+  const btn = $('end-phase-btn');
+  const nudge = $('phase-nudge');
+  const noFit = !hasFittingAction() && phase !== 'reflecting';
+  if (btn) {
+    btn.textContent = phase === 'reflecting' ? '…' : `End ${d.en} →`;
+    btn.classList.toggle('warn', noFit);
   }
-}
+  if (nudge) nudge.classList.toggle('hidden', !noFit);
 
-function updateLanguageLabels(lv) {
-  const unread = unreadJournalCount();
-  document.querySelectorAll('.content-tab').forEach(tab => {
-    const name = tab.dataset.tab;
-    const text = TAB_LABELS[name];
-    const lblEl = tab.querySelector('.content-tab-lbl');
-    if (!text || !lblEl) return;
-    let label = lv >= 1 ? text.en : text.jp;
-    if (name === 'journal' && unread > 0) label += ` (${unread})`;
-    lblEl.textContent = label;
-  });
-  const cl = $('hud-contacts-lbl');
-  if (cl) cl.textContent = lv >= 1 ? 'Contacts' : '知人';
-}
-
-// ─── HEADER ─────────────────────────────────────────────────────────────────
-export function renderHeader() {
-  $('header-name').textContent = state.character.name || '—';
-  $('header-day').textContent  = 'Day ' + state.time.day;
-
-  // Spiritual dryness indicator — only surfaces at ≥5 so it doesn't clutter the header.
-  // The icon intensifies (more opacity) as dryness climbs.
+  // Spiritual-dryness indicator — surfaces only at ≥5.
   const sd = state.character?.spiritDry ?? 0;
   const indicator = $('header-spiritdry');
   if (indicator) {
@@ -91,61 +80,26 @@ export function renderHeader() {
   }
 }
 
-// ─── BOTTOM SHEET PANEL ─────────────────────────────────────────────────────
-let _panelOpen = false;
+// ─── SCENE (full-bleed image / video swap) ─────────────────────────────────────
+let lastScene = null;
+export function renderScene() {
+  if (state.location === lastScene) return;
+  lastScene = state.location;
 
-export function togglePanel(forceOpen) {
-  _panelOpen = (forceOpen !== undefined) ? forceOpen : !_panelOpen;
-  const sheet = $('bottom-sheet');
-  if (sheet) sheet.classList.toggle('sheet-open', _panelOpen);
-  // Show the floating open-button only when the panel is closed
-  const openBtn = $('scene-open-btn');
-  if (openBtn) openBtn.classList.toggle('hidden', _panelOpen);
-  // Scrim: visible when sheet is open, gone when closed
-  const scrim = $('sheet-scrim');
-  if (scrim) scrim.classList.toggle('active', _panelOpen);
-}
-
-export function bindSheetHandle() {
-  const handle = $('sheet-handle');
-  if (handle) handle.addEventListener('click', () => togglePanel());
-  // Tapping the scrim closes the sheet
-  const scrim = $('sheet-scrim');
-  if (scrim) scrim.addEventListener('click', () => togglePanel(false));
-}
-
-// Scene floating "open panel" button
-export function bindSceneOpenBtn() {
-  const btn = $('scene-open-btn');
-  if (btn) btn.addEventListener('click', () => togglePanel(true));
-}
-
-// ─── LOCATION VIEW ──────────────────────────────────────────────────────────
-let lastLocation = null;
-export function renderLocation() {
-  if (state.location === lastLocation) return;
-  lastLocation = state.location;
-
-  const def   = LOCATION_DEFS[state.location] || LOCATION_DEFS.apartment;
-  const texts = locText(state.location);
-  const bg    = $('location-bg');
-
-  bg.className = 'location-bg ' + def.bgClass;
+  const def = LOCATION_DEFS[state.location] || LOCATION_DEFS.apartment;
+  $('location-bg').className = 'location-bg ' + def.bgClass;
 
   const img = $('location-img');
   const vid = $('location-vid');
 
   if (state.location === 'station' && vid) {
-    // ── Station: show looping video, hide still image ──
     if (img) img.style.opacity = '0';
     vid.style.opacity = '1';
     if (vid.paused) vid.play().catch(() => {});
     startStationAmbience();
   } else {
-    // ── Other locations: hide video, show still image ──
     if (vid) {
       vid.style.opacity = '0';
-      // Delay pause until fade-out completes (matches 0.6s CSS transition)
       setTimeout(() => { if (!vid.paused) vid.pause(); }, 650);
     }
     stopStationAmbience();
@@ -163,127 +117,92 @@ export function renderLocation() {
       }
     }
   }
+}
 
-  $('location-name-jp').textContent = texts.jp;
+// ─── "YOU ARE HERE" ANCHOR CARD ────────────────────────────────────────────────
+let lastAnchorLoc = null;
+export function renderAnchor() {
+  if (state.location === lastAnchorLoc) return;
+  lastAnchorLoc = state.location;
+
+  const def = LOCATION_DEFS[state.location] || LOCATION_DEFS.apartment;
+  const texts = locText(state.location);
+
+  const anchor = $('location-anchor');
+  if (anchor) anchor.style.setProperty('--acc', def.accent || '#FF8FAB');
+
+  const thumb = $('anchor-thumb');
+  if (thumb) thumb.style.backgroundImage = `url(assets/images/locations/${def.id}.png)`;
+
   $('location-name-en').textContent = texts.en;
+  $('location-name-jp').textContent = texts.jp;
 }
 
-// ─── PHASE STRIP ────────────────────────────────────────────────────────────
-const PHASE_DISPLAY = {
-  morning:    { icon: '☀️', en: 'Morning',    jp: '朝' },
-  afternoon:  { icon: '🌤', en: 'Afternoon',  jp: '昼' },
-  evening:    { icon: '🌙', en: 'Evening',    jp: '夜' },
-  reflecting: { icon: '✨', en: 'Reflecting', jp: '振り返り' },
-};
+// ─── TRAVEL RAIL ───────────────────────────────────────────────────────────────
+let lastRailKey = '';
+export function invalidateTravelRail() { lastRailKey = ''; }
 
-export function renderPhaseStrip() {
-  const phase = state.time.phase;
-  const d = PHASE_DISPLAY[phase] || PHASE_DISPLAY.morning;
-  $('phase-icon').textContent    = d.icon;
-  $('phase-name-en').textContent = d.en;
-  $('phase-name-jp').textContent = d.jp;
-
-  const t = state.time;
-  const tpct = t.max > 0 ? (t.remaining / t.max) * 100 : 0;
-  $('time-count').textContent    = `${t.remaining}/${t.max}`;
-  $('time-bar-fill').style.width = tpct + '%';
-
-  // ── Also update the always-visible scene overlay pill ──
-  const sIcon = $('scene-phase-icon');
-  const sName = $('scene-phase-name');
-  const sFill = $('scene-time-fill');
-  const sCnt  = $('scene-time-count');
-  if (sIcon) sIcon.textContent  = d.icon;
-  if (sName) sName.textContent  = d.en;
-  if (sFill) sFill.style.width  = tpct + '%';
-  if (sCnt)  sCnt.textContent   = `${t.remaining}/${t.max}`;
-
-  // (scene-open-btn shows static "↑ Activities" — no dynamic phase text needed)
-
-  // End-phase button labelling + nudge state
-  const btn = $('end-phase-btn');
-  const nudge = $('phase-nudge');
-  const noFit = !hasFittingAction() && phase !== 'reflecting';
-
-  if (btn) {
-    if (phase === 'morning')        btn.textContent = 'End Morning →';
-    else if (phase === 'afternoon') btn.textContent = 'End Afternoon →';
-    else if (phase === 'evening')   btn.textContent = 'End Evening →';
-    else                            btn.textContent = '…';
-    btn.classList.toggle('warn', noFit);
-  }
-  if (nudge) {
-    nudge.classList.toggle('hidden', !noFit);
-  }
-}
-
-// ─── TRAVEL ROW ─────────────────────────────────────────────────────────────
-let lastTravelKey = '';
-
-export function renderTravelRow() {
-  const row = $('travel-row');
-  if (!row) return;
+export function renderTravelRail() {
+  const rail = $('travel-row');
+  if (!rail) return;
 
   const t = state.time.remaining;
-  const key = `${state.location}|${t}`;
-  if (key === lastTravelKey) return;
-  lastTravelKey = key;
+  const rec = getRecommendation();
+  const recLoc = rec && rec.location !== state.location ? rec.location : '';
+  const key = `${state.location}|${t}|${recLoc}`;
+  if (key === lastRailKey) return;
+  lastRailKey = key;
 
-  row.innerHTML = '';
-
-  const here = currentLocation();
-  const header = el('div', 'travel-here',
-    `<span class="travel-here-label">📍 You are at</span>
-     <span class="travel-here-name">${here.icon} ${here.nameEN}</span>`);
-  row.appendChild(header);
-
-  const dests = el('div', 'travel-dests');
+  rail.innerHTML = '';
   LOCATION_ORDER.forEach(locId => {
-    if (locId === state.location) return;
     const def  = LOCATION_DEFS[locId];
+    const cur  = locId === state.location;
     const cost = travelCostTo(locId);
-    const canAfford = t >= cost;
-    const btn = el('button',
-      'travel-btn' + (canAfford ? '' : ' disabled-time'),
-      `<span class="travel-btn-icon">${def.icon}</span>
-       <span class="travel-btn-name">${def.nameEN}</span>
-       <span class="travel-btn-cost">⏳${cost}</span>`);
-    btn.dataset.travelTo = locId;
-    if (!canAfford) btn.disabled = true;
-    dests.appendChild(btn);
-  });
-  row.appendChild(dests);
-}
+    const canAfford = cur || t >= cost;
+    const isRec = !cur && locId === recLoc;
 
-export function bindTravelRow(onTravel) {
-  const row = $('travel-row');
-  if (!row) return;
-  row.addEventListener('click', e => {
-    const btn = e.target.closest('.travel-btn');
-    if (!btn || btn.disabled) return;
-    const locId = btn.dataset.travelTo;
-    if (locId) onTravel(locId);
+    const pill = el('button',
+      'travel-pill' + (cur ? ' cur' : '') + (isRec ? ' rec' : '') + (canAfford ? '' : ' disabled-time'));
+    pill.dataset.travelTo = locId;
+    pill.innerHTML =
+      `<span>${def.icon} ${def.short}</span>` +
+      (isRec ? '<span class="star">★</span>' : '') +
+      (cur ? '' : `<span class="c">⏳${cost}</span>`);
+    if (!cur && !canAfford) pill.disabled = true;
+    rail.appendChild(pill);
   });
 }
 
-// Force the travel row to rebuild on next render (used after location changes).
-export function invalidateTravelRow() { lastTravelKey = ''; }
+export function bindTravelRail(onTravel) {
+  const rail = $('travel-row');
+  if (!rail) return;
+  rail.addEventListener('click', e => {
+    const pill = e.target.closest('.travel-pill');
+    if (!pill || pill.disabled) return;
+    const locId = pill.dataset.travelTo;
+    if (locId && locId !== state.location) onTravel(locId);
+  });
+}
 
-// ─── ACTIONS LIST ───────────────────────────────────────────────────────────
-let lastUnlockKey = '';
-let lastPhase     = '';
-let lastMetCount  = -1;
-
-export function renderActions(force = false) {
+// ─── ACTION DOCK ───────────────────────────────────────────────────────────────
+let lastDockKey = '';
+export function renderDock(force = false) {
   const list = $('action-list');
-  const unlockKey = actionUnlockCacheKey();
-  const phase = state.time.phase;
-  const metCount = Object.values(state.npcs).filter(n => n.met).length;
+  if (!list) return;
 
-  if (!force && unlockKey === lastUnlockKey && phase === lastPhase && metCount === lastMetCount) return;
-  lastUnlockKey = unlockKey;
-  lastPhase     = phase;
-  lastMetCount  = metCount;
+  const rec = getRecommendation();
+  const here = state.location;
+  const recId = rec && rec.location === here ? rec.actionId : null;
+  const key = actionUnlockCacheKey() + '|rec:' + (recId || '');
+  if (!force && key === lastDockKey) return;
+  lastDockKey = key;
+
+  // Dock header label + rec hint
+  const d = PHASE_DISPLAY[state.time.phase] || PHASE_DISPLAY.morning;
+  const lbl = $('dock-head-label');
+  if (lbl) lbl.textContent = `What fits this ${d.en.toLowerCase()}`;
+  const hint = $('dock-rec-hint');
+  if (hint) hint.classList.toggle('hidden', !recId);
 
   list.innerHTML = '';
 
@@ -293,19 +212,40 @@ export function renderActions(force = false) {
     return;
   }
 
-  // Sort: unlocked first, then locked
+  // Sort: recommended first, then unlocked, then locked.
   ids.sort((a, b) => {
+    if (a === recId) return -1;
+    if (b === recId) return 1;
     const ua = ACTION_DEFS[a].unlocked() ? 0 : 1;
     const ub = ACTION_DEFS[b].unlocked() ? 0 : 1;
     return ua - ub;
   });
 
-  ids.forEach(id => {
-    list.appendChild(buildActionCard(id));
-  });
+  ids.forEach(id => list.appendChild(buildDockCard(id, id === recId)));
 }
 
-function buildActionCard(id) {
+function gainText(def) {
+  const r = def.reward || {};
+  const parts = [];
+  if (r.faith)    parts.push('+Faith');
+  if (r.wisdom)   parts.push('+Wisdom');
+  if (typeof r.contacts === 'number' && r.contacts > 0) parts.push(`+${r.contacts} Contacts`);
+  if (r.langXP)   parts.push('+Language');
+  if (r.npcTrust) parts.push('+Trust');
+  if (def.energyReward) parts.push('Recover energy');
+  return parts.join(' · ');
+}
+
+function costText(def) {
+  const c = def.cost || {};
+  const parts = [];
+  if (c.faith) parts.push(`−${c.faith} Faith`);
+  if (c.money) parts.push(`−¥${c.money}`);
+  if (c.wisdom) parts.push(`−${c.wisdom} Wisdom`);
+  return parts.join(' · ');
+}
+
+function buildDockCard(id, isRec) {
   const def    = ACTION_DEFS[id];
   const texts  = actionText(id);
   const isLocked = !def.unlocked();
@@ -317,276 +257,50 @@ function buildActionCard(id) {
   const isDisabledTime   = !isLocked && tCost > 0 && time   < tCost;
 
   const card = el('div', [
-    'action-card',
+    'dock-card',
+    isRec            ? 'rec'             : '',
     isLocked         ? 'locked'          : '',
     isDisabledTime   ? 'disabled-time'   : '',
     isDisabledEnergy ? 'disabled-energy' : '',
   ].filter(Boolean).join(' '));
   card.dataset.actionId = id;
 
-  const iconEl = el('div', 'action-icon', def.icon || '·');
-  const infoEl = el('div', 'action-info');
+  if (isRec) card.appendChild(el('div', 'dock-card-tag', '★ Recommended'));
+  card.appendChild(el('div', 'dock-card-ic', def.icon || '·'));
+  card.appendChild(el('div', 'dock-card-name', texts.en));
+  card.appendChild(el('div', 'dock-card-jp', texts.jp));
 
-  infoEl.appendChild(el('div', 'action-name-jp', texts.jp));
-  infoEl.appendChild(el('div', 'action-name-en', texts.en));
+  const desc = actionDesc(id);
+  if (desc) card.appendChild(el('div', 'dock-card-desc', desc));
 
-  const meta = el('div', 'action-meta');
-
-  // Location chip
-  const locDef = def.location ? LOCATION_DEFS[def.location] : null;
-  if (locDef) {
-    const chip = el('span', 'location-chip');
-    chip.innerHTML = `<span class="lc-icon">${locDef.icon}</span> ${locDef.nameEN}`;
-    meta.appendChild(chip);
+  if (isLocked) {
+    card.appendChild(el('div', 'dock-card-req', def.unlockHint || 'Locked for now'));
+  } else {
+    const meta = el('div', 'dock-card-meta');
+    if (tCost > 0) meta.appendChild(el('span', 'dock-mp t', '⏳' + tCost));
+    if (eCost > 0) meta.appendChild(el('span', 'dock-mp e', '⚡' + eCost));
+    if (def.energyReward) meta.appendChild(el('span', 'dock-mp e', '+' + def.energyReward + '⚡'));
+    const gain = gainText(def);
+    if (gain) meta.appendChild(el('span', 'dock-mp g', gain));
+    const cost = costText(def);
+    if (cost) meta.appendChild(el('span', 'dock-mp c', cost));
+    card.appendChild(meta);
   }
-
-  // Time cost
-  if (tCost > 0) meta.appendChild(el('span', 'tag tag-time', '⏳ ' + tCost));
-
-  // Energy cost / reward
-  if (eCost > 0) {
-    meta.appendChild(el('span', 'tag tag-energy', '⚡ ' + eCost));
-  }
-  if (def.energyReward) {
-    meta.appendChild(el('span', 'tag tag-energy-up', '+⚡ ' + def.energyReward));
-  }
-
-  if (def.cost?.faith)      meta.appendChild(el('span', 'tag tag-cost',   '-' + def.cost.faith + ' Faith'));
-  if (def.cost?.money)      meta.appendChild(el('span', 'tag tag-cost',   '-¥' + def.cost.money));
-  if (def.reward?.faith)    meta.appendChild(el('span', 'tag tag-faith',  '+' + def.reward.faith   + ' Faith'));
-  if (def.reward?.contacts) meta.appendChild(el('span', 'tag tag-trust',  '+' + def.reward.contacts + ' contacts'));
-  if (def.reward?.wisdom)   meta.appendChild(el('span', 'tag tag-wisdom', '+' + def.reward.wisdom   + ' wisdom'));
-  if (def.reward?.langXP)   meta.appendChild(el('span', 'tag tag-lang',   '+lang'));
-  if (def.reward?.npcTrust) meta.appendChild(el('span', 'tag tag-trust',  '+trust'));
-
-  infoEl.appendChild(meta);
-
-  const requirements = getActionRequirements(id);
-  if (requirements?.length) {
-    const reqBox = el('div', 'action-requirements');
-    requirements.forEach(req => {
-      reqBox.appendChild(el(
-        'div',
-        'action-req-line' + (req.met ? ' met' : ' unmet'),
-        (req.met ? '✓ ' : '○ ') + req.label + ' — ' + req.detail,
-      ));
-    });
-    infoEl.appendChild(reqBox);
-  }
-
-  card.appendChild(iconEl);
-  card.appendChild(infoEl);
 
   return card;
 }
 
-// Briefly pulse the card that was just used.
 export function flashActionCard(actionId) {
-  const card = document.querySelector(`.action-card[data-action-id="${actionId}"]`);
+  const card = document.querySelector(`.dock-card[data-action-id="${actionId}"]`);
   if (!card) return;
   card.classList.remove('flash');
-  // force reflow so the animation can restart
   void card.offsetWidth;
   card.classList.add('flash');
 }
 
-// ─── PEOPLE TAB ─────────────────────────────────────────────────────────────
-export function renderPeople() {
-  const list = $('people-list');
-  list.innerHTML = '';
-
-  const metNPCs = Object.entries(NPC_DEFS).filter(([id]) => state.npcs[id].met);
-
-  if (metNPCs.length === 0) {
-    list.appendChild(el('div', 'empty-state',
-      '<div class="empty-icon">🌆</div>' +
-      '<p>Tokyo is full of people.<br>Hand out tracts at the station,<br>or try the park.</p>'
-    ));
-  } else {
-    metNPCs.forEach(([id, def]) => {
-      const npc  = state.npcs[id];
-      const card = el('div', [
-        'npc-card',
-        def.cardClass,
-        npc.stage >= 5 ? 'believer' : '',
-        npc.stage >= 8 ? 'elder'    : '',
-      ].filter(Boolean).join(' '));
-
-      const avatar = buildNpcAvatar(id, def, 'npc-avatar');
-
-      const info = el('div', 'npc-info');
-      const nameLine = el('div', 'npc-name');
-      nameLine.innerHTML = `${def.name} <span class="npc-name-jp">${def.nameJP}</span>`;
-      info.appendChild(nameLine);
-      info.appendChild(el('div', 'npc-role', def.role));
-      info.appendChild(el('div', 'npc-stage-label', getStageName(id)));
-
-      const barWrap = el('div', 'npc-bar-wrap');
-      const barFill = el('div', 'npc-bar-fill');
-      barFill.style.width = getTrustPercent(id).toFixed(0) + '%';
-      barWrap.appendChild(barFill);
-      info.appendChild(barWrap);
-
-      const hint = getStageAdvanceHint(id);
-      if (hint) info.appendChild(el('div', 'npc-advance-hint', hint));
-
-      // Interact buttons — auto-travel + run the action
-      const actions = el('div', 'npc-actions');
-      const visitId = `visit_${id}`;
-      const deepId  = deepActionFor(id);
-      const visitDef = ACTION_DEFS[visitId];
-      const deepDef  = deepId ? ACTION_DEFS[deepId] : null;
-      if (visitDef) {
-        actions.appendChild(buildNpcActionBtn(visitId, visitDef, 'Visit'));
-      }
-      if (deepDef && deepDef.unlocked()) {
-        actions.appendChild(buildNpcActionBtn(deepId, deepDef, actionText(deepId).en));
-      }
-      info.appendChild(actions);
-
-      card.appendChild(avatar);
-      card.appendChild(info);
-      list.appendChild(card);
-    });
-  }
-
-  const summary = $('contacts-summary');
-  summary.innerHTML = `
-    <div class="contacts-big">${state.resources.contacts}</div>
-    <div class="contacts-sub">Total Contacts</div>
-  `;
-}
-
-function buildNpcActionBtn(actionId, def, label) {
-  const locDef = LOCATION_DEFS[def.location];
-  const here = state.location;
-  const needsTravel = def.location && def.location !== here;
-  const travelCost  = needsTravel ? travelCostTo(def.location) : 0;
-  const totalTime   = (def.timeCost || 0) + travelCost;
-
-  const t = state.time.remaining;
-  const e = state.resources.energy.current;
-  const faithOK = !def.cost?.faith  || state.resources.faith.current  >= def.cost.faith;
-  const moneyOK = !def.cost?.money  || state.resources.money.current  >= def.cost.money;
-  const wisdomOK = !def.cost?.wisdom || state.resources.wisdom        >= def.cost.wisdom;
-  const affordable = t >= totalTime && e >= (def.energyCost || 0) && faithOK && moneyOK && wisdomOK;
-
-  const btn = el('button', 'npc-act-btn' + (affordable ? '' : ' disabled'));
-  btn.dataset.npcAction = actionId;
-  btn.innerHTML = `
-    <span class="npc-act-label">${label}</span>
-    <span class="npc-act-meta">
-      ${needsTravel ? `<span class="npc-act-travel">→ ${locDef?.icon || ''} ⏳${travelCost}</span>` : ''}
-      <span class="npc-act-cost">⏳${def.timeCost}${def.energyCost ? ` ⚡${def.energyCost}` : ''}</span>
-    </span>
-  `;
-  if (!affordable) btn.disabled = true;
-  return btn;
-}
-
-export function bindPeopleList(onNpcAction) {
-  const list = $('people-list');
-  if (!list) return;
-  list.addEventListener('click', e => {
-    const btn = e.target.closest('.npc-act-btn');
-    if (!btn || btn.disabled) return;
-    const actionId = btn.dataset.npcAction;
-    if (actionId) onNpcAction(actionId);
-  });
-}
-
-function buildNpcAvatar(npcId, def, className) {
-  const wrap = el('div', className);
-  const img = document.createElement('img');
-  img.src       = `assets/images/npcs/${npcId}.png`;
-  img.alt       = def.name;
-  img.className = 'npc-portrait-img';
-  img.onerror   = () => img.style.display = 'none';
-  const fallback = el('span', 'npc-portrait-fallback', def.nameJP[0]);
-  wrap.appendChild(img);
-  wrap.appendChild(fallback);
-  return wrap;
-}
-
-// ─── JOURNAL TAB ────────────────────────────────────────────────────────────
-const PHASE_SHORT = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', reflecting: 'Evening' };
-const expandedJournalIds = new Set();
-
-export function renderJournal() {
-  const list = $('journal-list');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const entries = getJournalEntries();
-  if (entries.length === 0) {
-    list.appendChild(el('div', 'journal-empty',
-      `<div class="empty-icon">📖</div>
-       <p>Your journal is empty.</p>
-       <p class="journal-empty-sub">Important moments will be recorded here as you live them.</p>`
-    ));
-    return;
-  }
-
-  entries.forEach(entry => {
-    const isOpen = expandedJournalIds.has(entry.id);
-    const row = el('div', 'journal-row' + (isOpen ? ' open' : ''));
-    row.dataset.entryId = entry.id;
-    const phaseLabel = PHASE_SHORT[entry.phase] || '';
-    row.innerHTML = `
-      <div class="j-summary">
-        <span class="j-icon">${entry.icon || '·'}</span>
-        <div class="j-meta">
-          <div class="j-title">${entry.title}</div>
-          <div class="j-day">Day ${entry.day}${phaseLabel ? ' · ' + phaseLabel : ''}</div>
-        </div>
-        <span class="j-chevron">${isOpen ? '▾' : '▸'}</span>
-      </div>
-      <div class="j-body">${entry.body || ''}</div>
-    `;
-    list.appendChild(row);
-  });
-}
-
-// Tap-to-expand handler — wired once at boot.
-export function bindJournalList() {
-  const list = $('journal-list');
-  if (!list) return;
-  list.addEventListener('click', e => {
-    const row = e.target.closest('.journal-row');
-    if (!row) return;
-    const id = row.dataset.entryId;
-    if (!id) return;
-    if (expandedJournalIds.has(id)) expandedJournalIds.delete(id);
-    else                            expandedJournalIds.add(id);
-    renderJournal();
-    playTap();
-  });
-}
-
-// ─── CONTENT TABS ───────────────────────────────────────────────────────────
-export function bindContentTabs() {
-  document.querySelectorAll('.content-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const name = tab.dataset.tab;
-      document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-      $('tab-' + name).classList.remove('hidden');
-
-      // Opening any tab also opens the panel if it's collapsed
-      togglePanel(true);
-
-      if (name === 'people')  renderPeople();
-      if (name === 'journal') { markJournalRead(); renderJournal(); }
-      playTap();
-    });
-  });
-}
-
-// Click handler for the action list (delegation)
 export function bindActionList(onAction) {
   $('action-list').addEventListener('click', e => {
-    const card = e.target.closest('.action-card');
+    const card = e.target.closest('.dock-card');
     if (!card) return;
     if (card.classList.contains('locked')) return;
     if (card.classList.contains('disabled-energy')) return;
@@ -603,7 +317,204 @@ export function bindEndPhase(onEndPhase) {
   });
 }
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
+// ─── PEOPLE OVERLAY ────────────────────────────────────────────────────────────
+function moodDescriptor(mood) {
+  if (mood >= 3)  return { icon: '🙂', word: 'Warm' };
+  if (mood >= 1)  return { icon: '😊', word: 'Open' };
+  if (mood <= -3) return { icon: '😔', word: 'Withdrawn' };
+  if (mood < 0)   return { icon: '😕', word: 'Distant' };
+  return { icon: '😐', word: 'Steady' };
+}
+
+function npcHome(id) {
+  return ACTION_DEFS[`visit_${id}`]?.location || 'station';
+}
+
+function seenLabel(npc) {
+  if (npc.lastSeenDay == null) return 'not yet';
+  const ago = state.time.day - npc.lastSeenDay;
+  if (ago <= 0) return 'today';
+  return `${ago}d ago`;
+}
+
+export function renderPeople() {
+  const list = $('people-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const top = $('contacts-top');
+  if (top) {
+    top.innerHTML = `<span class="ct-num">◈ ${state.resources.contacts}</span> contacts made · relationships in motion`;
+  }
+
+  const metNPCs = Object.entries(NPC_DEFS).filter(([id]) => state.npcs[id].met);
+  if (metNPCs.length === 0) {
+    list.appendChild(el('div', 'people-empty',
+      '<div class="empty-icon">🌆</div>' +
+      '<p>Tokyo is full of people.<br>Hand out tracts at the station,<br>or preach in the park.</p>'));
+    return;
+  }
+
+  metNPCs.forEach(([id, def]) => {
+    const npc = state.npcs[id];
+    const card = el('div', [
+      'person', def.cardClass,
+      npc.stage >= 8 ? 'elder' : '',
+    ].filter(Boolean).join(' '));
+
+    // Row: avatar + name/role + stage block
+    const row = el('div', 'person-row');
+    row.appendChild(buildNpcAvatar(id, def, 'person-ava ' + def.cardClass));
+
+    const idBlock = el('div', 'person-id');
+    idBlock.appendChild(el('div', 'person-name', `${def.name} <span class="jp">${def.nameJP}</span>`));
+    idBlock.appendChild(el('div', 'person-role', def.role));
+    row.appendChild(idBlock);
+
+    const md = moodDescriptor(npc.mood ?? 0);
+    const stageBlock = el('div', 'person-stage');
+    stageBlock.appendChild(el('div', 's', getStageName(id)));
+    stageBlock.appendChild(el('div', 'm', `${md.icon} ${md.word}`));
+    row.appendChild(stageBlock);
+    card.appendChild(row);
+
+    if (def.line) card.appendChild(el('div', 'person-line', `“${def.line}”`));
+
+    // Trust meter
+    const nextStage = def.stages[npc.stage + 1];
+    const nextNeed  = def.trustNeeded[npc.stage + 1];
+    const topRow = el('div', 'person-top',
+      `<span>${nextStage ? 'Trust → ' + nextStage : 'Fully grown'}</span>` +
+      `<span>${nextNeed ? Math.floor(npc.trust) + ' / ' + nextNeed : '—'}</span>`);
+    card.appendChild(topRow);
+    const track = el('div', 'person-track');
+    track.appendChild(el('i', null)).style.width = getTrustPercent(id).toFixed(0) + '%';
+    card.appendChild(track);
+
+    const hint = getStageAdvanceHint(id);
+    if (hint) card.appendChild(el('div', 'person-hint', hint));
+
+    // Footer: location + last seen + Visit
+    const home = npcHome(id);
+    const homeDef = LOCATION_DEFS[home];
+    const foot = el('div', 'person-foot');
+    foot.appendChild(el('div', 'person-meta', `📍 ${homeDef.short} · seen ${seenLabel(npc)}`));
+    const visit = el('button', 'person-visit', `Visit ${homeDef.icon}`);
+    visit.dataset.npc = id;
+    foot.appendChild(visit);
+    card.appendChild(foot);
+
+    list.appendChild(card);
+  });
+}
+
+export function bindPeopleList(onVisit) {
+  const list = $('people-list');
+  if (!list) return;
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('.person-visit');
+    if (!btn) return;
+    const npcId = btn.dataset.npc;
+    if (npcId) onVisit(npcId);
+  });
+}
+
+function buildNpcAvatar(npcId, def, className) {
+  const wrap = el('div', className);
+  const img = document.createElement('img');
+  img.src       = `assets/images/npcs/${npcId}.png`;
+  img.alt       = def.name;
+  img.className = 'npc-portrait-img';
+  img.onerror   = () => img.style.display = 'none';
+  wrap.appendChild(img);
+  wrap.appendChild(el('span', 'npc-portrait-fallback', def.nameJP[0]));
+  return wrap;
+}
+
+// ─── JOURNAL OVERLAY ───────────────────────────────────────────────────────────
+const JOURNAL_KIND = {
+  milestone:   'Milestone',
+  npcMeet:     'Relationship',
+  stageAdvance:'Relationship',
+  conversion:  'Conversion',
+  langLevelUp: 'Milestone',
+  setback:     'Setback',
+};
+
+export function renderJournal() {
+  const list = $('journal-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const entries = getJournalEntries();
+  if (entries.length === 0) {
+    list.appendChild(el('div', 'journal-empty',
+      `<div class="empty-icon">📖</div>
+       <p>Your journal is empty.</p>
+       <p class="journal-empty-sub">Important moments will be recorded here as you live them.</p>`));
+    return;
+  }
+
+  // Entries are newest-first; the first `unread` of them are the fresh ones.
+  const unread = unreadJournalCount();
+  entries.forEach((entry, i) => {
+    const card = el('div', 'jcard');
+    card.dataset.entryId = entry.id;
+    const kind = JOURNAL_KIND[entry.type] || 'Note';
+    card.innerHTML = `
+      <div class="jcard-top">
+        <span class="jcard-ic">${entry.icon || '·'}</span>
+        <span class="jcard-kind">${kind}</span>
+        ${i < unread ? '<span class="jcard-dot"></span>' : ''}
+        <span class="jcard-day">Day ${entry.day}</span>
+      </div>
+      <div class="jcard-title">${entry.title}</div>
+      <div class="jcard-body">${entry.body || ''}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ─── VIEW SWITCHING (segmented nav) ────────────────────────────────────────────
+let currentView = 'scene';
+
+export function setView(tab) {
+  const mode = tab === 'actions' ? 'scene' : tab;   // nav tab 'actions' → 'scene' mode
+  currentView = mode;
+  const gs = $('game-screen');
+  gs.classList.remove('mode-scene', 'mode-people', 'mode-journal');
+  gs.classList.add('mode-' + mode);
+
+  $('tab-people').classList.toggle('hidden', tab !== 'people');
+  $('tab-journal').classList.toggle('hidden', tab !== 'journal');
+
+  document.querySelectorAll('.seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+
+  if (tab === 'people')  renderPeople();
+  if (tab === 'journal') { renderJournal(); markJournalRead(); updateNavBadge(true); }
+}
+
+export function bindNav() {
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setView(btn.dataset.tab);
+      playTap();
+    });
+  });
+}
+
+// Journal unread badge on the nav label.
+let lastNavUnread = -1;
+export function updateNavBadge(force = false) {
+  const unread = unreadJournalCount();
+  if (!force && unread === lastNavUnread) return;
+  lastNavUnread = unread;
+  const lbl = document.querySelector('.seg-btn[data-tab="journal"] .seg-lbl');
+  if (lbl) lbl.textContent = unread > 0 ? `Journal (${unread})` : 'Journal';
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
 let toastOnDismiss = null;
 
@@ -624,9 +535,7 @@ export function showToast(icon, title, desc = '', onDismiss = null) {
   }, 2800);
 }
 
-// ─── NPC STATE SHIFT CARD ───────────────────────────────────────────────────
-// Richer than toast — shows portrait + NPC name + headline + description.
-// Auto-dismisses after 3.6s (slightly longer than a regular toast).
+// ─── NPC STATE SHIFT CARD ───────────────────────────────────────────────────────
 let npcStateTimer = null;
 let npcStateOnDismiss = null;
 
@@ -651,7 +560,6 @@ export function showNpcStateCard(npcId, headline, desc = '', onDismiss = null) {
   $('npc-state-desc').textContent     = desc;
 
   card.classList.remove('hidden');
-  // force reflow so the CSS transition runs
   void card.offsetWidth;
   card.classList.add('show');
 
@@ -666,7 +574,7 @@ export function showNpcStateCard(npcId, headline, desc = '', onDismiss = null) {
   }, 3600);
 }
 
-// ─── STORY POPUP ─────────────────────────────────────────────────────────────
+// ─── STORY POPUP ─────────────────────────────────────────────────────────────────
 let storyPopupTimer = null;
 let storyPopupOnDismiss = null;
 
@@ -687,10 +595,8 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
     const def = NPC_DEFS[npcId];
     npcEl.classList.remove('hidden');
     npcEl.innerHTML = '';
-
     const avatarWrap = buildNpcAvatar(npcId, def, 'story-npc-avatar');
     avatarWrap.classList.add(def.cardClass);
-
     const infoDiv = el('div', 'story-npc-info');
     infoDiv.appendChild(el('div', 'story-npc-name', def.name));
     infoDiv.appendChild(el('div', 'story-npc-role', def.role));
@@ -700,8 +606,6 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
     npcEl.classList.add('hidden');
   }
 
-  // Show exactly what was rewarded — use the beat/action's actual reward, not the
-  // tiny multiplier bonuses. Clear labels, no "(wisdom)" or "(language)" confusion.
   const parts = [];
   if (reward?.faith)        parts.push(`+${reward.faith} ✦ Faith`);
   if (reward?.wisdom)       parts.push(`+${reward.wisdom} ◆ Wisdom`);
@@ -717,34 +621,22 @@ export function showStoryPopup(text, icon, npcId, bonuses, reward, onDismiss = n
     bonusEl.classList.add('hidden');
   }
 
-  // Setback row — red chips showing what was lost. Mirrors the bonus row above it.
   if (setbackEl) {
     const losses = formatSetbackChips(setback);
-    if (losses) {
-      setbackEl.textContent = losses;
-      setbackEl.classList.remove('hidden');
-    } else {
-      setbackEl.classList.add('hidden');
-    }
+    if (losses) { setbackEl.textContent = losses; setbackEl.classList.remove('hidden'); }
+    else        { setbackEl.classList.add('hidden'); }
   }
 
-  // NPC inner shift row — sakura-tinted chips showing what changed in the NPC.
-  // Only renders for NPC visit/deep actions where mood/stress/burden actually moved.
   if (shiftEl) {
     const shiftText = formatNpcShiftChips(npcShift);
-    if (shiftText) {
-      shiftEl.textContent = shiftText;
-      shiftEl.classList.remove('hidden');
-    } else {
-      shiftEl.classList.add('hidden');
-    }
+    if (shiftText) { shiftEl.textContent = shiftText; shiftEl.classList.remove('hidden'); }
+    else           { shiftEl.classList.add('hidden'); }
   }
 
   popup.classList.remove('hidden');
   if (storyPopupTimer) { clearTimeout(storyPopupTimer); storyPopupTimer = null; }
 }
 
-// Returns a chip-row string for a setback deltas object, or null if nothing to show.
 function formatSetbackChips(setback) {
   if (!setback) return null;
   const parts = [];
@@ -753,7 +645,6 @@ function formatSetbackChips(setback) {
   if (setback.contacts) parts.push(`−${setback.contacts} contacts`);
   if (setback.trust)    parts.push(`−${setback.trust.amount} trust`);
   if (setback.spiritDry && setback.spiritDry > 0) parts.push(`⛅ +${setback.spiritDry}`);
-  // NPC mood/stress/burden deltas — show the signed value with descriptive label
   if (setback.npcMood)   parts.push(`mood ${signed(setback.npcMood.amount)}`);
   if (setback.npcStress) parts.push(`stress ${signed(setback.npcStress.amount)}`);
   if (setback.npcBurden) parts.push(`burden ${signed(setback.npcBurden.amount)}`);
@@ -762,9 +653,6 @@ function formatSetbackChips(setback) {
 
 function signed(n) { return n > 0 ? `+${n}` : `${n}`; }
 
-// Build the NPC inner-shift chip-row string for the story popup.
-// npcShift = { npcId, mood?, stress?, burden? } — only non-zero deltas.
-// Returns null when there's nothing meaningful to show.
 function formatNpcShiftChips(npcShift) {
   if (!npcShift) return null;
   const def = NPC_DEFS[npcShift.npcId];
@@ -793,7 +681,7 @@ export function bindStoryPopup() {
   if (card)     card.addEventListener('click', dismissStoryPopup);
 }
 
-// ─── END-OF-DAY SCREEN ──────────────────────────────────────────────────────
+// ─── END-OF-DAY SCREEN ──────────────────────────────────────────────────────────
 export function showEndOfDayScreen(onContinue) {
   $('end-of-day-title').textContent = `Day ${state.time.day}`;
 
@@ -832,7 +720,6 @@ export function showEndOfDayScreen(onContinue) {
 
   $('end-of-day').classList.remove('hidden');
 
-  // Replace listener each show to avoid stacking
   const newBtn = continueBtn.cloneNode(true);
   continueBtn.parentNode.replaceChild(newBtn, continueBtn);
   newBtn.addEventListener('click', () => {
@@ -851,7 +738,7 @@ function summarizeActions(acts) {
   }).join(', ');
 }
 
-// ─── MODAL ──────────────────────────────────────────────────────────────────
+// ─── MODAL ──────────────────────────────────────────────────────────────────────
 export function showModal(html, onClose) {
   const overlay = $('modal');
   const card    = $('modal-card');
@@ -888,14 +775,11 @@ export function showNPCMeetModal(npcId, onDismiss = null) {
     <button class="modal-btn modal-btn-primary" data-close>Nice to meet you</button>
   `, () => {
     renderPeople();
-    renderActions(true);
+    renderDock(true);
     if (onDismiss) onDismiss();
   });
 }
 
-// Sakura-ringed modal for non-conversion stage advances (1–4, 6–7).
-// Stage 8 (Elder) gets a gold-accented variant — same warm vocabulary, with weight.
-// Smaller emotional beat than conversion, but bigger than the routine story popup.
 export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = null) {
   const def = NPC_DEFS[npcId];
   if (!def) { if (onDismiss) onDismiss(); return; }
@@ -904,7 +788,6 @@ export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = n
   const bodyText  = momentText || `Your relationship with ${def.name} has deepened.`;
   const isElder   = newStage === 8;
 
-  // Eyebrow text shifts by stage so the moment has the right register.
   let eyebrow;
   if      (isElder)        eyebrow = '— An elder rises —';
   else if (newStage >= 6)  eyebrow = '— Growing in faith —';
@@ -935,7 +818,7 @@ export function showStageAdvanceModal(npcId, newStage, momentText, onDismiss = n
     modal.classList.remove('stage-advance-modal');
     modal.classList.remove('elder-modal');
     renderPeople();
-    renderActions(true);
+    renderDock(true);
     if (onDismiss) onDismiss();
   });
 }
@@ -969,7 +852,7 @@ export function showConversionModal(npcId, text, onDismiss = null) {
   `, () => {
     modal.classList.remove('conversion-modal');
     renderPeople();
-    renderActions(true);
+    renderDock(true);
     if (onDismiss) onDismiss();
   });
 }
@@ -987,7 +870,7 @@ export function showConfirmModal(title, body, onConfirm) {
   });
 }
 
-// ─── SETTINGS ───────────────────────────────────────────────────────────────
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
 export function bindSettings(onReset) {
   const versionEl = $('app-version');
   if (versionEl) {
@@ -1024,18 +907,17 @@ export function bindSettings(onReset) {
   });
 }
 
-// ─── FULL RENDER (called on rAF) ────────────────────────────────────────────
-// Each render is wrapped so a single throw doesn't kill the whole loop —
-// keeps the game responsive if one render breaks. Errors are logged.
+// ─── FULL RENDER (called on rAF) ────────────────────────────────────────────────
 function safeRender(name, fn) {
   try { fn(); } catch (e) { console.error(`[render:${name}]`, e); }
 }
 
 export function renderFrame() {
-  safeRender('HUD',         renderHUD);
-  safeRender('Header',      renderHeader);
-  safeRender('Location',    renderLocation);
-  safeRender('PhaseStrip',  renderPhaseStrip);
-  safeRender('TravelRow',   renderTravelRow);
-  safeRender('Actions',     () => renderActions());
+  safeRender('StatsBar',   renderStatsBar);
+  safeRender('DayBeat',    renderDayBeat);
+  safeRender('Scene',      renderScene);
+  safeRender('Anchor',     renderAnchor);
+  safeRender('TravelRail', renderTravelRail);
+  safeRender('Dock',       () => renderDock());
+  safeRender('NavBadge',   () => updateNavBadge());
 }

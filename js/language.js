@@ -35,6 +35,33 @@ export const ACTION_TEXT = {
   disciple_hiro:    { jp: '浩と歩む',             en: 'Walk with Hiro' },
 };
 
+// One-line flavor shown on the Direction D dock cards (under the name).
+// Plain, missionary-toned; kept short so the 2-line clamp rarely truncates.
+export const ACTION_DESC = {
+  pray:             'Kneel on the tatami. Quiet the city.',
+  rest:             'Half a phase of sleep. Wake up a person again.',
+  study_scripture:  'Sit with the Word before the day starts.',
+  study_japanese:   'Drill kanji. Slow, humbling work.',
+  hand_tracts:      'Stand by the kiosk. Offer. Be ignored. Offer again.',
+  commuter_convo:   'Try a real exchange with a stranger.',
+  open_air_preach:  'Raise your voice over Yoyogi. Most walk past.',
+  casual_convo:     'An easy word with someone on a bench.',
+  host_english:     'Run the conversation table. Your whole evening.',
+  observe_shrine:   'Watch how this culture prays. Learn before you speak.',
+  onsen_visit:      '“The church of the Japanese,” Kenji called it.',
+  visit_kenji:      'Kiosk coffee before his 12-hour day.',
+  visit_yuki:       'She brings her notebook of hard questions.',
+  visit_hiro:       'The bench. The pigeons. No need for words.',
+  evening_kenji:    'A long evening. The guard comes down in pieces.',
+  questions_yuki:   'Her written questions, one by one.',
+  pray_hiro:        'Pray aloud on the bench. He closes his eyes.',
+  disciple_kenji:   'He reads on his commute now. Practical questions.',
+  disciple_yuki:    'Romans, side by side, Japanese and English.',
+  disciple_hiro:    'He reads in Emiko’s chair. Some days, chrysanthemums.',
+};
+
+export function actionDesc(id) { return ACTION_DESC[id] || ''; }
+
 // UI labels that shift to Japanese at language level 0
 export const TAB_LABELS = {
   actions: { jp: '行動', en: 'Actions' },

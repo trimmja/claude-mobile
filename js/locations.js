@@ -16,12 +16,16 @@ export const TRAVEL_COSTS = {
   onsen:     3,   // special excursion
 };
 
+// `short` = compact name for travel pills. `accent` = the location's signature
+// color, used as --acc on the "You are here" anchor card (Direction D redesign).
 export const LOCATION_DEFS = {
   apartment: {
     id: 'apartment',
     icon: '🏠',
     nameJP: 'アパート',
     nameEN: 'Your Apartment',
+    short: 'Home',
+    accent: '#A78BFA',
     bgClass: 'bg-apartment',
   },
   station: {
@@ -29,6 +33,8 @@ export const LOCATION_DEFS = {
     icon: '🚉',
     nameJP: '駅',
     nameEN: 'Shinjuku Station',
+    short: 'Station',
+    accent: '#60A5FA',
     bgClass: 'bg-station',
   },
   park: {
@@ -36,6 +42,8 @@ export const LOCATION_DEFS = {
     icon: '🌸',
     nameJP: '公園',
     nameEN: 'Yoyogi Park',
+    short: 'Park',
+    accent: '#34D399',
     bgClass: 'bg-park',
   },
   cafe: {
@@ -43,6 +51,8 @@ export const LOCATION_DEFS = {
     icon: '☕',
     nameJP: 'カフェ',
     nameEN: 'English Café',
+    short: 'Café',
+    accent: '#D08A3E',
     bgClass: 'bg-cafe',
   },
   shrine: {
@@ -50,6 +60,8 @@ export const LOCATION_DEFS = {
     icon: '⛩️',
     nameJP: '神社',
     nameEN: 'Local Shrine',
+    short: 'Shrine',
+    accent: '#F87171',
     bgClass: 'bg-shrine',
   },
   onsen: {
@@ -57,6 +69,8 @@ export const LOCATION_DEFS = {
     icon: '♨️',
     nameJP: '温泉',
     nameEN: 'Onsen',
+    short: 'Onsen',
+    accent: '#2DD4BF',
     bgClass: 'bg-onsen',
   },
 };

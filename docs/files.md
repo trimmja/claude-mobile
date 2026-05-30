@@ -10,6 +10,7 @@ data/stories.json     — story beat text keyed by action + conditions (editable
 data/reflections.json — end-of-day reflections; conditional shape (specific matches weight 3× catch-alls) — see Phase C condition keys
 data/stageAdvances.json — text shown when an NPC advances to a new relationship stage (per NPC, per stage)
 data/npcEvents.json   — scripted arc events + random texture pools per NPC (loaded by gameData.js)
+data/dayBeats.json    — editorial day-beat phrases per phase (Direction D header)
 data/README.md        — how to edit the JSON files
 index.html            — full game shell (all DOM structure, all IDs)
 css/style.css         — all styles (dark theme, cherry blossom + gold palette)
@@ -18,18 +19,21 @@ js/gameData.js        — loads data/*.json at startup
 js/state.js           — single mutable state object (source of truth, imported everywhere)
 js/engine.js          — event-driven engine: doAction, endPhase, endDay; hooks
 js/save.js            — localStorage save/load/reset (key: 'tokyo_called_v2')
-js/language.js        — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS
+js/language.js        — JP→EN translation, XP thresholds, addLangXP(), TAB_LABELS, ACTION_DESC (dock card flavor)
 js/resources.js       — spend/gain (incl. spendTime + spendEnergy + refillTime + refillEnergyDaily)
 js/actions.js         — ACTION_DEFS, ACTION_UNLOCK, ACTION_VISIBLE, doAction, hasFittingAction
-js/locations.js       — LOCATION_DEFS, LOCATION_ORDER, TRAVEL_COSTS, travelTo() — real navigation
-js/npcs.js            — NPC_DEFS, getIntroText(), getStageAdvanceHint(), addNPCTrust()
+js/locations.js       — LOCATION_DEFS (incl. short + accent), LOCATION_ORDER, TRAVEL_COSTS, travelTo()
+js/npcs.js            — NPC_DEFS (incl. line), getIntroText(), getStageAdvanceHint(), addNPCTrust()
+js/recommend.js       — getRecommendation() → next-action hint behind the ★ dock card
+js/dayBeats.js        — dayBeat()/weekdayFor() — picks the editorial header phrase per day+phase
 js/stories.js         — getStoryBeat(actionId, state) → { text, rewards? }
 js/reflections.js     — pickReflection() — picks end-of-day line matching state vs conditions
 js/milestones.js      — MILESTONE_DEFS, checkMilestones() (called after each action + on new day)
 js/journal.js         — addJournalEntry / getJournalEntries / markJournalRead
 js/unlocks.js         — checkUnlocks() polls action unlock conditions and notifies on newly-unlocked actions
 js/audio.js           — playTap/ActionComplete/Milestone/LevelUp/NPCMeet/Payday, toggleMute(); startStationAmbience()/stopStationAmbience()
-js/ui.js              — all DOM rendering + phase strip + top-bar + bottom-sheet + end-of-day screen; renderFrame() on rAF
+js/ui.js              — Direction D rendering: stats bar, day-beat, scene, anchor, travel rail, dock,
+                        people/journal overlays, setView() view-switching, all modals/popups; renderFrame() on rAF
 js/notifications.js   — sequential notification queue: events show one at a time, next blocks until current dismissed
 js/version.js         — APP_VERSION (bump when deploying); hardRefreshApp()
 js/parseDuration.js   — (legacy, unused — kept for possible future "real minutes" time UI)

@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="assets/images/ui/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Nunito:wght@400;600;700;800&family=Zen+Old+Mincho:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -50,154 +50,115 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════ GAME SCREEN -->
-<div id="game-screen" class="screen hidden">
+<!-- ════════════════════════════════════════════ GAME SCREEN (Direction D) -->
+<!-- mode-scene / mode-people / mode-journal toggles which view is showing.    -->
+<div id="game-screen" class="screen hidden mode-scene">
 
-  <!-- ── Header ─────────────────────────────────────────────── -->
-  <header class="game-header">
-    <div id="header-name" class="header-name">—</div>
-    <div id="header-day"  class="header-day">Day 1</div>
-    <div id="header-spiritdry" class="header-spiritdry hidden" title="Spiritual dryness — pray, rest, or visit the onsen">⛅</div>
-    <button id="header-settings" class="header-settings" title="Settings">⚙</button>
-  </header>
-
-  <!-- ── Resource HUD ───────────────────────────────────────── -->
-  <div class="hud">
-    <div class="res faith">
-      <div class="res-icon">✦</div>
-      <div id="res-faith" class="res-val">50</div>
-      <div class="res-lbl">Faith</div>
-    </div>
-    <div class="res energy">
-      <div class="res-icon">⚡</div>
-      <div id="res-energy" class="res-val">6</div>
-      <div class="res-lbl">Energy</div>
-    </div>
-    <div class="res trust">
-      <div class="res-icon">◈</div>
-      <div id="res-contacts" class="res-val">0</div>
-      <div id="hud-contacts-lbl" class="res-lbl">Contacts</div>
-    </div>
-    <div class="res money">
-      <div class="res-icon">◎</div>
-      <div id="res-money" class="res-val">¥300</div>
-      <div class="res-lbl">Support</div>
-    </div>
-    <div class="res wisdom">
-      <div class="res-icon">◆</div>
-      <div id="res-wisdom" class="res-val">0</div>
-      <div class="res-lbl">Wisdom</div>
-    </div>
-    <div class="res lang">
-      <div class="res-icon">語</div>
-      <div id="res-lang" class="res-val">Lv.0</div>
-      <div class="lang-pip-row">
-        <div class="lang-pip"></div>
-        <div class="lang-pip"></div>
-        <div class="lang-pip"></div>
-        <div class="lang-pip"></div>
-        <div class="lang-pip"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Top info bar: phase + time + travel (always visible, under HUD) ── -->
-  <div class="top-bar">
-    <div class="top-bar-phase">
-      <span id="scene-phase-icon" class="top-phase-icon">☀️</span>
-      <span id="scene-phase-name" class="top-phase-name">Morning</span>
-      <div class="scene-time-bar">
-        <div id="scene-time-fill" class="scene-time-fill"></div>
-      </div>
-      <span id="scene-time-count" class="top-time-count">6/6</span>
-    </div>
-    <div id="travel-row" class="travel-row"></div>
-  </div>
-
-  <!-- ── Location view — fills remaining space, scene background ── -->
-  <div class="location-view">
+  <!-- ── Full-bleed location scene (always behind everything) ── -->
+  <div class="scene-layer">
+    <div id="location-bg" class="location-bg bg-apartment"></div>
     <img id="location-img" class="location-img" alt="" src="assets/images/locations/apartment.png">
     <!-- Station: looping video background (muted for autoplay; audio is separate below) -->
     <video id="location-vid" class="location-vid" playsinline muted loop preload="none">
       <source src="assets/video/shinjuku.MP4" type="video/mp4">
     </video>
-    <div id="location-bg" class="location-bg bg-apartment"></div>
-    <!-- Open-panel floating button — visible when sheet is closed -->
-    <button id="scene-open-btn" class="scene-open-btn">↑ Activities</button>
-
-    <div class="location-info">
-      <div id="location-name-jp" class="location-name-jp">アパート</div>
-      <div id="location-name-en" class="location-name-en">Your Apartment</div>
-    </div>
+    <div class="scene-scrim"></div>
   </div>
 
   <!-- Station ambient audio — MP4 container works as audio source in all browsers -->
   <audio id="station-ambience" src="assets/video/shinjuku.MP4" loop preload="none"></audio>
 
-  <!-- Scrim — darkens scene when sheet is open; tap to close -->
-  <div id="sheet-scrim" class="sheet-scrim"></div>
+  <!-- ── Top chrome: editorial day-beat (scene only) + stats bar (always) ── -->
+  <div class="top-chrome">
 
-  <!-- ── Bottom sheet: handle + tabs + content (slides up over scene) ── -->
-  <div id="bottom-sheet" class="bottom-sheet">
-
-    <!-- Drag handle — tap to close when open -->
-    <div id="sheet-handle" class="sheet-handle">
-      <div class="sheet-handle-hint" id="sheet-handle-hint">↓ tap to close</div>
-    </div>
-
-    <!-- Content area -->
-    <div class="content-area">
-      <!-- Activities panel -->
-      <div id="tab-actions" class="tab-panel">
-        <!-- Phase strip: phase icon + label, time bar, end-phase button -->
-        <div class="phase-strip">
-          <div class="phase-strip-left">
-            <span id="phase-icon" class="phase-icon">☀️</span>
-            <span class="phase-labels">
-              <span id="phase-name-en" class="phase-name-en">Morning</span>
-              <span id="phase-name-jp" class="phase-name-jp">朝</span>
-            </span>
-          </div>
-          <div class="time-strip" title="Time left in this phase">
-            <span class="time-icon">⏳</span>
-            <div class="time-bar"><div id="time-bar-fill" class="time-bar-fill"></div></div>
-            <span id="time-count" class="time-count">6/6</span>
-          </div>
-          <button id="end-phase-btn" class="end-phase-btn">End Phase →</button>
+    <!-- Day-beat header — hidden on People/Journal views -->
+    <div id="day-beat" class="day-beat">
+      <div class="beat-text">
+        <div id="beat-eyebrow" class="beat-eyebrow">Day 1 · Monday morning</div>
+        <div class="beat-phrase">
+          <span id="beat-phrase-en">A quiet start.</span><span id="beat-phrase-jp" class="jp">朝</span>
         </div>
-        <div id="phase-nudge" class="phase-nudge hidden">— nothing more fits this phase —</div>
-        <div id="action-list" class="action-list"></div>
+        <div class="beat-timeline">
+          <span class="beat-time-icon">⏳</span>
+          <span id="beat-phase-name">Morning</span>
+          <div class="beat-timebar"><i id="beat-time-fill"></i></div>
+          <span id="beat-time-count">6 of 6 left</span>
+        </div>
       </div>
-
-      <!-- People panel -->
-      <div id="tab-people" class="tab-panel hidden">
-        <div id="people-list" class="people-list"></div>
-        <div id="contacts-summary" class="contacts-summary"></div>
-      </div>
-
-      <!-- Journal panel -->
-      <div id="tab-journal" class="tab-panel hidden">
-        <div id="journal-list" class="journal-list"></div>
+      <div class="beat-right">
+        <div id="header-spiritdry" class="header-spiritdry hidden" title="Spiritual dryness — pray, rest, or visit the onsen">⛅</div>
+        <button id="header-settings" class="beat-gear" title="Settings">⚙</button>
       </div>
     </div>
 
-    <!-- Bottom nav: content tabs -->
-    <nav id="content-tabs" class="content-tabs">
-      <button class="content-tab active" data-tab="actions">
-        <span class="content-tab-icon">⛩</span>
-        <span class="content-tab-lbl">Actions</span>
-      </button>
-      <button class="content-tab" data-tab="people">
-        <span class="content-tab-icon">👥</span>
-        <span class="content-tab-lbl">People</span>
-      </button>
-      <button class="content-tab" data-tab="journal">
-        <span class="content-tab-icon">📖</span>
-        <span class="content-tab-lbl">Journal</span>
-      </button>
-    </nav>
+    <!-- Stats bar — Faith · Energy · Wisdom · Language · Support -->
+    <div class="stats-bar">
+      <div class="stat"><div class="v"><span class="stat-ic">✦</span> <span id="res-faith">50</span></div><div class="l">Faith</div></div>
+      <div class="stat-sep"></div>
+      <div class="stat eng"><div class="v"><span class="stat-ic">⚡</span> <span id="res-energy">14/14</span></div><div class="l">Energy</div></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><div class="v"><span class="stat-ic">◆</span> <span id="res-wisdom">0</span></div><div class="l">Wisdom</div></div>
+      <div class="stat-sep"></div>
+      <div class="stat lang"><div class="v"><span class="stat-ic">語</span> <span id="res-lang">Lv.0</span></div><div class="l">Language</div></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><div class="v"><span id="res-money">¥300</span></div><div class="l">Support</div></div>
+    </div>
+  </div>
 
-  </div><!-- /bottom-sheet -->
+  <!-- ── Scene bottom zone: travel rail · anchor · action dock (scene only) ── -->
+  <div class="scene-bottom">
+    <div id="travel-row" class="travel-rail"></div>
+
+    <!-- "You are here" anchor card — glued above the dock -->
+    <div id="location-anchor" class="anchor">
+      <div id="anchor-thumb" class="anchor-thumb"></div>
+      <div class="anchor-body">
+        <div class="anchor-eye"><span class="pin"></span> You are here</div>
+        <div class="anchor-name">
+          <span id="location-name-en">Your Apartment</span>
+          <span id="location-name-jp" class="jp">アパート</span>
+        </div>
+      </div>
+      <div class="anchor-go">Travel ↑</div>
+    </div>
+
+    <div class="dock">
+      <div class="dock-head">
+        <span id="dock-head-label" class="dock-head-label">What fits this morning</span>
+        <span id="dock-rec-hint" class="dock-rec-hint hidden">· swipe →</span>
+        <button id="end-phase-btn" class="end-phase-btn">End Morning →</button>
+      </div>
+      <div id="phase-nudge" class="phase-nudge hidden">— nothing more fits this phase —</div>
+      <div id="action-list" class="dock-cards"></div>
+    </div>
+  </div>
+
+  <!-- ── People overlay ── -->
+  <div id="tab-people" class="overlay hidden">
+    <div class="overlay-title">Your People <span class="jp">人々</span></div>
+    <div id="contacts-top" class="contacts-top"></div>
+    <div id="people-list" class="people-list"></div>
+  </div>
+
+  <!-- ── Journal overlay ── -->
+  <div id="tab-journal" class="overlay hidden">
+    <div class="overlay-title">Journal <span class="jp">日記</span></div>
+    <div class="overlay-sub">The story so far</div>
+    <div id="journal-list" class="journal-list"></div>
+  </div>
+
+  <!-- ── Bottom segmented nav (always) ── -->
+  <nav id="content-tabs" class="seg-nav">
+    <button class="seg-btn active" data-tab="actions">
+      <span class="seg-ic">🗺️</span><span class="seg-lbl">Scene</span>
+    </button>
+    <button class="seg-btn" data-tab="people">
+      <span class="seg-ic">👥</span><span class="seg-lbl">People</span>
+    </button>
+    <button class="seg-btn" data-tab="journal">
+      <span class="seg-ic">📖</span><span class="seg-lbl">Journal</span>
+    </button>
+  </nav>
 
 </div><!-- /game-screen -->
 
@@ -266,6 +227,7 @@
 <div id="story-popup" class="story-popup hidden">
   <div id="story-popup-backdrop" class="story-popup-backdrop"></div>
   <div class="story-popup-card">
+    <div class="story-popup-grip"></div>
     <div id="story-popup-npc" class="story-popup-npc hidden"></div>
     <p id="story-popup-text" class="story-popup-text"></p>
     <div id="story-popup-bonus" class="story-popup-bonus hidden"></div>
@@ -275,6 +237,6 @@
   </div>
 </div>
 
-<script type="module" src="js/main.js?v=35"></script>
+<script type="module" src="js/main.js?v=36"></script>
 </body>
 </html>

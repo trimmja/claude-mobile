@@ -15,12 +15,11 @@ import { NPC_DEFS, getStageAdvanceText, getIntroText, adjustNPC, getNPCEvents, i
 import { addJournalEntry } from './journal.js';
 import { refillTime, refillEnergyDaily, adjustSpiritDry } from './resources.js';
 import {
-  renderFrame, renderHUD, renderHeader, renderLocation, renderPhaseStrip,
-  renderActions, renderPeople, renderJournal, invalidateTravelRow,
+  renderFrame, renderStatsBar, renderDayBeat, renderScene, renderAnchor,
+  renderTravelRail, renderDock, renderPeople, renderJournal, invalidateTravelRail, setView,
   showToast, showNPCMeetModal, showStoryPopup, showConversionModal, showStageAdvanceModal, showNpcStateCard,
-  bindStoryPopup, bindJournalList,
-  bindContentTabs, bindSettings, bindActionList, bindEndPhase, bindTravelRow,
-  bindPeopleList, flashActionCard, showEndOfDayScreen, bindSheetHandle, bindSceneOpenBtn,
+  bindStoryPopup, bindNav, bindSettings, bindActionList, bindEndPhase, bindTravelRail,
+  bindPeopleList, flashActionCard, showEndOfDayScreen,
 } from './ui.js';
 import { enqueueNotification, registerNotificationRenderer } from './notifications.js';
 import { silentBackfillUnlocks } from './unlocks.js';
@@ -106,21 +105,19 @@ function startGame() {
   document.getElementById('game-screen').classList.remove('hidden');
 
   // Initial render
-  renderLocation();
-  renderPhaseStrip();
-  renderActions(true);
-  renderHUD();
-  renderHeader();
+  renderScene();
+  renderAnchor();
+  renderDayBeat();
+  renderTravelRail();
+  renderDock(true);
+  renderStatsBar();
 
   // Bind UI interactions
-  bindSheetHandle();
-  bindSceneOpenBtn();
-  bindContentTabs();
+  bindNav();
   bindSettings(resetGame);
   bindStoryPopup();
-  bindJournalList();
-  bindTravelRow(handleTravel);
-  bindPeopleList(handleNpcAction);
+  bindTravelRail(handleTravel);
+  bindPeopleList(handleVisit);
 
   // Click an action card → run it
   bindActionList(handleAction);
@@ -259,22 +256,21 @@ function startGame() {
   };
 
   hooks.onNewDay = () => {
-    renderHeader();
-    renderPhaseStrip();
-    renderActions(true);
-    invalidateTravelRow();
+    renderDayBeat();
+    renderDock(true);
+    invalidateTravelRail();
   };
 
   hooks.onTravel = () => {
-    invalidateTravelRow();
-    renderActions(true);
+    invalidateTravelRail();
+    renderDock(true);
     renderPeople();
   };
 
   hooks.onPhaseChange = ({ to, auto }) => {
-    renderPhaseStrip();
-    renderActions(true);
-    invalidateTravelRow();
+    renderDayBeat();
+    renderDock(true);
+    invalidateTravelRail();
     if (auto) {
       const labels = {
         morning:   ['☀️', 'Morning',   'A new morning begins'],
@@ -478,17 +474,16 @@ function handleEndDay() {
   endDay();
 }
 
-// People-tab action: if the NPC's action is at a different location, travel first, then act.
-// Travel and action are independent — travel may succeed and the action then fail for energy
-// reasons; that's intentional (you committed to going). UI prevents clicks unless both fit.
-function handleNpcAction(actionId) {
-  const def = ACTION_DEFS[actionId];
-  if (!def) return;
-  if (def.location && def.location !== state.location) {
-    const travelResult = doTravel(def.location);
-    if (!travelResult.ok) return;
+// People-view "Visit" button: switch to the Scene and travel to where the NPC is.
+// The actual visiting happens by tapping their card in the dock there (matches the
+// Direction D design — Visit navigates, it doesn't auto-run the action).
+function handleVisit(npcId) {
+  const home = ACTION_DEFS[`visit_${npcId}`]?.location;
+  setView('actions');
+  if (home && home !== state.location) {
+    doTravel(home);   // best-effort; if time is short you simply arrive next chance
   }
-  handleAction(actionId);
+  audio.playTap();
 }
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

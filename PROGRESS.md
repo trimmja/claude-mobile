@@ -19,7 +19,7 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | NPC language-tiered trust (langWeight) | ✅ | n/a | ⚠️ balance untested |
 | Stat multipliers (lang→contacts, wisdom→faith) | ✅ | n/a | ⚠️ balance untested |
 | Portrait system | infrastructure only | ❌ no real images | n/a |
-| Immersive scene UI — floating button + panel (v20–v28) | ✅ | n/a | ✅ |
+| Immersive scene UI — floating button + bottom sheet (v20–v28) | ⛔ superseded by Direction D (v36) | n/a | ✅ |
 | NPC mood/stress/burden system (Step 2, v29) | ✅ | ⚠️ first draft | ❌ not yet |
 | Character-specific deep action names (v30) | ✅ | n/a | ❌ not yet |
 | Variable outcome rewards — pray/preach/study (v30) | ✅ | ⚠️ first draft | ❌ not yet |
@@ -34,13 +34,17 @@ Status of what's shipped + ideas backlog. Architecture lives in `CLAUDE.md`. Des
 | 3 disciple_* actions w/ pre-conv hide + REQUIREMENT_BUILDERS (Phase D1, v35) | ✅ | n/a | ❌ not yet |
 | Elder modal — sakura+gold ring + playElderChord (Phase D1, v35) | ✅ | n/a | ❌ not yet |
 | Disciple story beats — 27 beats across 3 NPCs × stages 5–8 (Phase D1, v35) | ✅ | ⚠️ first draft | ❌ not yet |
+| **Direction D UI redesign — full-bleed scene, day-beat, anchor card, dock, seg-nav (v36)** | ✅ | ✅ | ❌ not yet |
+| Stats bar = 5 cells (Faith/Energy/Wisdom/Language/Support); contacts moved to People (v36) | ✅ | n/a | ❌ not yet |
+| ★ Recommendation engine + dock card / travel-pill ring (v36) | ✅ | n/a | ❌ not yet |
+| Editorial day-beat header + dayBeats.json phrases (v36) | ✅ | ✅ 20 lines | ❌ not yet |
 
 ---
 
 ## Polish backlog (small open fixes)
 
 - **Station video asset** — code for video background + ambient audio is wired (v24) but current shinjuku.MP4 doesn't loop well. Need a better video clip, or decide on a different approach (still image? looping GIF? different scene?). Infrastructure stays; just swap the asset.
-- **Touch targets** — ⚙ settings + ✕ cancel buttons are ~20px; need 44px+ for iPhone
+- **Touch targets** — ✅ done in v36 (⚙ gear + ✕ settings-close are now 44px). Re-audit any remaining small hit areas on iPhone.
 - **Faith balance** — faith regen feels fast enough that costs are trivial; consider raising costs or slowing regen
 - **Payday countdown** — no way to know when support arrives; add "Support in X days" somewhere
 

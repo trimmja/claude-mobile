@@ -3,6 +3,7 @@ import { applyTimingFromData } from './resources.js';
 import { initStoriesFromData } from './stories.js';
 import { initReflectionsFromData } from './reflections.js';
 import { initStageAdvancesFromData, initNPCEventsFromData } from './npcs.js';
+import { initDayBeatsFromData } from './dayBeats.js';
 
 async function fetchJson(path) {
   const res = await fetch(path);
@@ -11,13 +12,14 @@ async function fetchJson(path) {
 }
 
 export async function loadGameData() {
-  const [actionsData, timingData, storiesData, reflectionsData, stageAdvancesData, npcEventsData] = await Promise.all([
+  const [actionsData, timingData, storiesData, reflectionsData, stageAdvancesData, npcEventsData, dayBeatsData] = await Promise.all([
     fetchJson('./data/actions.json'),
     fetchJson('./data/timing.json'),
     fetchJson('./data/stories.json').catch(() => ({})),
     fetchJson('./data/reflections.json').catch(() => ({ lines: [] })),
     fetchJson('./data/stageAdvances.json').catch(() => ({})),
     fetchJson('./data/npcEvents.json').catch(() => ({})),
+    fetchJson('./data/dayBeats.json').catch(() => ({})),
   ]);
 
   initActionsFromData(actionsData);
@@ -26,4 +28,5 @@ export async function loadGameData() {
   initReflectionsFromData(reflectionsData);
   initStageAdvancesFromData(stageAdvancesData);
   initNPCEventsFromData(npcEventsData);
+  initDayBeatsFromData(dayBeatsData);
 }
